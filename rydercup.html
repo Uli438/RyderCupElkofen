@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🏆 Ryder Cup</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#daeeff; --bg2:#c8e6fa; --bg3:#b8d8f5;
+  --card:#fff; --border:#2c2c2c; --border-light:#8bb8d8;
+  --txt:#111; --txt2:#334455; --txt3:#556677;
+  --accent:#1565c0; --accent2:#0d47a1;
+  --green:#2e7d32; --red:#c62828;
+  --team-a:#c62828; --team-b:#1565c0; /* Rot vs Blau */
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input,select,button{font-family:'DM Sans',sans-serif}
+.serif{font-family:'Cormorant Garamond',serif}
+.view{display:none;flex-direction:column;min-height:100vh}
+.view.active{display:flex}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(160deg,#1a237e 0%,#c62828 100%);padding:28px 18px 20px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.15);pointer-events:none}
+.hero-content{position:relative;z-index:1}
+.hero-eyebrow{font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:3px;margin-bottom:4px;font-weight:700}
+.hero-title{font-size:28px;color:#fff;font-weight:700;line-height:1.1;font-family:'Cormorant Garamond',serif}
+.hero-sub{font-size:12px;color:rgba(255,255,255,0.8);margin-top:4px}
+.hero-tabs{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.hero-btn{padding:6px 14px;border-radius:20px;border:2px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.hero-btn.active{background:#fff;color:var(--accent)}
+.hero-btn.admin{margin-left:auto;background:rgba(255,255,255,0.2)}
+
+/* ── SCORE BOARD ── */
+.scoreboard{background:linear-gradient(135deg,#1a237e,#c62828);margin:0;padding:16px 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;border-bottom:2px solid var(--border)}
+.team-score-block{text-align:center}
+.team-name-lbl{font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.7)}
+.team-pts{font-size:42px;font-weight:900;color:#fff;font-family:'Cormorant Garamond',serif;line-height:1}
+.team-pts.a{color:#ffcdd2}
+.team-pts.b{color:#bbdefb}
+.vs-block{text-align:center;color:rgba(255,255,255,0.6);font-size:13px;font-weight:700}
+.day-lbl{font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:1px}
+
+/* ── PAIRINGS LIST ── */
+.section-head{padding:10px 16px 6px;font-size:9px;color:var(--accent);letter-spacing:2px;font-weight:700;background:var(--bg2);border-bottom:1px solid var(--border-light)}
+.pairing-card{background:var(--card);border-bottom:1px solid var(--border-light);padding:12px 16px;cursor:pointer}
+.pairing-card:active{background:#e3f2fd}
+.pairing-mode-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:1px;margin-bottom:6px}
+.badge-match{background:#fff3e0;color:#e65100;border:1px solid #e65100}
+.badge-best{background:#f3e5f5;color:#6a1b9a;border:1px solid #6a1b9a}
+.badge-stbl{background:#e8f5e9;color:#2e7d32;border:1px solid #2e7d32}
+.pairing-players{display:grid;grid-template-columns:1fr 32px 1fr;align-items:center;gap:6px}
+.pairing-player-a{text-align:right}
+.pairing-player-b{text-align:left}
+.pairing-name{font-size:15px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.pairing-name.a{color:var(--team-a)}
+.pairing-name.b{color:var(--team-b)}
+.pairing-hcp{font-size:10px;color:var(--txt3)}
+.pairing-vs{text-align:center;font-size:11px;font-weight:700;color:var(--txt3)}
+.pairing-result{margin-top:8px;display:flex;justify-content:center}
+.result-pill{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700}
+.result-a{background:#ffebee;color:var(--team-a);border:1px solid var(--team-a)}
+.result-b{background:#e3f2fd;color:var(--team-b);border:1px solid var(--team-b)}
+.result-draw{background:#f5f5f5;color:#555;border:1px solid #999}
+.result-open{background:#fff8e1;color:#f57f17;border:1px solid #f57f17}
+
+/* ── SCORE ENTRY ── */
+.hdr{background:var(--bg2);border-bottom:2px solid var(--border);padding:13px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+.back-btn{background:none;border:none;color:var(--accent);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;font-weight:700}
+.hdr-title{font-size:17px;color:var(--txt);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-sub{font-size:10px;color:var(--txt2)}
+.sc-tabs{display:flex;background:var(--bg2);border-bottom:2px solid var(--border)}
+.sc-tab{flex:1;padding:9px 0;background:none;border:none;border-bottom:3px solid transparent;color:var(--txt2);font-size:11px;letter-spacing:1.5px;cursor:pointer;font-weight:600}
+.sc-tab.active{border-bottom-color:var(--accent);color:var(--accent)}
+.sc-col-head{display:grid;padding:7px 14px 4px;gap:6px;font-size:9px;color:var(--txt3);letter-spacing:1px;background:var(--bg2);border-bottom:1px solid var(--border-light)}
+.hole-row{display:grid;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--border-light);background:var(--card)}
+.hole-row.filled{background:#e8f4fd}
+.hole-info{text-align:center}
+.hole-num{font-size:14px;font-weight:700;color:var(--txt)}
+.hole-par{font-size:9px;color:var(--txt3)}
+.stepper{display:flex;align-items:center;background:var(--card);border:2px solid var(--border);border-radius:10px;overflow:hidden;height:50px}
+.st-btn{background:none;border:none;color:var(--accent);font-size:28px;width:48px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;touch-action:manipulation;font-weight:900}
+.st-btn:active{background:#bbdefb}
+.st-val{flex:1;text-align:center;font-size:22px;font-weight:700;color:var(--txt);font-family:'Cormorant Garamond',serif}
+.st-val.empty{color:#aaa;font-size:15px}
+.hole-result{text-align:center}
+.rv{font-size:14px;font-weight:700}
+.rl{font-size:8px;opacity:.65}
+.save-wrap{position:fixed;bottom:0;left:0;right:0;padding:12px 16px 22px;background:linear-gradient(transparent,var(--bg) 40%)}
+.save-btn{width:100%;padding:14px 0;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--green),#43a047);box-shadow:0 4px 14px rgba(46,125,50,0.35)}
+.save-btn:disabled{background:#aaa;box-shadow:none}
+
+/* matchplay hole result */
+.match-hole-result{display:flex;gap:4px;justify-content:center}
+.match-btn{padding:4px 10px;border-radius:8px;border:2px solid var(--border-light);background:var(--card);font-size:11px;font-weight:700;cursor:pointer}
+.match-btn.win-a{background:var(--team-a);border-color:var(--team-a);color:#fff}
+.match-btn.win-b{background:var(--team-b);border-color:var(--team-b);color:#fff}
+.match-btn.draw{background:#757575;border-color:#757575;color:#fff}
+.match-status{text-align:center;padding:6px;font-size:13px;font-weight:700;border-radius:8px;margin-top:6px}
+
+/* ── ADMIN ── */
+.admin-body{padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:40px}
+.slabel{font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:8px;font-weight:700}
+.shint{font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.5}
+.inp{background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 14px;outline:none;width:100%}
+.inp:focus{border-color:var(--accent)}
+.row2{display:flex;gap:8px}
+.row2 .inp{flex:1}
+.team-section{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.team-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.team-color-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.team-title{font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.player-row-admin{display:grid;grid-template-columns:1fr 80px 36px;gap:6px;margin-bottom:6px;align-items:center}
+.player-name-cell{padding:9px 12px;background:var(--bg2);border:1px solid var(--border-light);border-radius:8px;color:var(--txt);font-size:14px;font-weight:600}
+.rm-btn{background:#ffebee;border:2px solid var(--red);border-radius:8px;color:var(--red);font-size:16px;padding:7px;cursor:pointer;line-height:1;font-weight:700}
+.add-row{display:grid;grid-template-columns:1fr 80px auto;gap:6px;margin-top:4px}
+.add-btn{background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:20px;padding:0 14px;cursor:pointer;line-height:1;font-weight:700}
+.pairing-admin-card{background:var(--card);border:2px solid var(--border-light);border-radius:10px;padding:12px;margin-bottom:8px}
+.pairing-admin-row{display:grid;grid-template-columns:1fr auto 1fr auto;gap:6px;align-items:center;margin-bottom:8px}
+.pairing-vs-lbl{font-size:12px;font-weight:700;color:var(--txt3);text-align:center}
+.mode-select-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.mode-chip{padding:4px 10px;border-radius:20px;border:2px solid var(--border-light);background:var(--card);font-size:11px;font-weight:700;cursor:pointer;color:var(--txt2)}
+.mode-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.rstbtn{background:#ffebee;border:2px solid var(--red);border-radius:10px;color:var(--red);font-size:14px;padding:11px;cursor:pointer;width:100%;font-weight:600}
+.primbtn{background:linear-gradient(135deg,var(--green),#43a047);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;padding:13px;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,0.35);width:100%}
+.day-tabs{display:flex;background:var(--bg2);border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.day-tab{flex:1;padding:10px 0;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;font-weight:700}
+.day-tab.active{background:var(--accent);color:#fff}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.2)}
+.toast.show{opacity:1}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#00c853;animation:pulse 2s infinite;flex-shrink:0;display:inline-block;margin-right:5px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.empty-pairings{text-align:center;padding:40px 20px;color:var(--txt3)}
+.course-dropdown{width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 14px;outline:none;cursor:pointer;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- ══ LEADERBOARD ══ -->
+<div id="view-lb" class="view active">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">🏆 RYDER CUP</div>
+      <div class="hero-title serif" id="lb-event-name">Privater Ryder Cup</div>
+      <div class="hero-sub" id="lb-event-sub">Einstellungen öffnen zum Starten</div>
+      <div class="hero-tabs">
+        <button class="hero-btn active" data-day="1" onclick="setDay(1)">TAG 1</button>
+        <button class="hero-btn" data-day="2" onclick="setDay(2)">TAG 2</button>
+        <button class="hero-btn" data-day="total" onclick="setDay('total')">GESAMT</button>
+        <button class="hero-btn admin" onclick="showView('admin')">⚙ Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <div class="team-score-block">
+      <div class="team-name-lbl" id="lb-team-a-name">TEAM A</div>
+      <div class="team-pts a serif" id="lb-pts-a">0</div>
+    </div>
+    <div class="vs-block">
+      VS
+      <div class="day-lbl" id="lb-day-lbl">TAG 1</div>
+    </div>
+    <div class="team-score-block">
+      <div class="team-name-lbl" id="lb-team-b-name">TEAM B</div>
+      <div class="team-pts b serif" id="lb-pts-b">0</div>
+    </div>
+  </div>
+
+  <!-- Pairings -->
+  <div class="section-head" id="lb-section-head">PAARUNGEN</div>
+  <div id="lb-pairings" style="padding-bottom:20px"></div>
+</div>
+
+<!-- ══ SCORE ENTRY ══ -->
+<div id="view-score" class="view">
+  <div class="hdr">
+    <button class="back-btn" onclick="showView('lb')">←</button>
+    <div style="flex:1;min-width:0">
+      <div class="hdr-title" id="sc-title"></div>
+      <div class="hdr-sub" id="sc-sub"></div>
+    </div>
+    <div style="text-align:center;flex-shrink:0">
+      <div style="font-size:18px;font-weight:900;font-family:'Cormorant Garamond',serif" id="sc-status-pill">–</div>
+      <div style="font-size:9px;color:var(--txt3)" id="sc-status-lbl">Stand</div>
+    </div>
+  </div>
+  <div class="sc-tabs">
+    <button class="sc-tab active" id="sc-tab-front" onclick="scSetTab('front')">FRONT 9 (1–9)</button>
+    <button class="sc-tab" id="sc-tab-back" onclick="scSetTab('back')">BACK 9 (10–18)</button>
+  </div>
+  <div id="sc-col-head" class="sc-col-head"></div>
+  <div id="sc-holes"></div>
+  <div style="height:80px"></div>
+  <div class="save-wrap">
+    <button class="save-btn" onclick="savePairingScore()">Score speichern ✓</button>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div id="view-admin" class="view">
+  <div class="hdr">
+    <button class="back-btn" onclick="showView('lb')">←</button>
+    <div class="hdr-title serif">⚙ Admin</div>
+  </div>
+  <div class="admin-body">
+
+    <!-- Event Name -->
+    <section>
+      <div class="slabel">EVENT</div>
+      <input class="inp" id="adm-event-name" placeholder="z.B. Ryder Cup 2025" style="margin-bottom:8px">
+      <div class="row2">
+        <input class="inp" type="date" id="adm-date1" placeholder="Tag 1 Datum">
+        <input class="inp" type="date" id="adm-date2" placeholder="Tag 2 Datum">
+      </div>
+    </section>
+
+    <!-- Plätze -->
+    <section>
+      <div class="slabel">PLÄTZE</div>
+      <div class="shint">Tag 1 und Tag 2 Platz aus gespeicherter Datenbank wählen oder manuell eingeben.</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px">TAG 1</div>
+      <select class="course-dropdown" id="adm-course1-sel" onchange="loadAdminCourse(1,this.value)">
+        <option value="">— Gespeicherten Platz wählen —</option>
+      </select>
+      <input class="inp" id="adm-course1-name" placeholder="Platzname Tag 1" style="margin-bottom:4px">
+      <div class="row2" style="margin-bottom:10px">
+        <input class="inp" type="number" id="adm-course1-par" placeholder="Par gesamt" step="1" min="60" max="75">
+        <input class="inp" id="adm-course1-si" placeholder="SI (kommagetrennt)" style="font-size:12px">
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px">TAG 2</div>
+      <select class="course-dropdown" id="adm-course2-sel" onchange="loadAdminCourse(2,this.value)">
+        <option value="">— Gespeicherten Platz wählen —</option>
+      </select>
+      <input class="inp" id="adm-course2-name" placeholder="Platzname Tag 2" style="margin-bottom:4px">
+      <div class="row2">
+        <input class="inp" type="number" id="adm-course2-par" placeholder="Par gesamt" step="1" min="60" max="75">
+        <input class="inp" id="adm-course2-si" placeholder="SI (kommagetrennt)" style="font-size:12px">
+      </div>
+    </section>
+
+    <!-- Teams -->
+    <section>
+      <div class="slabel">TEAMS & SPIELER</div>
+      <!-- Team A -->
+      <div class="team-section">
+        <div class="team-header">
+          <div class="team-color-dot" style="background:var(--team-a)"></div>
+          <input class="inp" id="adm-team-a-name" placeholder="Team A Name" style="border:none;background:none;padding:0;font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--team-a)">
+        </div>
+        <div id="adm-players-a"></div>
+        <div class="add-row">
+          <input class="inp" id="new-player-a" placeholder="Spieler Name">
+          <input class="inp" id="new-hcp-a" type="number" step="0.1" placeholder="Vorg." style="text-align:center;padding:8px 4px">
+          <button class="add-btn" onclick="addPlayer('a')" style="background:var(--team-a)">+</button>
+        </div>
+      </div>
+      <!-- Team B -->
+      <div class="team-section">
+        <div class="team-header">
+          <div class="team-color-dot" style="background:var(--team-b)"></div>
+          <input class="inp" id="adm-team-b-name" placeholder="Team B Name" style="border:none;background:none;padding:0;font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--team-b)">
+        </div>
+        <div id="adm-players-b"></div>
+        <div class="add-row">
+          <input class="inp" id="new-player-b" placeholder="Spieler Name">
+          <input class="inp" id="new-hcp-b" type="number" step="0.1" placeholder="Vorg." style="text-align:center;padding:8px 4px">
+          <button class="add-btn" onclick="addPlayer('b')" style="background:var(--team-b)">+</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Paarungen -->
+    <section>
+      <div class="slabel">PAARUNGEN</div>
+      <div class="day-tabs">
+        <button class="day-tab active" onclick="setPairingDay(1)">TAG 1</button>
+        <button class="day-tab" onclick="setPairingDay(2)">TAG 2</button>
+      </div>
+      <div id="adm-pairings"></div>
+      <button onclick="addPairing()" style="width:100%;padding:10px;background:var(--bg2);border:2px dashed var(--accent);border-radius:10px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px">+ Paarung hinzufügen</button>
+    </section>
+
+    <button class="rstbtn" onclick="resetAll()">Alles zurücksetzen</button>
+    <button class="primbtn" onclick="saveAdmin()">Speichern & Starten ✓</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════
+const FB_CFG = {
+  apiKey:"AIzaSyDiijlLGQJebM0plfZXssTh4bXb1qTQ5YQ",
+  authDomain:"rydercupelkofen.firebaseapp.com",
+  databaseURL:"https://rydercupelkofen-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"rydercupelkofen",
+  storageBucket:"rydercupelkofen.firebasestorage.app",
+  messagingSenderId:"494603962762",
+  appId:"1:494603962762:web:ab4b5156d61dc3572de073"
+};
+
+// ══════════════════════════════════════════════
+// SUPABASE (Platzspeicherung)
+// ══════════════════════════════════════════════
+const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
+
+async function sbFetch(method,path,body){
+  const res=await fetch(SB_URL+'/rest/v1/'+path,{
+    method,
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},
+    body:body?JSON.stringify(body):undefined
+  });
+  if(!res.ok)throw new Error('SB '+res.status);
+  return res.json();
+}
+async function sbLoadCourses(){
+  try{return await sbFetch('GET','courses?select=*&order=name');}catch(e){return [];}
+}
+
+// ══════════════════════════════════════════════
+// CONSTANTS & HELPERS
+// ══════════════════════════════════════════════
+const DEFAULT_PAR=[4,5,3,4,4,3,5,4,4,4,4,3,5,4,3,4,5,4];
+const DEFAULT_SI=[7,1,15,11,5,17,3,9,13,8,2,16,12,6,18,4,10,14];
+
+function today(){return new Date().toISOString().slice(0,10);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function dc(d){if(d<=-2)return'#f4c430';if(d===-1)return'#4ade80';if(d===0)return'#94a3b8';if(d===1)return'#fb923c';return'#f87171';}
+function dl(d){if(d<=-2)return'Eagle';if(d===-1)return'Birdie';if(d===0)return'Par';if(d===1)return'Bogey';if(d===2)return'Double';return`+${d}`;}
+function fmt(d){return d>0?`+${d}`:d===0?'E':`${d}`;}
+
+function xStr(idx,hcp,si){
+  const siV=(si||DEFAULT_SI)[idx]||idx+1;
+  const h=Math.round(Math.abs(hcp))*(hcp<0?-1:1);
+  if(h>=0)return Math.floor(h/18)+(h%18>=siV?1:0);
+  const a=Math.abs(h);return-(Math.floor(a/18)+(a%18>=siV?1:0));
+}
+function nettoScore(brutto,idx,hcp,si){
+  if(brutto==null)return null;
+  return brutto-xStr(idx,hcp,si);
+}
+function stblPts(net,par){
+  if(net==null)return 0;
+  const d=net-par;
+  if(d>=2)return 0;if(d===1)return 1;if(d===0)return 2;if(d===-1)return 3;if(d===-2)return 4;return 5;
+}
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = {
+  eventName: 'Privater Ryder Cup',
+  date1: today(), date2: today(),
+  teamA: { name:'Team Rot', players:[] },
+  teamB: { name:'Team Blau', players:[] },
+  courses: {
+    1: { name:'', par:[...DEFAULT_PAR], si:[...DEFAULT_SI] },
+    2: { name:'', par:[...DEFAULT_PAR], si:[...DEFAULT_SI] }
+  },
+  pairings: { 1:[], 2:[] } // day -> [{id,playerA,playerB,mode,bruttoNetto,scores}]
+};
+
+let currentDay = 1;
+let currentPairingId = null;
+let currentScores = {}; // {playerKey: [s1..s18]}
+let scTab = 'front';
+let admPairingDay = 1;
+
+// ══════════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════════
+window._fbSet = async()=>{};
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+
+async function initFirebase(){
+  await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+  await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js');
+  if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+  const db=firebase.database();
+  window._fbSet=(path,data)=>db.ref(path).set(data);
+  // Load initial data
+  const snap=await db.ref('rc_state').get();
+  if(snap.exists()) state=snap.val();
+  renderLB();
+  showToast('🟢 Live verbunden');
+  // Listen for changes
+  db.ref('rc_state').on('value',snap=>{
+    if(!snap.exists())return;
+    state=snap.val();
+    renderLB();
+  });
+}
+initFirebase().catch(e=>{console.warn('Firebase:',e);showToast('⚠️ Offline');renderLB();});
+
+// ══════════════════════════════════════════════
+// VIEW ROUTING
+// ══════════════════════════════════════════════
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='admin') initAdmin();
+}
+
+// ══════════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════════
+function setDay(day){
+  currentDay=day;
+  document.querySelectorAll('.hero-btn[data-day]').forEach(b=>b.classList.toggle('active',b.dataset.day==day));
+  renderLB();
+}
+
+function calcPoints(day){
+  const pairings=(state.pairings&&state.pairings[day])||[];
+  let ptA=0,ptB=0;
+  pairings.forEach(p=>{
+    const r=calcPairingResult(p);
+    ptA+=r.ptA; ptB+=r.ptB;
+  });
+  return{ptA,ptB};
+}
+
+function calcPairingResult(p){
+  if(!p.scores) return {ptA:0,ptB:0,status:'open'};
+  const mode=p.mode||'stroke';
+  const bn=p.bruttoNetto||'brutto';
+  const course=state.courses[p.day||1]||{par:DEFAULT_PAR,si:DEFAULT_SI};
+  const par=course.par||DEFAULT_PAR;
+  const si=course.si||DEFAULT_SI;
+
+  if(mode==='matchplay'){
+    return calcMatchplay(p,par,si,bn);
+  } else if(mode==='bestball'){
+    return calcBestBall(p,par,si,bn);
+  } else { // stableford
+    return calcStableford(p,par,si);
+  }
+}
+
+function calcMatchplay(p,par,si,bn){
+  // For matchplay: hole by hole winner
+  const holesA=p.scores&&p.scores.playerA||Array(18).fill(null);
+  const holesB=p.scores&&p.scores.playerB||Array(18).fill(null);
+  const hcpA=Number(p.hcpA)||0, hcpB=Number(p.hcpB)||0;
+  let scoreA=0,scoreB=0,holesPlayed=0;
+  for(let i=0;i<18;i++){
+    const sA=holesA[i],sB=holesB[i];
+    if(sA==null||sB==null)continue;
+    holesPlayed++;
+    const vA=bn==='netto'?nettoScore(sA,i,hcpA,si):sA;
+    const vB=bn==='netto'?nettoScore(sB,i,hcpB,si):sB;
+    if(vA<vB)scoreA++;
+    else if(vB<vA)scoreB++;
+  }
+  // Match status
+  const lead=scoreA-scoreB;
+  const holesLeft=18-holesPlayed;
+  let status='';
+  if(holesPlayed===0)status='open';
+  else if(lead>holesLeft)status='A';
+  else if(-lead>holesLeft)status='B';
+  else if(holesPlayed===18&&lead===0)status='draw';
+  else if(holesPlayed===18&&lead>0)status='A';
+  else if(holesPlayed===18&&lead<0)status='B';
+  else status='running';
+  // Points
+  let ptA=0,ptB=0;
+  if(status==='A'){ptA=1;}
+  else if(status==='B'){ptB=1;}
+  else if(status==='draw'){ptA=0.5;ptB=0.5;}
+  return{ptA,ptB,status,scoreA,scoreB,holesPlayed,lead};
+}
+
+function calcBestBall(p,par,si,bn){
+  // Best ball: best score of team per hole
+  const scoresA=(p.scores&&p.scores.playersA)||{};
+  const scoresB=(p.scores&&p.scores.playersB)||{};
+  // For best ball, playerA/playerB can be arrays
+  const playersA=Array.isArray(p.playerA)?p.playerA:[p.playerA];
+  const playersB=Array.isArray(p.playerB)?p.playerB:[p.playerB];
+  let ptA=0,ptB=0,holesPlayed=0;
+  for(let i=0;i<18;i++){
+    const bestA=Math.min(...playersA.map(pid=>{
+      const s=(scoresA[pid]||[])[i];
+      if(s==null)return 99;
+      const hcp=getPlayerHcp(pid);
+      return bn==='netto'?nettoScore(s,i,hcp,si):s;
+    }));
+    const bestB=Math.min(...playersB.map(pid=>{
+      const s=(scoresB[pid]||[])[i];
+      if(s==null)return 99;
+      const hcp=getPlayerHcp(pid);
+      return bn==='netto'?nettoScore(s,i,hcp,si):s;
+    }));
+    if(bestA===99||bestB===99)continue;
+    holesPlayed++;
+    if(bestA<bestB)ptA+=1/18;
+    else if(bestB<bestA)ptB+=1/18;
+    else{ptA+=0.5/18;ptB+=0.5/18;}
+  }
+  const status=holesPlayed===0?'open':ptA>ptB?'A':ptB>ptA?'B':'draw';
+  return{ptA:holesPlayed===18?Math.round(ptA*2)/2:0,
+         ptB:holesPlayed===18?Math.round(ptB*2)/2:0,
+         status,holesPlayed};
+}
+
+function calcStableford(p,par,si){
+  const holesA=(p.scores&&p.scores.playerA)||Array(18).fill(null);
+  const holesB=(p.scores&&p.scores.playerB)||Array(18).fill(null);
+  const hcpA=Number(p.hcpA)||0,hcpB=Number(p.hcpB)||0;
+  let ptsA=0,ptsB=0,played=0;
+  for(let i=0;i<18;i++){
+    const sA=holesA[i],sB=holesB[i];
+    if(sA==null||sB==null)continue;
+    played++;
+    ptsA+=stblPts(nettoScore(sA,i,hcpA,si),par[i]||4);
+    ptsB+=stblPts(nettoScore(sB,i,hcpB,si),par[i]||4);
+  }
+  const done=played===18;
+  const status=played===0?'open':ptsA>ptsB?'A':ptsB>ptsA?'B':'draw';
+  return{ptA:done&&ptsA>ptsB?1:done&&ptsA===ptsB?0.5:0,
+         ptB:done&&ptsB>ptsA?1:done&&ptsA===ptsB?0.5:0,
+         status,ptsA,ptsB,played};
+}
+
+function getPlayerHcp(pid){
+  const allP=[...(state.teamA.players||[]),...(state.teamB.players||[])];
+  return Number(allP.find(p=>p.id===pid)?.hcp)||0;
+}
+
+function renderLB(){
+  document.getElementById('lb-event-name').textContent=state.eventName||'Privater Ryder Cup';
+  const courseDay=state.courses&&state.courses[currentDay];
+  document.getElementById('lb-event-sub').textContent=
+    currentDay==='total'?'Gesamtstand':
+    `Tag ${currentDay}${courseDay&&courseDay.name?' · '+courseDay.name:''}`;
+  document.getElementById('lb-team-a-name').textContent=(state.teamA&&state.teamA.name)||'TEAM A';
+  document.getElementById('lb-team-b-name').textContent=(state.teamB&&state.teamB.name)||'TEAM B';
+
+  let ptA=0,ptB=0;
+  if(currentDay==='total'){
+    const d1=calcPoints(1),d2=calcPoints(2);
+    ptA=d1.ptA+d2.ptA; ptB=d1.ptB+d2.ptB;
+    document.getElementById('lb-day-lbl').textContent='GESAMT';
+  } else {
+    const pts=calcPoints(currentDay);
+    ptA=pts.ptA; ptB=pts.ptB;
+    document.getElementById('lb-day-lbl').textContent='TAG '+currentDay;
+  }
+  document.getElementById('lb-pts-a').textContent=Number.isInteger(ptA)?ptA:ptA.toFixed(1);
+  document.getElementById('lb-pts-b').textContent=Number.isInteger(ptB)?ptB:ptB.toFixed(1);
+
+  // Pairings
+  const days=currentDay==='total'?[1,2]:[currentDay];
+  let html='';
+  days.forEach(day=>{
+    const pairings=(state.pairings&&state.pairings[day])||[];
+    if(currentDay==='total') html+=`<div class="section-head">TAG ${day}</div>`;
+    if(!pairings.length){
+      html+=`<div class="empty-pairings">Keine Paarungen für Tag ${day}</div>`;
+      return;
+    }
+    pairings.forEach(p=>{
+      const res=calcPairingResult({...p,day});
+      const modeLabel=p.mode==='matchplay'?'MATCHPLAY':p.mode==='bestball'?'BEST BALL':'STABLEFORD';
+      const modeCls=p.mode==='matchplay'?'badge-match':p.mode==='bestball'?'badge-best':'badge-stbl';
+      const bnLabel=p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
+      const pA=getPlayerName(p.playerA);
+      const pB=getPlayerName(p.playerB);
+
+      let resultHtml='';
+      if(res.status==='open'){
+        resultHtml=`<div class="result-pill result-open">Noch nicht gespielt</div>`;
+      } else if(res.status==='running'||res.status==='A'||res.status==='B'||res.status==='draw'){
+        if(p.mode==='matchplay'){
+          const lead=res.lead;
+          let txt='';
+          if(res.status==='draw'||lead===0) txt='All Square';
+          else if(lead>0) txt=`${esc(pA.split(' ')[0])} ${Math.abs(lead)} UP`;
+          else txt=`${esc(pB.split(' ')[0])} ${Math.abs(lead)} UP`;
+          const cls=lead>0?'result-a':lead<0?'result-b':'result-draw';
+          resultHtml=`<div class="result-pill ${cls}">${txt}${res.status!=='running'?' (FINAL)':''}</div>`;
+        } else if(p.mode==='stableford'){
+          resultHtml=`<div class="result-pill ${res.status==='A'?'result-a':res.status==='B'?'result-b':'result-draw'}">${res.ptsA||0} – ${res.ptsB||0} Pkt${res.status!=='running'?' (FINAL)':''}</div>`;
+        } else {
+          resultHtml=`<div class="result-pill ${res.status==='A'?'result-a':res.status==='B'?'result-b':'result-draw'}">Loch ${res.holesPlayed}/18${res.status!=='running'?' (FINAL)':''}</div>`;
+        }
+      }
+
+      html+=`<div class="pairing-card" onclick="openScore('${p.id}',${day})">
+        <div><span class="pairing-mode-badge ${modeCls}">${modeLabel}${bnLabel}</span></div>
+        <div class="pairing-players">
+          <div class="pairing-player-a">
+            <div class="pairing-name a">${esc(pA)}</div>
+            <div class="pairing-hcp">Vorg. ${getPlayerHcp2(p.playerA)}</div>
+          </div>
+          <div class="pairing-vs">VS</div>
+          <div class="pairing-player-b">
+            <div class="pairing-name b">${esc(pB)}</div>
+            <div class="pairing-hcp">Vorg. ${getPlayerHcp2(p.playerB)}</div>
+          </div>
+        </div>
+        <div class="pairing-result">${resultHtml}</div>
+      </div>`;
+    });
+  });
+  document.getElementById('lb-pairings').innerHTML=html||'<div class="empty-pairings"><div style="font-size:40px">⛳</div><div style="margin-top:8px">Keine Paarungen</div><div style="font-size:11px;margin-top:4px">Admin öffnen um Paarungen einzurichten</div></div>';
+}
+
+function getPlayerName(pid){
+  if(!pid)return'–';
+  const all=[...(state.teamA.players||[]),...(state.teamB.players||[])];
+  return all.find(p=>p.id===pid)?.name||pid;
+}
+function getPlayerHcp2(pid){
+  if(!pid)return'–';
+  const all=[...(state.teamA.players||[]),...(state.teamB.players||[])];
+  return all.find(p=>p.id===pid)?.hcp||0;
+}
+
+// ══════════════════════════════════════════════
+// SCORE ENTRY
+// ══════════════════════════════════════════════
+function openScore(pairingId, day){
+  currentPairingId=pairingId;
+  currentDay=day;
+  const p=(state.pairings[day]||[]).find(x=>x.id===pairingId);
+  if(!p)return;
+  const pA=getPlayerName(p.playerA);
+  const pB=getPlayerName(p.playerB);
+  const mode=p.mode||'stroke';
+  document.getElementById('sc-title').textContent=`${pA} vs ${pB}`;
+  document.getElementById('sc-sub').textContent=
+    `${mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford'} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'} · Tag ${day}`;
+  // Load existing scores
+  currentScores={
+    playerA:[...(p.scores?.playerA||Array(18).fill(null))],
+    playerB:[...(p.scores?.playerB||Array(18).fill(null))]
+  };
+  // Column header
+  const modeCol=mode==='matchplay'?'RESULT':mode==='stableford'?'STBL.':'NETTO';
+  document.getElementById('sc-col-head').style.gridTemplateColumns='32px 1fr 1fr '+( mode==='matchplay'?'80px':'60px');
+  document.getElementById('sc-col-head').innerHTML=`<span>LOCH</span><span style="text-align:center">${esc(pA.split(' ')[0])}</span><span style="text-align:center">${esc(pB.split(' ')[0])}</span><span style="text-align:center">${modeCol}</span>`;
+  scTab='front';
+  document.getElementById('sc-tab-front').classList.add('active');
+  document.getElementById('sc-tab-back').classList.remove('active');
+  renderScHoles();
+  updateScStatus();
+  showView('score');
+}
+
+function scSetTab(tab){
+  scTab=tab;
+  document.getElementById('sc-tab-front').classList.toggle('active',tab==='front');
+  document.getElementById('sc-tab-back').classList.toggle('active',tab==='back');
+  renderScHoles();
+}
+
+function renderScHoles(){
+  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
+  if(!p)return;
+  const course=state.courses[currentDay]||{par:DEFAULT_PAR,si:DEFAULT_SI};
+  const par=course.par||DEFAULT_PAR;
+  const si=course.si||DEFAULT_SI;
+  const hcpA=Number(p.hcpA)||getPlayerHcp(p.playerA);
+  const hcpB=Number(p.hcpB)||getPlayerHcp(p.playerB);
+  const mode=p.mode||'stroke';
+  const bn=p.bruttoNetto||'brutto';
+  const start=scTab==='front'?0:9;
+  const holes=Array.from({length:9},(_,i)=>start+i);
+
+  document.getElementById('sc-col-head').style.gridTemplateColumns='32px 1fr 1fr '+(mode==='matchplay'?'80px':'60px');
+
+  document.getElementById('sc-holes').innerHTML=holes.map(i=>{
+    const pv=par[i]||4, siv=si[i]||i+1;
+    const sA=currentScores.playerA[i], sB=currentScores.playerB[i];
+    const nA=nettoScore(sA,i,hcpA,si), nB=nettoScore(sB,i,hcpB,si);
+    const bdA=sA!=null?sA-pv:null, bdB=sB!=null?sB-pv:null;
+
+    // Hole result
+    let holeResult='<span style="color:#aaa">–</span>';
+    if(sA!=null&&sB!=null){
+      const vA=bn==='netto'?nA:sA;
+      const vB=bn==='netto'?nB:sB;
+      if(mode==='matchplay'){
+        if(vA<vB) holeResult=`<span style="font-weight:900;color:var(--team-a);font-size:13px">${esc(getPlayerName(p.playerA).split(' ')[0])}</span>`;
+        else if(vB<vA) holeResult=`<span style="font-weight:900;color:var(--team-b);font-size:13px">${esc(getPlayerName(p.playerB).split(' ')[0])}</span>`;
+        else holeResult=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
+      } else if(mode==='stableford'){
+        const stA=stblPts(nA,pv), stB=stblPts(nB,pv);
+        holeResult=`<span style="font-size:12px;font-weight:700;color:${stA>stB?'var(--team-a)':stB>stA?'var(--team-b)':'#666'}">${stA}–${stB}</span>`;
+      } else {
+        if(vA<vB) holeResult=`<span style="color:var(--team-a);font-weight:700;font-size:12px">A</span>`;
+        else if(vB<vA) holeResult=`<span style="color:var(--team-b);font-weight:700;font-size:12px">B</span>`;
+        else holeResult=`<span style="color:#666;font-weight:700;font-size:12px">½</span>`;
+      }
+    }
+
+    return`<div class="hole-row${(sA!=null||sB!=null)?' filled':''}" style="grid-template-columns:32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}">
+      <div class="hole-info"><div class="hole-num">${i+1}</div><div class="hole-par" style="font-size:9px;color:var(--txt3)">P${pv}·SI${siv}</div></div>
+      <div class="stepper" style="height:46px">
+        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerA',${i},-1)">−</button>
+        <div class="${sA!=null?'st-val':'st-val empty'}" style="font-size:20px" id="sv-A-${i}">${sA!=null?sA:'–'}</div>
+        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerA',${i},+1)">+</button>
+      </div>
+      <div class="stepper" style="height:46px">
+        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerB',${i},-1)">−</button>
+        <div class="${sB!=null?'st-val':'st-val empty'}" style="font-size:20px" id="sv-B-${i}">${sB!=null?sB:'–'}</div>
+        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerB',${i},+1)">+</button>
+      </div>
+      <div class="hole-result" style="display:flex;align-items:center;justify-content:center">${holeResult}</div>
+    </div>`;
+  }).join('');
+}
+
+function stepSc(player, idx, delta){
+  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
+  const course=state.courses[currentDay]||{par:DEFAULT_PAR,si:DEFAULT_SI};
+  const par=course.par||DEFAULT_PAR;
+  const cur=currentScores[player][idx];
+  let next=cur==null?(par[idx]||4):cur+delta;
+  if(next<1)next=1;if(next>15)next=15;
+  currentScores[player][idx]=next;
+  const el=document.getElementById(`sv-${player==='playerA'?'A':'B'}-${idx}`);
+  if(el){el.textContent=next;el.className='st-val';}
+  // Re-render just hole result
+  renderScHoles();
+  updateScStatus();
+}
+
+function updateScStatus(){
+  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
+  if(!p)return;
+  const tempP={...p,scores:{playerA:currentScores.playerA,playerB:currentScores.playerB},day:currentDay};
+  const res=calcPairingResult(tempP);
+  const el=document.getElementById('sc-status-pill');
+  const lbl=document.getElementById('sc-status-lbl');
+  if(p.mode==='matchplay'){
+    const lead=res.lead||0;
+    if(lead===0)el.textContent='A/S';
+    else if(lead>0)el.textContent=`+${lead}A`;
+    else el.textContent=`+${Math.abs(lead)}B`;
+    el.style.color=lead>0?'var(--team-a)':lead<0?'var(--team-b)':'#666';
+    lbl.textContent='Matchstand';
+  } else if(p.mode==='stableford'){
+    el.textContent=`${res.ptsA||0}–${res.ptsB||0}`;
+    el.style.color='var(--txt)';
+    lbl.textContent='Punkte';
+  } else {
+    el.textContent='–';
+    lbl.textContent='Stand';
+  }
+}
+
+async function savePairingScore(){
+  const btn=document.querySelector('.save-btn');
+  btn.disabled=true;btn.textContent='Speichere…';
+  // Update pairing in state
+  state.pairings[currentDay]=state.pairings[currentDay].map(p=>{
+    if(p.id!==currentPairingId)return p;
+    return{...p,scores:{playerA:[...currentScores.playerA],playerB:[...currentScores.playerB]}};
+  });
+  try{await window._fbSet('rc_state',state);showToast('✓ Gespeichert');}
+  catch(e){showToast('⚠️ Fehler');}
+  btn.disabled=false;btn.textContent='Score speichern ✓';
+  renderLB();
+}
+
+// ══════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════
+function initAdmin(){
+  document.getElementById('adm-event-name').value=state.eventName||'';
+  document.getElementById('adm-date1').value=state.date1||today();
+  document.getElementById('adm-date2').value=state.date2||today();
+  document.getElementById('adm-team-a-name').value=state.teamA?.name||'Team Rot';
+  document.getElementById('adm-team-b-name').value=state.teamB?.name||'Team Blau';
+  // Courses
+  const c1=state.courses?.[1]||{};
+  const c2=state.courses?.[2]||{};
+  document.getElementById('adm-course1-name').value=c1.name||'';
+  document.getElementById('adm-course1-par').value=c1.par?(c1.par.reduce((a,b)=>a+b,0)||''):'';
+  document.getElementById('adm-course1-si').value=c1.si?c1.si.join(','):'';
+  document.getElementById('adm-course2-name').value=c2.name||'';
+  document.getElementById('adm-course2-par').value=c2.par?(c2.par.reduce((a,b)=>a+b,0)||''):'';
+  document.getElementById('adm-course2-si').value=c2.si?c2.si.join(','):'';
+  renderAdminPlayers();
+  renderAdminPairings();
+  // Load Supabase courses into dropdowns
+  sbLoadCourses().then(courses=>{
+    ['adm-course1-sel','adm-course2-sel'].forEach(id=>{
+      const sel=document.getElementById(id);
+      if(!sel)return;
+      const cur=sel.value;
+      sel.innerHTML='<option value="">— Gespeicherten Platz wählen —</option>'+
+        courses.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+      if(cur)sel.value=cur;
+    });
+  });
+}
+
+async function loadAdminCourse(day,name){
+  if(!name)return;
+  const courses=await sbLoadCourses();
+  const c=courses.find(x=>x.name===name);
+  if(!c)return;
+  const par=JSON.parse(c.par||'[]');
+  const si=JSON.parse(c.stroke_index||'[]');
+  document.getElementById(`adm-course${day}-name`).value=c.name;
+  document.getElementById(`adm-course${day}-par`).value=par.reduce((a,b)=>a+b,0)||72;
+  document.getElementById(`adm-course${day}-si`).value=si.join(',');
+  showToast('✓ '+c.name+' geladen');
+}
+
+function renderAdminPlayers(){
+  ['a','b'].forEach(team=>{
+    const players=(team==='a'?state.teamA:state.teamB)?.players||[];
+    document.getElementById(`adm-players-${team}`).innerHTML=players.map(p=>`
+      <div class="player-row-admin">
+        <div class="player-name-cell">${esc(p.name)}</div>
+        <input class="inp" type="number" step="0.1" value="${p.hcp||''}" placeholder="Vorg."
+          style="text-align:center;padding:8px 4px;font-size:14px"
+          oninput="updPlayerHcp('${team}','${p.id}',this.value)">
+        <button class="rm-btn" onclick="rmPlayer('${team}','${p.id}')">×</button>
+      </div>`).join('');
+  });
+}
+
+function addPlayer(team){
+  const nameEl=document.getElementById(`new-player-${team}`);
+  const hcpEl=document.getElementById(`new-hcp-${team}`);
+  const name=nameEl.value.trim();if(!name)return;
+  const player={id:uid(),name,hcp:Number(hcpEl.value)||0};
+  if(team==='a') state.teamA.players=[...(state.teamA.players||[]),player];
+  else state.teamB.players=[...(state.teamB.players||[]),player];
+  nameEl.value='';hcpEl.value='';
+  renderAdminPlayers();
+  renderAdminPairings();
+}
+
+function rmPlayer(team,id){
+  if(!confirm('Spieler wirklich löschen?'))return;
+  if(team==='a') state.teamA.players=(state.teamA.players||[]).filter(p=>p.id!==id);
+  else state.teamB.players=(state.teamB.players||[]).filter(p=>p.id!==id);
+  renderAdminPlayers();
+  renderAdminPairings();
+}
+
+function updPlayerHcp(team,id,val){
+  const players=team==='a'?state.teamA.players:state.teamB.players;
+  const p=players.find(p=>p.id===id);
+  if(p)p.hcp=Number(val)||0;
+}
+
+function setPairingDay(day){
+  admPairingDay=day;
+  document.querySelectorAll('.day-tab').forEach((b,i)=>b.classList.toggle('active',i+1===day));
+  renderAdminPairings();
+}
+
+function renderAdminPairings(){
+  const pairings=(state.pairings&&state.pairings[admPairingDay])||[];
+  const playersA=state.teamA?.players||[];
+  const playersB=state.teamB?.players||[];
+  const allA=`<option value="">– Team A –</option>`+playersA.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const allB=`<option value="">– Team B –</option>`+playersB.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+
+  document.getElementById('adm-pairings').innerHTML=pairings.map((p,idx)=>{
+    const modes=['matchplay','bestball','stableford'];
+    const bns=['brutto','netto'];
+    return`<div class="pairing-admin-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--txt2)">Paarung ${idx+1}</div>
+        <button onclick="rmPairing(${idx})" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer">×</button>
+      </div>
+      <div class="pairing-admin-row">
+        <select class="inp" style="padding:8px;font-size:13px" onchange="updPairing(${idx},'playerA',this.value)">${allA.replace(`value="${p.playerA}"`,`value="${p.playerA}" selected`)}</select>
+        <div class="pairing-vs-lbl">VS</div>
+        <select class="inp" style="padding:8px;font-size:13px" onchange="updPairing(${idx},'playerB',this.value)">${allB.replace(`value="${p.playerB}"`,`value="${p.playerB}" selected`)}</select>
+      </div>
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">SPIELMODUS</div>
+      <div class="mode-select-row">
+        ${modes.map(m=>`<button class="mode-chip${p.mode===m?' active':''}" onclick="updPairing(${idx},'mode','${m}')">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball':'Stableford'}</button>`).join('')}
+      </div>
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin:6px 0 4px">WERTUNG</div>
+      <div class="mode-select-row">
+        ${bns.map(bn=>`<button class="mode-chip${p.bruttoNetto===bn?' active':''}" onclick="updPairing(${idx},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addPairing(){
+  if(!state.pairings) state.pairings={1:[],2:[]};
+  if(!state.pairings[admPairingDay]) state.pairings[admPairingDay]=[];
+  state.pairings[admPairingDay].push({
+    id:uid(),playerA:'',playerB:'',mode:'matchplay',bruttoNetto:'brutto',scores:null
+  });
+  renderAdminPairings();
+}
+
+function rmPairing(idx){
+  if(!confirm('Paarung löschen?'))return;
+  state.pairings[admPairingDay].splice(idx,1);
+  renderAdminPairings();
+}
+
+function updPairing(idx,field,val){
+  if(!state.pairings[admPairingDay][idx])return;
+  state.pairings[admPairingDay][idx][field]=val;
+  renderAdminPairings();
+}
+
+function resetAll(){
+  if(!confirm('Alles zurücksetzen?'))return;
+  state={
+    eventName:'Privater Ryder Cup',date1:today(),date2:today(),
+    teamA:{name:'Team Rot',players:[]},
+    teamB:{name:'Team Blau',players:[]},
+    courses:{1:{name:'',par:[...DEFAULT_PAR],si:[...DEFAULT_SI]},2:{name:'',par:[...DEFAULT_PAR],si:[...DEFAULT_SI]}},
+    pairings:{1:[],2:[]}
+  };
+  initAdmin();
+}
+
+async function saveAdmin(){
+  // Read all fields
+  state.eventName=document.getElementById('adm-event-name').value||'Privater Ryder Cup';
+  state.date1=document.getElementById('adm-date1').value||today();
+  state.date2=document.getElementById('adm-date2').value||today();
+  state.teamA.name=document.getElementById('adm-team-a-name').value||'Team Rot';
+  state.teamB.name=document.getElementById('adm-team-b-name').value||'Team Blau';
+
+  // Courses
+  [1,2].forEach(day=>{
+    const name=document.getElementById(`adm-course${day}-name`).value||'';
+    const parTotal=parseInt(document.getElementById(`adm-course${day}-par`).value)||72;
+    const siRaw=document.getElementById(`adm-course${day}-si`).value;
+    let si=siRaw?siRaw.split(',').map(Number).filter(n=>n>0):[];
+    // Build par array from total (simplified: distribute around par 4)
+    let par=[...DEFAULT_PAR];
+    if(si.length<18)si=[...DEFAULT_SI];
+    state.courses[day]={name,par,si:si.slice(0,18)};
+  });
+
+  try{
+    await window._fbSet('rc_state',state);
+    showToast('✓ Gespeichert & synchronisiert');
+  }catch(e){showToast('⚠️ Firebase nicht erreichbar');}
+  showView('lb');
+  renderLB();
+}
+</script>
+</body>
+</html>
