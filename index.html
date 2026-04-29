@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>🏆 Ryder Cup</title>
+<title>🏆 Ryder Cup Elkofen</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#daeeff; --bg2:#c8e6fa; --bg3:#b8d8f5;
-  --card:#fff; --border:#2c2c2c; --border-light:#8bb8d8;
-  --txt:#111; --txt2:#334455; --txt3:#556677;
-  --accent:#1565c0; --accent2:#0d47a1;
-  --green:#2e7d32; --red:#c62828;
-  --team-a:#c62828; --team-b:#1565c0; /* Rot vs Blau */
+  --bg:#daeeff;--bg2:#c8e6fa;--bg3:#b8d8f5;
+  --card:#fff;--border:#2c2c2c;--border-light:#8bb8d8;
+  --txt:#111;--txt2:#334455;--txt3:#556677;
+  --accent:#1565c0;--accent2:#0d47a1;
+  --green:#2e7d32;--red:#c62828;
+  --ta:#c62828;--tb:#1565c0;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
@@ -23,86 +23,95 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .view{display:none;flex-direction:column;min-height:100vh}
 .view.active{display:flex}
 
-/* ── HERO ── */
-.hero{background:linear-gradient(160deg,#1a237e 0%,#c62828 100%);padding:28px 18px 20px;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.15);pointer-events:none}
-.hero-content{position:relative;z-index:1}
-.hero-eyebrow{font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:3px;margin-bottom:4px;font-weight:700}
-.hero-title{font-size:28px;color:#fff;font-weight:700;line-height:1.1;font-family:'Cormorant Garamond',serif}
-.hero-sub{font-size:12px;color:rgba(255,255,255,0.8);margin-top:4px}
-.hero-tabs{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
-.hero-btn{padding:6px 14px;border-radius:20px;border:2px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px}
-.hero-btn.active{background:#fff;color:var(--accent)}
-.hero-btn.admin{margin-left:auto;background:rgba(255,255,255,0.2)}
+/* hero */
+.hero{background:linear-gradient(135deg,#1a237e 0%,#c62828 100%);padding:24px 16px 18px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.12);pointer-events:none}
+.hero-inner{position:relative;z-index:1}
+.hero-eye{font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:3px;margin-bottom:3px;font-weight:700}
+.hero-title{font-size:26px;color:#fff;font-weight:700;line-height:1.1}
+.hero-sub{font-size:11px;color:rgba(255,255,255,0.75);margin-top:3px}
+.hero-tabs{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.htab{padding:5px 12px;border-radius:20px;border:2px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.12);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
+.htab.active{background:#fff;color:var(--accent)}
+.htab.adm{margin-left:auto;background:rgba(0,0,0,0.2);border-color:rgba(255,255,255,0.3)}
 
-/* ── SCORE BOARD ── */
-.scoreboard{background:linear-gradient(135deg,#1a237e,#c62828);margin:0;padding:16px 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;border-bottom:2px solid var(--border)}
-.team-score-block{text-align:center}
-.team-name-lbl{font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.7)}
-.team-pts{font-size:42px;font-weight:900;color:#fff;font-family:'Cormorant Garamond',serif;line-height:1}
-.team-pts.a{color:#ffcdd2}
-.team-pts.b{color:#bbdefb}
-.vs-block{text-align:center;color:rgba(255,255,255,0.6);font-size:13px;font-weight:700}
-.day-lbl{font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:1px}
+/* player bar */
+.player-bar{background:var(--card);border-bottom:2px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px}
+.player-bar-lbl{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;white-space:nowrap}
+.player-sel{flex:1;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:14px;font-weight:600;padding:8px 12px;outline:none;cursor:pointer}
+.player-sel:focus{border-color:var(--accent)}
 
-/* ── PAIRINGS LIST ── */
-.section-head{padding:10px 16px 6px;font-size:9px;color:var(--accent);letter-spacing:2px;font-weight:700;background:var(--bg2);border-bottom:1px solid var(--border-light)}
-.pairing-card{background:var(--card);border-bottom:1px solid var(--border-light);padding:12px 16px;cursor:pointer}
-.pairing-card:active{background:#e3f2fd}
-.pairing-mode-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:1px;margin-bottom:6px}
-.badge-match{background:#fff3e0;color:#e65100;border:1px solid #e65100}
-.badge-best{background:#f3e5f5;color:#6a1b9a;border:1px solid #6a1b9a}
-.badge-stbl{background:#e8f5e9;color:#2e7d32;border:1px solid #2e7d32}
-.pairing-players{display:grid;grid-template-columns:1fr 32px 1fr;align-items:center;gap:6px}
-.pairing-player-a{text-align:right}
-.pairing-player-b{text-align:left}
-.pairing-name{font-size:15px;font-weight:700;font-family:'Cormorant Garamond',serif}
-.pairing-name.a{color:var(--team-a)}
-.pairing-name.b{color:var(--team-b)}
-.pairing-hcp{font-size:10px;color:var(--txt3)}
-.pairing-vs{text-align:center;font-size:11px;font-weight:700;color:var(--txt3)}
-.pairing-result{margin-top:8px;display:flex;justify-content:center}
-.result-pill{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700}
-.result-a{background:#ffebee;color:var(--team-a);border:1px solid var(--team-a)}
-.result-b{background:#e3f2fd;color:var(--team-b);border:1px solid var(--team-b)}
-.result-draw{background:#f5f5f5;color:#555;border:1px solid #999}
-.result-open{background:#fff8e1;color:#f57f17;border:1px solid #f57f17}
+/* scoreboard */
+.scoreboard{background:linear-gradient(135deg,#1a237e,#c62828);padding:14px 16px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;border-bottom:2px solid var(--border)}
+.tsb{text-align:center}
+.tsb-name{font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.65)}
+.tsb-pts{font-size:40px;font-weight:900;line-height:1;font-family:'Cormorant Garamond',serif}
+.tsb-pts.a{color:#ffcdd2}
+.tsb-pts.b{color:#bbdefb}
+.vsb{text-align:center;color:rgba(255,255,255,0.55);font-size:12px;font-weight:700}
+.vsb-day{font-size:9px;color:rgba(255,255,255,0.45);margin-top:2px;letter-spacing:1px}
 
-/* ── SCORE ENTRY ── */
-.hdr{background:var(--bg2);border-bottom:2px solid var(--border);padding:13px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
-.back-btn{background:none;border:none;color:var(--accent);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;font-weight:700}
-.hdr-title{font-size:17px;color:var(--txt);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-sub{font-size:10px;color:var(--txt2)}
+/* pairings */
+.sec-head{padding:9px 16px 6px;font-size:9px;color:var(--accent);letter-spacing:2px;font-weight:700;background:var(--bg2);border-bottom:1px solid var(--border-light)}
+.pair-card{background:var(--card);border-bottom:1px solid var(--border-light);padding:12px 16px;cursor:pointer}
+.pair-card:active{background:#e3f2fd}
+.mode-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:1px;margin-bottom:6px}
+.bm{background:#fff3e0;color:#e65100;border:1px solid #e65100}
+.bb{background:#f3e5f5;color:#6a1b9a;border:1px solid #6a1b9a}
+.bs{background:#e8f5e9;color:#2e7d32;border:1px solid #2e7d32}
+.pair-grid{display:grid;grid-template-columns:1fr 28px 1fr;align-items:center;gap:4px}
+.pname{font-size:15px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.pname.a{color:var(--ta);text-align:right}
+.pname.b{color:var(--tb);text-align:left}
+.phcp{font-size:10px;color:var(--txt3)}
+.phcp.a{text-align:right}
+.pvs{text-align:center;font-size:11px;font-weight:700;color:var(--txt3)}
+.pair-result{margin-top:8px;display:flex;justify-content:center}
+.rpill{padding:3px 14px;border-radius:20px;font-size:11px;font-weight:700}
+.rpa{background:#ffebee;color:var(--ta);border:1px solid var(--ta)}
+.rpb{background:#e3f2fd;color:var(--tb);border:1px solid var(--tb)}
+.rpd{background:#f5f5f5;color:#555;border:1px solid #999}
+.rpo{background:#fff8e1;color:#f57f17;border:1px solid #f57f17}
+.rpc{background:#fff3e0;color:#e65100;border:1px solid #e65100}
+.empty-pairs{text-align:center;padding:50px 20px;color:var(--txt3)}
+
+/* header */
+.hdr{background:var(--bg2);border-bottom:2px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+.back{background:none;border:none;color:var(--accent);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;font-weight:700}
+.hdr-t{font-size:17px;color:var(--txt);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-s{font-size:10px;color:var(--txt2)}
+.status-pill{text-align:center;flex-shrink:0}
+.sp-val{font-size:18px;font-weight:900;line-height:1;font-family:'Cormorant Garamond',serif}
+.sp-lbl{font-size:9px;color:var(--txt3)}
+
+/* live match bar */
+.match-bar{padding:10px 16px;text-align:center;font-weight:900;font-size:17px;font-family:'Cormorant Garamond',serif;border-bottom:2px solid var(--border);transition:background .3s}
+
+/* score tabs */
 .sc-tabs{display:flex;background:var(--bg2);border-bottom:2px solid var(--border)}
 .sc-tab{flex:1;padding:9px 0;background:none;border:none;border-bottom:3px solid transparent;color:var(--txt2);font-size:11px;letter-spacing:1.5px;cursor:pointer;font-weight:600}
 .sc-tab.active{border-bottom-color:var(--accent);color:var(--accent)}
-.sc-col-head{display:grid;padding:7px 14px 4px;gap:6px;font-size:9px;color:var(--txt3);letter-spacing:1px;background:var(--bg2);border-bottom:1px solid var(--border-light)}
+.col-head{display:grid;padding:7px 14px 4px;gap:6px;font-size:9px;color:var(--txt3);letter-spacing:1px;background:var(--bg2);border-bottom:1px solid var(--border-light)}
 .hole-row{display:grid;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--border-light);background:var(--card)}
 .hole-row.filled{background:#e8f4fd}
+.hole-row.conflict{background:#fff5f5;border-left:4px solid var(--red)}
 .hole-info{text-align:center}
 .hole-num{font-size:14px;font-weight:700;color:var(--txt)}
 .hole-par{font-size:9px;color:var(--txt3)}
 .stepper{display:flex;align-items:center;background:var(--card);border:2px solid var(--border);border-radius:10px;overflow:hidden;height:50px}
-.st-btn{background:none;border:none;color:var(--accent);font-size:28px;width:48px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;touch-action:manipulation;font-weight:900}
-.st-btn:active{background:#bbdefb}
-.st-val{flex:1;text-align:center;font-size:22px;font-weight:700;color:var(--txt);font-family:'Cormorant Garamond',serif}
-.st-val.empty{color:#aaa;font-size:15px}
-.hole-result{text-align:center}
-.rv{font-size:14px;font-weight:700}
-.rl{font-size:8px;opacity:.65}
+.stbtn{background:none;border:none;color:var(--accent);font-size:28px;width:48px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;touch-action:manipulation;font-weight:900}
+.stbtn:active{background:#bbdefb}
+.stval{flex:1;text-align:center;font-size:22px;font-weight:700;color:var(--txt);font-family:'Cormorant Garamond',serif}
+.stval.empty{color:#aaa;font-size:15px}
+.hole-res{text-align:center;display:flex;align-items:center;justify-content:center}
 .save-wrap{position:fixed;bottom:0;left:0;right:0;padding:12px 16px 22px;background:linear-gradient(transparent,var(--bg) 40%)}
-.save-btn{width:100%;padding:14px 0;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--green),#43a047);box-shadow:0 4px 14px rgba(46,125,50,0.35)}
-.save-btn:disabled{background:#aaa;box-shadow:none}
+.save-btn{width:100%;padding:14px 0;border:3px solid #1b5e20;border-radius:12px;color:#fff;font-size:18px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#2e7d32,#43a047);box-shadow:0 6px 20px rgba(46,125,50,0.4)}
+.save-btn:disabled{background:#aaa;border-color:#aaa;box-shadow:none}
 
-/* matchplay hole result */
-.match-hole-result{display:flex;gap:4px;justify-content:center}
-.match-btn{padding:4px 10px;border-radius:8px;border:2px solid var(--border-light);background:var(--card);font-size:11px;font-weight:700;cursor:pointer}
-.match-btn.win-a{background:var(--team-a);border-color:var(--team-a);color:#fff}
-.match-btn.win-b{background:var(--team-b);border-color:var(--team-b);color:#fff}
-.match-btn.draw{background:#757575;border-color:#757575;color:#fff}
-.match-status{text-align:center;padding:6px;font-size:13px;font-weight:700;border-radius:8px;margin-top:6px}
+/* conflict warning */
+.conflict-bar{background:#ffebee;border:2px solid var(--red);border-radius:10px;padding:10px 14px;margin:10px 14px;font-size:12px;color:var(--red);font-weight:700}
 
-/* ── ADMIN ── */
+/* admin */
 .admin-body{padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:40px}
 .slabel{font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:8px;font-weight:700}
 .shint{font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.5}
@@ -110,32 +119,27 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .inp:focus{border-color:var(--accent)}
 .row2{display:flex;gap:8px}
 .row2 .inp{flex:1}
-.team-section{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-.team-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.team-color-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
-.team-title{font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif}
-.player-row-admin{display:grid;grid-template-columns:1fr 80px 36px;gap:6px;margin-bottom:6px;align-items:center}
-.player-name-cell{padding:9px 12px;background:var(--bg2);border:1px solid var(--border-light);border-radius:8px;color:var(--txt);font-size:14px;font-weight:600}
-.rm-btn{background:#ffebee;border:2px solid var(--red);border-radius:8px;color:var(--red);font-size:16px;padding:7px;cursor:pointer;line-height:1;font-weight:700}
-.add-row{display:grid;grid-template-columns:1fr 80px auto;gap:6px;margin-top:4px}
-.add-btn{background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:20px;padding:0 14px;cursor:pointer;line-height:1;font-weight:700}
-.pairing-admin-card{background:var(--card);border:2px solid var(--border-light);border-radius:10px;padding:12px;margin-bottom:8px}
-.pairing-admin-row{display:grid;grid-template-columns:1fr auto 1fr auto;gap:6px;align-items:center;margin-bottom:8px}
-.pairing-vs-lbl{font-size:12px;font-weight:700;color:var(--txt3);text-align:center}
-.mode-select-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.mode-chip{padding:4px 10px;border-radius:20px;border:2px solid var(--border-light);background:var(--card);font-size:11px;font-weight:700;cursor:pointer;color:var(--txt2)}
-.mode-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.rstbtn{background:#ffebee;border:2px solid var(--red);border-radius:10px;color:var(--red);font-size:14px;padding:11px;cursor:pointer;width:100%;font-weight:600}
-.primbtn{background:linear-gradient(135deg,var(--green),#43a047);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;padding:13px;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,0.35);width:100%}
+.team-box{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.team-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.team-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.prow{display:grid;grid-template-columns:1fr 80px 36px;gap:6px;margin-bottom:6px;align-items:center}
+.pcell{padding:9px 12px;background:var(--bg2);border:1px solid var(--border-light);border-radius:8px;font-size:14px;font-weight:600}
+.rmbtn{background:#ffebee;border:2px solid var(--red);border-radius:8px;color:var(--red);font-size:16px;padding:7px;cursor:pointer;line-height:1;font-weight:700}
+.addrow{display:grid;grid-template-columns:1fr 80px auto;gap:6px;margin-top:4px}
+.addbtn{border:none;border-radius:10px;color:#fff;font-size:20px;padding:0 14px;cursor:pointer;line-height:1;font-weight:700}
+.pair-adm{background:var(--card);border:2px solid var(--border-light);border-radius:10px;padding:12px;margin-bottom:8px}
+.pair-adm-row{display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center;margin-bottom:8px}
+.mode-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:4px 10px;border-radius:20px;border:2px solid var(--border-light);background:var(--card);font-size:11px;font-weight:700;cursor:pointer;color:var(--txt2)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .day-tabs{display:flex;background:var(--bg2);border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
-.day-tab{flex:1;padding:10px 0;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;font-weight:700}
-.day-tab.active{background:var(--accent);color:#fff}
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.2)}
+.dtab{flex:1;padding:10px 0;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;font-weight:700}
+.dtab.active{background:var(--accent);color:#fff}
+.rstbtn{background:#ffebee;border:2px solid var(--red);border-radius:10px;color:var(--red);font-size:14px;padding:11px;cursor:pointer;width:100%;font-weight:600}
+.primbtn{background:linear-gradient(135deg,var(--green),#43a047);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;padding:13px;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,0.3);width:100%}
+.cdrop{width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 14px;outline:none;cursor:pointer;margin-bottom:8px}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:#00c853;animation:pulse 2s infinite;flex-shrink:0;display:inline-block;margin-right:5px}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.empty-pairings{text-align:center;padding:40px 20px;color:var(--txt3)}
-.course-dropdown{width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 14px;outline:none;cursor:pointer;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -144,167 +148,154 @@ input,select,button{font-family:'DM Sans',sans-serif}
 <!-- ══ LEADERBOARD ══ -->
 <div id="view-lb" class="view active">
   <div class="hero">
-    <div class="hero-content">
-      <div class="hero-eyebrow">🏆 RYDER CUP</div>
-      <div class="hero-title serif" id="lb-event-name">Privater Ryder Cup</div>
-      <div class="hero-sub" id="lb-event-sub">Einstellungen öffnen zum Starten</div>
+    <div class="hero-inner">
+      <div class="hero-eye">🏆 RYDER CUP</div>
+      <div class="hero-title serif" id="lb-name">Ryder Cup Elkofen</div>
+      <div class="hero-sub" id="lb-sub">Admin öffnen zum Einrichten</div>
       <div class="hero-tabs">
-        <button class="hero-btn active" data-day="1" onclick="setDay(1)">TAG 1</button>
-        <button class="hero-btn" data-day="2" onclick="setDay(2)">TAG 2</button>
-        <button class="hero-btn" data-day="total" onclick="setDay('total')">GESAMT</button>
-        <button class="hero-btn admin" onclick="showView('admin')">⚙ Admin</button>
+        <button class="htab active" data-day="1" onclick="setDay(1)">TAG 1</button>
+        <button class="htab" data-day="2" onclick="setDay(2)">TAG 2</button>
+        <button class="htab" data-day="total" onclick="setDay('total')">GESAMT</button>
+        <button class="htab adm" onclick="showView('admin')">⚙ Admin</button>
       </div>
     </div>
   </div>
 
   <!-- Spieler-Auswahl -->
-  <div id="player-select-bar" style="background:#fff;border-bottom:2px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px">
-    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;white-space:nowrap">ICH BIN:</div>
-    <select id="current-player-sel" onchange="setCurrentPlayer(this.value)" style="flex:1;background:#fff;border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:14px;font-weight:600;padding:8px 12px;outline:none;cursor:pointer">
+  <div class="player-bar" id="player-bar" style="display:none">
+    <div class="player-bar-lbl">ICH BIN:</div>
+    <select class="player-sel" id="player-sel" onchange="setMe(this.value)">
       <option value="">— Spieler auswählen —</option>
     </select>
   </div>
 
   <!-- Scoreboard -->
   <div class="scoreboard">
-    <div class="team-score-block">
-      <div class="team-name-lbl" id="lb-team-a-name">TEAM A</div>
-      <div class="team-pts a serif" id="lb-pts-a">0</div>
+    <div class="tsb">
+      <div class="tsb-name" id="lb-ta">TEAM A</div>
+      <div class="tsb-pts a serif" id="lb-pta">0</div>
     </div>
-    <div class="vs-block">
-      VS
-      <div class="day-lbl" id="lb-day-lbl">TAG 1</div>
-    </div>
-    <div class="team-score-block">
-      <div class="team-name-lbl" id="lb-team-b-name">TEAM B</div>
-      <div class="team-pts b serif" id="lb-pts-b">0</div>
+    <div class="vsb">VS<div class="vsb-day" id="lb-day">TAG 1</div></div>
+    <div class="tsb">
+      <div class="tsb-name" id="lb-tb">TEAM B</div>
+      <div class="tsb-pts b serif" id="lb-ptb">0</div>
     </div>
   </div>
 
-  <!-- Pairings -->
-  <div class="section-head" id="lb-section-head">PAARUNGEN</div>
-  <div id="lb-pairings" style="padding-bottom:20px"></div>
+  <div class="sec-head" id="lb-shead">PAARUNGEN</div>
+  <div id="lb-pairs" style="padding-bottom:20px"></div>
 </div>
 
 <!-- ══ SCORE ENTRY ══ -->
 <div id="view-score" class="view">
   <div class="hdr">
-    <button class="back-btn" onclick="showView('lb')">←</button>
+    <button class="back" onclick="showView('lb')">←</button>
     <div style="flex:1;min-width:0">
-      <div class="hdr-title" id="sc-title"></div>
-      <div class="hdr-sub" id="sc-sub"></div>
+      <div class="hdr-t" id="sc-title"></div>
+      <div class="hdr-s" id="sc-sub"></div>
     </div>
-    <div style="text-align:center;flex-shrink:0">
-      <div style="font-size:18px;font-weight:900;font-family:'Cormorant Garamond',serif" id="sc-status-pill">–</div>
-      <div style="font-size:9px;color:var(--txt3)" id="sc-status-lbl">Stand</div>
+    <div class="status-pill">
+      <div class="sp-val serif" id="sc-spill">–</div>
+      <div class="sp-lbl" id="sc-slbl">Stand</div>
     </div>
   </div>
+  <div class="match-bar" id="match-bar" style="display:none"></div>
+  <div id="conflict-warn" style="display:none" class="conflict-bar"></div>
   <div class="sc-tabs">
-    <button class="sc-tab active" id="sc-tab-front" onclick="scSetTab('front')">FRONT 9 (1–9)</button>
-    <button class="sc-tab" id="sc-tab-back" onclick="scSetTab('back')">BACK 9 (10–18)</button>
+    <button class="sc-tab active" id="sct-front" onclick="scTab('front')">FRONT 9 (1–9)</button>
+    <button class="sc-tab" id="sct-back" onclick="scTab('back')">BACK 9 (10–18)</button>
   </div>
-  <div id="sc-col-head" class="sc-col-head"></div>
+  <div class="col-head" id="sc-colhead"></div>
   <div id="sc-holes"></div>
-  <div style="height:80px"></div>
+  <div style="height:82px"></div>
   <div class="save-wrap">
-    <button class="save-btn" onclick="savePairingScore()">Score speichern ✓</button>
+    <button class="save-btn serif" id="savebtn" onclick="saveScore()">Score speichern ✓</button>
   </div>
 </div>
 
 <!-- ══ ADMIN ══ -->
 <div id="view-admin" class="view">
   <div class="hdr">
-    <button class="back-btn" onclick="showView('lb')">←</button>
-    <div class="hdr-title serif">⚙ Admin</div>
+    <button class="back" onclick="showView('lb')">←</button>
+    <div class="hdr-t serif">⚙ Admin</div>
   </div>
   <div class="admin-body">
 
-    <!-- Event Name -->
     <section>
       <div class="slabel">EVENT</div>
-      <input class="inp" id="adm-event-name" placeholder="z.B. Ryder Cup 2025" style="margin-bottom:8px">
+      <input class="inp" id="a-name" placeholder="z.B. Ryder Cup Elkofen 2025" style="margin-bottom:8px">
       <div class="row2">
-        <input class="inp" type="date" id="adm-date1" placeholder="Tag 1 Datum">
-        <input class="inp" type="date" id="adm-date2" placeholder="Tag 2 Datum">
+        <input class="inp" type="date" id="a-d1">
+        <input class="inp" type="date" id="a-d2">
       </div>
     </section>
 
-    <!-- Plätze -->
     <section>
       <div class="slabel">PLÄTZE</div>
-      <div class="shint">Tag 1 und Tag 2 Platz aus gespeicherter Datenbank wählen oder manuell eingeben.</div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px">TAG 1</div>
-      <select class="course-dropdown" id="adm-course1-sel" onchange="loadAdminCourse(1,this.value)">
-        <option value="">— Gespeicherten Platz wählen —</option>
-      </select>
-      <input class="inp" id="adm-course1-name" placeholder="Platzname Tag 1" style="margin-bottom:4px">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600">TAG 1</div>
+      <select class="cdrop" id="a-c1-sel" onchange="loadCourse(1,this.value)"><option value="">— Gespeicherten Platz laden —</option></select>
+      <input class="inp" id="a-c1-name" placeholder="Platzname Tag 1" style="margin-bottom:4px">
       <div class="row2" style="margin-bottom:10px">
-        <input class="inp" type="number" id="adm-course1-par" placeholder="Par gesamt" step="1" min="60" max="75">
-        <input class="inp" id="adm-course1-si" placeholder="SI (kommagetrennt)" style="font-size:12px">
+        <input class="inp" type="number" id="a-c1-par" placeholder="Par (z.B. 72)">
+        <input class="inp" id="a-c1-si" placeholder="SI 1–18 (kommagetrennt)" style="font-size:12px">
       </div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px">TAG 2</div>
-      <select class="course-dropdown" id="adm-course2-sel" onchange="loadAdminCourse(2,this.value)">
-        <option value="">— Gespeicherten Platz wählen —</option>
-      </select>
-      <input class="inp" id="adm-course2-name" placeholder="Platzname Tag 2" style="margin-bottom:4px">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600">TAG 2</div>
+      <select class="cdrop" id="a-c2-sel" onchange="loadCourse(2,this.value)"><option value="">— Gespeicherten Platz laden —</option></select>
+      <input class="inp" id="a-c2-name" placeholder="Platzname Tag 2" style="margin-bottom:4px">
       <div class="row2">
-        <input class="inp" type="number" id="adm-course2-par" placeholder="Par gesamt" step="1" min="60" max="75">
-        <input class="inp" id="adm-course2-si" placeholder="SI (kommagetrennt)" style="font-size:12px">
+        <input class="inp" type="number" id="a-c2-par" placeholder="Par (z.B. 72)">
+        <input class="inp" id="a-c2-si" placeholder="SI 1–18 (kommagetrennt)" style="font-size:12px">
       </div>
     </section>
 
-    <!-- Teams -->
     <section>
       <div class="slabel">TEAMS & SPIELER</div>
-      <!-- Team A -->
-      <div class="team-section">
-        <div class="team-header">
-          <div class="team-color-dot" style="background:var(--team-a)"></div>
-          <input class="inp" id="adm-team-a-name" placeholder="Team A Name" style="border:none;background:none;padding:0;font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--team-a)">
+      <div class="team-box">
+        <div class="team-hdr">
+          <div class="team-dot" style="background:var(--ta)"></div>
+          <input class="inp" id="a-ta" placeholder="Team A Name" style="border:none;background:none;padding:0;font-size:17px;font-weight:700;color:var(--ta)">
         </div>
-        <div id="adm-players-a"></div>
-        <div class="add-row">
-          <input class="inp" id="new-player-a" placeholder="Spieler Name">
-          <input class="inp" id="new-hcp-a" type="number" step="0.1" placeholder="Vorg." style="text-align:center;padding:8px 4px">
-          <button class="add-btn" onclick="addPlayer('a')" style="background:var(--team-a)">+</button>
+        <div id="a-pl-a"></div>
+        <div class="addrow">
+          <input class="inp" id="np-a" placeholder="Spieler Name">
+          <input class="inp" id="nh-a" type="number" step="0.1" placeholder="Vorg." style="text-align:center;padding:8px 4px">
+          <button class="addbtn" style="background:var(--ta)" onclick="addP('a')">+</button>
         </div>
       </div>
-      <!-- Team B -->
-      <div class="team-section">
-        <div class="team-header">
-          <div class="team-color-dot" style="background:var(--team-b)"></div>
-          <input class="inp" id="adm-team-b-name" placeholder="Team B Name" style="border:none;background:none;padding:0;font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--team-b)">
+      <div class="team-box">
+        <div class="team-hdr">
+          <div class="team-dot" style="background:var(--tb)"></div>
+          <input class="inp" id="a-tb" placeholder="Team B Name" style="border:none;background:none;padding:0;font-size:17px;font-weight:700;color:var(--tb)">
         </div>
-        <div id="adm-players-b"></div>
-        <div class="add-row">
-          <input class="inp" id="new-player-b" placeholder="Spieler Name">
-          <input class="inp" id="new-hcp-b" type="number" step="0.1" placeholder="Vorg." style="text-align:center;padding:8px 4px">
-          <button class="add-btn" onclick="addPlayer('b')" style="background:var(--team-b)">+</button>
+        <div id="a-pl-b"></div>
+        <div class="addrow">
+          <input class="inp" id="np-b" placeholder="Spieler Name">
+          <input class="inp" id="nh-b" type="number" step="0.1" placeholder="Vorg." style="text-align:center;padding:8px 4px">
+          <button class="addbtn" style="background:var(--tb)" onclick="addP('b')">+</button>
         </div>
       </div>
     </section>
 
-    <!-- Paarungen -->
     <section>
       <div class="slabel">PAARUNGEN</div>
       <div class="day-tabs">
-        <button class="day-tab active" onclick="setPairingDay(1)">TAG 1</button>
-        <button class="day-tab" onclick="setPairingDay(2)">TAG 2</button>
+        <button class="dtab active" onclick="setPDay(1)">TAG 1</button>
+        <button class="dtab" onclick="setPDay(2)">TAG 2</button>
       </div>
-      <div id="adm-pairings"></div>
-      <button onclick="addPairing()" style="width:100%;padding:10px;background:var(--bg2);border:2px dashed var(--accent);border-radius:10px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px">+ Paarung hinzufügen</button>
+      <div id="a-pairs"></div>
+      <button onclick="addPair()" style="width:100%;padding:10px;background:var(--bg2);border:2px dashed var(--accent);border-radius:10px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px">+ Paarung hinzufügen</button>
     </section>
 
     <button class="rstbtn" onclick="resetAll()">Alles zurücksetzen</button>
-    <button class="primbtn" onclick="saveAdmin()">Speichern & Starten ✓</button>
+    <button class="primbtn serif" onclick="saveAdmin()">Speichern & Starten ✓</button>
   </div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════
-// FIREBASE CONFIG
+// FIREBASE
 // ══════════════════════════════════════════════
-const FB_CFG = {
+const FB_CFG={
   apiKey:"AIzaSyDiijlLGQJebM0plfZXssTh4bXb1qTQ5YQ",
   authDomain:"rydercupelkofen.firebaseapp.com",
   databaseURL:"https://rydercupelkofen-default-rtdb.europe-west1.firebasedatabase.app",
@@ -315,839 +306,776 @@ const FB_CFG = {
 };
 
 // ══════════════════════════════════════════════
-// SUPABASE (Platzspeicherung)
+// SUPABASE
 // ══════════════════════════════════════════════
-const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
-
-async function sbFetch(method,path,body){
-  const res=await fetch(SB_URL+'/rest/v1/'+path,{
-    method,
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},
-    body:body?JSON.stringify(body):undefined
-  });
-  if(!res.ok)throw new Error('SB '+res.status);
-  return res.json();
-}
-async function sbLoadCourses(){
-  try{return await sbFetch('GET','courses?select=*&order=name');}catch(e){return [];}
+const SB_URL='https://pukixlbdbdbbsmqobfhj.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
+async function sbGet(path){
+  const r=await fetch(SB_URL+'/rest/v1/'+path,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+  return r.json();
 }
 
 // ══════════════════════════════════════════════
-// CONSTANTS & HELPERS
+// CONSTANTS
 // ══════════════════════════════════════════════
-const DEFAULT_PAR=[4,5,3,4,4,3,5,4,4,4,4,3,5,4,3,4,5,4];
-const DEFAULT_SI=[7,1,15,11,5,17,3,9,13,8,2,16,12,6,18,4,10,14];
+const DPAR=[4,5,3,4,4,3,5,4,4,4,4,3,5,4,3,4,5,4];
+const DSI=[7,1,15,11,5,17,3,9,13,8,2,16,12,6,18,4,10,14];
 
 function today(){return new Date().toISOString().slice(0,10);}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function dc(d){if(d<=-2)return'#f4c430';if(d===-1)return'#4ade80';if(d===0)return'#94a3b8';if(d===1)return'#fb923c';return'#f87171';}
 function dl(d){if(d<=-2)return'Eagle';if(d===-1)return'Birdie';if(d===0)return'Par';if(d===1)return'Bogey';if(d===2)return'Double';return`+${d}`;}
 function fmt(d){return d>0?`+${d}`:d===0?'E':`${d}`;}
 
 function xStr(idx,hcp,si){
-  const siV=(si||DEFAULT_SI)[idx]||idx+1;
+  const s=(si||DSI)[idx]||idx+1;
   const h=Math.round(Math.abs(hcp))*(hcp<0?-1:1);
-  if(h>=0)return Math.floor(h/18)+(h%18>=siV?1:0);
-  const a=Math.abs(h);return-(Math.floor(a/18)+(a%18>=siV?1:0));
+  if(h>=0)return Math.floor(h/18)+(h%18>=s?1:0);
+  const a=Math.abs(h);return-(Math.floor(a/18)+(a%18>=s?1:0));
 }
-function nettoScore(brutto,idx,hcp,si){
-  if(brutto==null)return null;
-  return brutto-xStr(idx,hcp,si);
-}
-function stblPts(net,par){
-  if(net==null)return 0;
-  const d=net-par;
-  if(d>=2)return 0;if(d===1)return 1;if(d===0)return 2;if(d===-1)return 3;if(d===-2)return 4;return 5;
-}
+function netto(b,idx,hcp,si){return b==null?null:b-xStr(idx,hcp,si);}
+function stbl(net,par){if(net==null)return 0;const d=net-par;if(d>=2)return 0;if(d===1)return 1;if(d===0)return 2;if(d===-1)return 3;if(d===-2)return 4;return 5;}
 
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let state = {
-  eventName: 'Privater Ryder Cup',
-  date1: today(), date2: today(),
-  teamA: { name:'Team Rot', players:[] },
-  teamB: { name:'Team Blau', players:[] },
-  courses: {
-    1: { name:'', par:[...DEFAULT_PAR], si:[...DEFAULT_SI] },
-    2: { name:'', par:[...DEFAULT_PAR], si:[...DEFAULT_SI] }
-  },
-  pairings: { 1:[], 2:[] } // day -> [{id,playerA,playerB,mode,bruttoNetto,scores}]
+let S={
+  eventName:'Ryder Cup Elkofen',
+  date1:today(),date2:today(),
+  teamA:{name:'Team Rot',players:[]},
+  teamB:{name:'Team Blau',players:[]},
+  courses:{1:{name:'',par:[...DPAR],si:[...DSI]},2:{name:'',par:[...DPAR],si:[...DSI]}},
+  pairings:{1:[],2:[]}
 };
-
-let currentDay = 1;
-let currentPairingId = null;
-let currentScores = {}; // {playerKey: [s1..s18]}
-let scTab = 'front';
-let admPairingDay = 1;
+let curDay=1, curPid=null, curTab='front', admPDay=1;
+let curScores={playerA:Array(18).fill(null),playerB:Array(18).fill(null)};
+let myId='', myRole='', forBoth=false;
 
 // ══════════════════════════════════════════════
-// FIREBASE
+// FIREBASE INIT
 // ══════════════════════════════════════════════
-window._fbSet = async()=>{};
+window._fbSet=async()=>{};
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
 
-async function initFirebase(){
+async function initFB(){
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js');
-  if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+  if(!firebase.apps.length)firebase.initializeApp(FB_CFG);
   const db=firebase.database();
   window._fbSet=(path,data)=>db.ref(path).set(data);
-  // Load initial data
-  const snap=await db.ref('rc_state').get();
-  if(snap.exists()) state=snap.val();
+  const snap=await db.ref('rc').get();
+  if(snap.exists())S=snap.val();
   renderLB();
   showToast('🟢 Live verbunden');
-  // Listen for changes
-  db.ref('rc_state').on('value',snap=>{
+  db.ref('rc').on('value',snap=>{
     if(!snap.exists())return;
-    state=snap.val();
+    S=snap.val();
     renderLB();
+    // Scorecard aktualisieren wenn offen
+    if(document.getElementById('view-score').classList.contains('active')){
+      const p=getPairing(curPid,curDay);
+      if(p){
+        // Pending des anderen Spielers laden
+        const other=myRole==='playerA'?'playerB':'playerA';
+        if(p.pending&&p.pending[other]&&!forBoth) checkConflict(p);
+      }
+    }
   });
 }
-initFirebase().catch(e=>{console.warn('Firebase:',e);showToast('⚠️ Offline');renderLB();});
+initFB().catch(e=>{console.warn(e);showToast('⚠️ Offline');renderLB();});
 
 // ══════════════════════════════════════════════
-// VIEW ROUTING
+// HELPERS
 // ══════════════════════════════════════════════
-function showView(name){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+name).classList.add('active');
-  window.scrollTo(0,0);
-  if(name==='admin') initAdmin();
+function allPlayers(){
+  return[
+    ...(S.teamA?.players||[]).map(p=>({...p,team:'a'})),
+    ...(S.teamB?.players||[]).map(p=>({...p,team:'b'}))
+  ];
+}
+function pName(pid){return allPlayers().find(p=>p.id===pid)?.name||'–';}
+function pHcp(pid){return Number(allPlayers().find(p=>p.id===pid)?.hcp)||0;}
+function getCourse(day){return S.courses?.[day]||{par:DPAR,si:DSI};}
+function getPairing(pid,day){return(S.pairings?.[day]||[]).find(p=>p.id===pid);}
+
+// ══════════════════════════════════════════════
+// SCORING MATH
+// ══════════════════════════════════════════════
+function calcResult(p,day){
+  if(!p)return{ptA:0,ptB:0,status:'open'};
+  const sc=p.scores||{};
+  const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
+  const c=getCourse(day||1);
+  const par=c.par||DPAR,si=c.si||DSI;
+  const bn=p.bruttoNetto||'brutto';
+  const mode=p.mode||'matchplay';
+
+  if(mode==='matchplay') return calcMatchplay(sc,hA,hB,par,si,bn,p);
+  if(mode==='bestball')  return calcBestball(sc,hA,hB,par,si,bn);
+  return calcStableford(sc,hA,hB,par,si);
+}
+
+function calcMatchplay(sc,hA,hB,par,si,bn,p){
+  const sA=sc.playerA||Array(18).fill(null);
+  const sB=sc.playerB||Array(18).fill(null);
+  let wA=0,wB=0,played=0;
+  for(let i=0;i<18;i++){
+    if(sA[i]==null||sB[i]==null)continue;
+    played++;
+    const vA=bn==='netto'?netto(sA[i],i,hA,si):sA[i];
+    const vB=bn==='netto'?netto(sB[i],i,hB,si):sB[i];
+    if(vA<vB)wA++;else if(vB<vA)wB++;
+  }
+  const lead=wA-wB,left=18-played;
+  let status='open';
+  if(played>0){
+    if(lead>left)status='A';
+    else if(-lead>left)status='B';
+    else if(played===18&&lead===0)status='draw';
+    else if(played===18)status=lead>0?'A':'B';
+    else status='running';
+  }
+  const ptA=status==='A'?1:status==='draw'?0.5:0;
+  const ptB=status==='B'?1:status==='draw'?0.5:0;
+  return{ptA,ptB,status,lead,played,wA,wB};
+}
+
+function calcBestball(sc,hA,hB,par,si,bn){
+  const sA=sc.playerA||Array(18).fill(null);
+  const sB=sc.playerB||Array(18).fill(null);
+  let ptA=0,ptB=0,played=0;
+  for(let i=0;i<18;i++){
+    if(sA[i]==null||sB[i]==null)continue;
+    played++;
+    const vA=bn==='netto'?netto(sA[i],i,hA,si):sA[i];
+    const vB=bn==='netto'?netto(sB[i],i,hB,si):sB[i];
+    if(vA<vB)ptA++;else if(vB<vA)ptB++;else{ptA+=0.5;ptB+=0.5;}
+  }
+  const done=played===18;
+  const status=played===0?'open':ptA>ptB?'A':ptB>ptA?'B':'draw';
+  return{
+    ptA:done?(ptA>ptB?1:ptA===ptB?0.5:0):0,
+    ptB:done?(ptB>ptA?1:ptA===ptB?0.5:0):0,
+    status,played,ptsA:ptA,ptsB:ptB
+  };
+}
+
+function calcStableford(sc,hA,hB,par,si){
+  const sA=sc.playerA||Array(18).fill(null);
+  const sB=sc.playerB||Array(18).fill(null);
+  let pA=0,pB=0,played=0;
+  for(let i=0;i<18;i++){
+    if(sA[i]==null||sB[i]==null)continue;
+    played++;
+    pA+=stbl(netto(sA[i],i,hA,si),par[i]||4);
+    pB+=stbl(netto(sB[i],i,hB,si),par[i]||4);
+  }
+  const done=played===18;
+  const status=played===0?'open':pA>pB?'A':pB>pA?'B':'draw';
+  return{
+    ptA:done?(pA>pB?1:pA===pB?0.5:0):0,
+    ptB:done?(pB>pA?1:pA===pB?0.5:0):0,
+    status,played,ptsA:pA,ptsB:pB
+  };
+}
+
+function calcDayPts(day){
+  let pA=0,pB=0;
+  (S.pairings?.[day]||[]).forEach(p=>{
+    const r=calcResult(p,day);
+    pA+=r.ptA;pB+=r.ptB;
+  });
+  return{pA,pB};
+}
+
+// ══════════════════════════════════════════════
+// PLAYER SELECTION
+// ══════════════════════════════════════════════
+function setMe(pid){
+  myId=pid;
+  try{localStorage.setItem('rc_me_'+S.eventName,pid);}catch(e){}
+  if(pid)showToast('✓ '+pName(pid));
+}
+
+function renderPlayerBar(){
+  const all=allPlayers();
+  const bar=document.getElementById('player-bar');
+  const sel=document.getElementById('player-sel');
+  if(!all.length){bar.style.display='none';return;}
+  bar.style.display='flex';
+  // Restore saved player
+  try{
+    const saved=localStorage.getItem('rc_me_'+S.eventName);
+    if(saved&&!myId){myId=saved;}
+  }catch(e){}
+  sel.innerHTML='<option value="">— Spieler auswählen —</option>'+
+    ['a','b'].map(team=>{
+      const tp=all.filter(p=>p.team===team);
+      if(!tp.length)return'';
+      const tn=team==='a'?(S.teamA?.name||'Team A'):(S.teamB?.name||'Team B');
+      return`<optgroup label="🏌️ ${tn}">${tp.map(p=>`<option value="${p.id}"${p.id===myId?' selected':''}>${esc(p.name)} (${p.hcp||0})</option>`).join('')}</optgroup>`;
+    }).join('');
 }
 
 // ══════════════════════════════════════════════
 // LEADERBOARD
 // ══════════════════════════════════════════════
-function setDay(day){
-  currentDay=day;
-  document.querySelectorAll('.hero-btn[data-day]').forEach(b=>b.classList.toggle('active',b.dataset.day==day));
+function setDay(d){
+  curDay=d;
+  document.querySelectorAll('.htab[data-day]').forEach(b=>b.classList.toggle('active',b.dataset.day==d));
   renderLB();
 }
 
-function calcPoints(day){
-  const pairings=(state.pairings&&state.pairings[day])||[];
-  let ptA=0,ptB=0;
-  pairings.forEach(p=>{
-    const r=calcPairingResult(p);
-    ptA+=r.ptA; ptB+=r.ptB;
-  });
-  return{ptA,ptB};
-}
-
-function calcPairingResult(p){
-  if(!p.scores) return {ptA:0,ptB:0,status:'open'};
-  const mode=p.mode||'stroke';
-  const bn=p.bruttoNetto||'brutto';
-  const course=state.courses[p.day||1]||{par:DEFAULT_PAR,si:DEFAULT_SI};
-  const par=course.par||DEFAULT_PAR;
-  const si=course.si||DEFAULT_SI;
-
-  if(mode==='matchplay'){
-    return calcMatchplay(p,par,si,bn);
-  } else if(mode==='bestball'){
-    return calcBestBall(p,par,si,bn);
-  } else { // stableford
-    return calcStableford(p,par,si);
-  }
-}
-
-function calcMatchplay(p,par,si,bn){
-  // For matchplay: hole by hole winner
-  const holesA=p.scores&&p.scores.playerA||Array(18).fill(null);
-  const holesB=p.scores&&p.scores.playerB||Array(18).fill(null);
-  const hcpA=Number(p.hcpA)||0, hcpB=Number(p.hcpB)||0;
-  let scoreA=0,scoreB=0,holesPlayed=0;
-  for(let i=0;i<18;i++){
-    const sA=holesA[i],sB=holesB[i];
-    if(sA==null||sB==null)continue;
-    holesPlayed++;
-    const vA=bn==='netto'?nettoScore(sA,i,hcpA,si):sA;
-    const vB=bn==='netto'?nettoScore(sB,i,hcpB,si):sB;
-    if(vA<vB)scoreA++;
-    else if(vB<vA)scoreB++;
-  }
-  // Match status
-  const lead=scoreA-scoreB;
-  const holesLeft=18-holesPlayed;
-  let status='';
-  if(holesPlayed===0)status='open';
-  else if(lead>holesLeft)status='A';
-  else if(-lead>holesLeft)status='B';
-  else if(holesPlayed===18&&lead===0)status='draw';
-  else if(holesPlayed===18&&lead>0)status='A';
-  else if(holesPlayed===18&&lead<0)status='B';
-  else status='running';
-  // Points
-  let ptA=0,ptB=0;
-  if(status==='A'){ptA=1;}
-  else if(status==='B'){ptB=1;}
-  else if(status==='draw'){ptA=0.5;ptB=0.5;}
-  return{ptA,ptB,status,scoreA,scoreB,holesPlayed,lead};
-}
-
-function calcBestBall(p,par,si,bn){
-  // Best ball: best score of team per hole
-  const scoresA=(p.scores&&p.scores.playersA)||{};
-  const scoresB=(p.scores&&p.scores.playersB)||{};
-  // For best ball, playerA/playerB can be arrays
-  const playersA=Array.isArray(p.playerA)?p.playerA:[p.playerA];
-  const playersB=Array.isArray(p.playerB)?p.playerB:[p.playerB];
-  let ptA=0,ptB=0,holesPlayed=0;
-  for(let i=0;i<18;i++){
-    const bestA=Math.min(...playersA.map(pid=>{
-      const s=(scoresA[pid]||[])[i];
-      if(s==null)return 99;
-      const hcp=getPlayerHcp(pid);
-      return bn==='netto'?nettoScore(s,i,hcp,si):s;
-    }));
-    const bestB=Math.min(...playersB.map(pid=>{
-      const s=(scoresB[pid]||[])[i];
-      if(s==null)return 99;
-      const hcp=getPlayerHcp(pid);
-      return bn==='netto'?nettoScore(s,i,hcp,si):s;
-    }));
-    if(bestA===99||bestB===99)continue;
-    holesPlayed++;
-    if(bestA<bestB)ptA+=1/18;
-    else if(bestB<bestA)ptB+=1/18;
-    else{ptA+=0.5/18;ptB+=0.5/18;}
-  }
-  const status=holesPlayed===0?'open':ptA>ptB?'A':ptB>ptA?'B':'draw';
-  return{ptA:holesPlayed===18?Math.round(ptA*2)/2:0,
-         ptB:holesPlayed===18?Math.round(ptB*2)/2:0,
-         status,holesPlayed};
-}
-
-function calcStableford(p,par,si){
-  const holesA=(p.scores&&p.scores.playerA)||Array(18).fill(null);
-  const holesB=(p.scores&&p.scores.playerB)||Array(18).fill(null);
-  const hcpA=Number(p.hcpA)||0,hcpB=Number(p.hcpB)||0;
-  let ptsA=0,ptsB=0,played=0;
-  for(let i=0;i<18;i++){
-    const sA=holesA[i],sB=holesB[i];
-    if(sA==null||sB==null)continue;
-    played++;
-    ptsA+=stblPts(nettoScore(sA,i,hcpA,si),par[i]||4);
-    ptsB+=stblPts(nettoScore(sB,i,hcpB,si),par[i]||4);
-  }
-  const done=played===18;
-  const status=played===0?'open':ptsA>ptsB?'A':ptsB>ptsA?'B':'draw';
-  return{ptA:done&&ptsA>ptsB?1:done&&ptsA===ptsB?0.5:0,
-         ptB:done&&ptsB>ptsA?1:done&&ptsA===ptsB?0.5:0,
-         status,ptsA,ptsB,played};
-}
-
-function getPlayerHcp(pid){
-  const allP=[...(state.teamA.players||[]),...(state.teamB.players||[])];
-  return Number(allP.find(p=>p.id===pid)?.hcp)||0;
-}
-
 function renderLB(){
-  document.getElementById('lb-event-name').textContent=state.eventName||'Privater Ryder Cup';
-  const courseDay=state.courses&&state.courses[currentDay];
-  document.getElementById('lb-event-sub').textContent=
-    currentDay==='total'?'Gesamtstand':
-    `Tag ${currentDay}${courseDay&&courseDay.name?' · '+courseDay.name:''}`;
-  document.getElementById('lb-team-a-name').textContent=(state.teamA&&state.teamA.name)||'TEAM A';
-  document.getElementById('lb-team-b-name').textContent=(state.teamB&&state.teamB.name)||'TEAM B';
+  document.getElementById('lb-name').textContent=S.eventName||'Ryder Cup';
+  document.getElementById('lb-ta').textContent=S.teamA?.name||'TEAM A';
+  document.getElementById('lb-tb').textContent=S.teamB?.name||'TEAM B';
+  const c=getCourse(curDay==='total'?1:curDay);
+  document.getElementById('lb-sub').textContent=
+    curDay==='total'?'Gesamtstand':
+    `Tag ${curDay}${c.name?' · '+c.name:''}`;
+  document.getElementById('lb-day').textContent=curDay==='total'?'GESAMT':`TAG ${curDay}`;
 
-  let ptA=0,ptB=0;
-  if(currentDay==='total'){
-    const d1=calcPoints(1),d2=calcPoints(2);
-    ptA=d1.ptA+d2.ptA; ptB=d1.ptB+d2.ptB;
-    document.getElementById('lb-day-lbl').textContent='GESAMT';
-  } else {
-    const pts=calcPoints(currentDay);
-    ptA=pts.ptA; ptB=pts.ptB;
-    document.getElementById('lb-day-lbl').textContent='TAG '+currentDay;
+  let pA=0,pB=0;
+  if(curDay==='total'){
+    const d1=calcDayPts(1),d2=calcDayPts(2);
+    pA=d1.pA+d2.pA;pB=d1.pB+d2.pB;
+  }else{
+    const d=calcDayPts(curDay);pA=d.pA;pB=d.pB;
   }
-  document.getElementById('lb-pts-a').textContent=Number.isInteger(ptA)?ptA:ptA.toFixed(1);
-  document.getElementById('lb-pts-b').textContent=Number.isInteger(ptB)?ptB:ptB.toFixed(1);
+  document.getElementById('lb-pta').textContent=Number.isInteger(pA)?pA:pA.toFixed(1);
+  document.getElementById('lb-ptb').textContent=Number.isInteger(pB)?pB:pB.toFixed(1);
 
-  // Pairings
-  const days=currentDay==='total'?[1,2]:[currentDay];
+  renderPlayerBar();
+
+  const days=curDay==='total'?[1,2]:[curDay];
   let html='';
   days.forEach(day=>{
-    const pairings=(state.pairings&&state.pairings[day])||[];
-    if(currentDay==='total') html+=`<div class="section-head">TAG ${day}</div>`;
-    if(!pairings.length){
-      html+=`<div class="empty-pairings">Keine Paarungen für Tag ${day}</div>`;
-      return;
-    }
-    pairings.forEach(p=>{
-      const res=calcPairingResult({...p,day});
-      const modeLabel=p.mode==='matchplay'?'MATCHPLAY':p.mode==='bestball'?'BEST BALL':'STABLEFORD';
-      const modeCls=p.mode==='matchplay'?'badge-match':p.mode==='bestball'?'badge-best':'badge-stbl';
-      const bnLabel=p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
-      const pA=getPlayerName(p.playerA);
-      const pB=getPlayerName(p.playerB);
+    const pairs=S.pairings?.[day]||[];
+    if(curDay==='total')html+=`<div class="sec-head">TAG ${day}</div>`;
+    if(!pairs.length){html+=`<div class="empty-pairs">Keine Paarungen für Tag ${day}</div>`;return;}
+    pairs.forEach(p=>{
+      const r=calcResult(p,day);
+      const mL=p.mode==='matchplay'?'MATCHPLAY':p.mode==='bestball'?'BEST BALL':'STABLEFORD';
+      const mC=p.mode==='matchplay'?'bm':p.mode==='bestball'?'bb':'bs';
+      const bnL=p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
+      const nA=pName(p.playerA),nB=pName(p.playerB);
+      const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
+      // Has conflict?
+      const hasConflict=p.conflict&&p.conflict.length>0;
 
-      let resultHtml='';
-      if(res.status==='open'){
-        resultHtml=`<div class="result-pill result-open">Noch nicht gespielt</div>`;
-      } else if(res.status==='running'||res.status==='A'||res.status==='B'||res.status==='draw'){
+      let rHtml='';
+      if(hasConflict){
+        rHtml=`<div class="rpill rpc">⚠️ Abweichung Loch ${p.conflict.join(', ')}</div>`;
+      }else if(r.status==='open'){
+        rHtml=`<div class="rpill rpo">Noch nicht gespielt</div>`;
+      }else{
+        let txt='',cls='rpd';
         if(p.mode==='matchplay'){
-          const lead=res.lead;
-          let txt='';
-          if(res.status==='draw'||lead===0) txt='All Square';
-          else if(lead>0) txt=`${esc(pA.split(' ')[0])} ${Math.abs(lead)} UP`;
-          else txt=`${esc(pB.split(' ')[0])} ${Math.abs(lead)} UP`;
-          const cls=lead>0?'result-a':lead<0?'result-b':'result-draw';
-          resultHtml=`<div class="result-pill ${cls}">${txt}${res.status!=='running'?' (FINAL)':''}</div>`;
-        } else if(p.mode==='stableford'){
-          resultHtml=`<div class="result-pill ${res.status==='A'?'result-a':res.status==='B'?'result-b':'result-draw'}">${res.ptsA||0} – ${res.ptsB||0} Pkt${res.status!=='running'?' (FINAL)':''}</div>`;
-        } else {
-          resultHtml=`<div class="result-pill ${res.status==='A'?'result-a':res.status==='B'?'result-b':'result-draw'}">Loch ${res.holesPlayed}/18${res.status!=='running'?' (FINAL)':''}</div>`;
+          const lead=r.lead||0;
+          if(lead===0)txt='All Square';
+          else if(lead>0){txt=`${esc(nA.split(' ')[0])} ${lead} UP`;cls='rpa';}
+          else{txt=`${esc(nB.split(' ')[0])} ${Math.abs(lead)} UP`;cls='rpb';}
+          if(r.status==='A'||r.status==='B')txt+=' ✓';
+        }else if(p.mode==='stableford'){
+          txt=`${r.ptsA||0} – ${r.ptsB||0} Pkt`;
+          cls=r.status==='A'?'rpa':r.status==='B'?'rpb':'rpd';
+        }else{
+          txt=`Loch ${r.played}/18`;
+          cls=r.status==='A'?'rpa':r.status==='B'?'rpb':'rpd';
         }
+        rHtml=`<div class="rpill ${cls}">${txt}</div>`;
       }
 
-      html+=`<div class="pairing-card" onclick="openScore('${p.id}',${day})">
-        <div><span class="pairing-mode-badge ${modeCls}">${modeLabel}${bnLabel}</span></div>
-        <div class="pairing-players">
-          <div class="pairing-player-a">
-            <div class="pairing-name a">${esc(pA)}</div>
-            <div class="pairing-hcp">Vorg. ${getPlayerHcp2(p.playerA)}</div>
-          </div>
-          <div class="pairing-vs">VS</div>
-          <div class="pairing-player-b">
-            <div class="pairing-name b">${esc(pB)}</div>
-            <div class="pairing-hcp">Vorg. ${getPlayerHcp2(p.playerB)}</div>
-          </div>
+      html+=`<div class="pair-card" onclick="openScore('${p.id}',${day})">
+        <div><span class="mode-badge ${mC}">${mL}${bnL}</span></div>
+        <div class="pair-grid">
+          <div><div class="pname a">${esc(nA)}</div><div class="phcp a">Vorg. ${hA}</div></div>
+          <div class="pvs">VS</div>
+          <div><div class="pname b">${esc(nB)}</div><div class="phcp b">Vorg. ${hB}</div></div>
         </div>
-        <div class="pairing-result">${resultHtml}</div>
+        <div class="pair-result">${rHtml}</div>
       </div>`;
     });
   });
-  renderPlayerSelectBar();
-  document.getElementById('lb-pairings').innerHTML=html||'<div class="empty-pairings"><div style="font-size:40px">⛳</div><div style="margin-top:8px">Keine Paarungen</div><div style="font-size:11px;margin-top:4px">Admin öffnen um Paarungen einzurichten</div></div>';
-}
-
-function getPlayerName(pid){
-  if(!pid)return'–';
-  const all=[...(state.teamA.players||[]),...(state.teamB.players||[])];
-  return all.find(p=>p.id===pid)?.name||pid;
-}
-
-function setCurrentPlayer(pid){
-  window._currentPlayerId = pid;
-  // Spielerrolle merken (localStorage damit sie nach Reload noch da ist)
-  try{ localStorage.setItem('rc_player_'+state.eventName, pid); }catch(e){}
-  if(pid) showToast('✓ Eingeloggt als: '+getPlayerName(pid));
-}
-
-function renderPlayerSelectBar(){
-  const sel = document.getElementById('current-player-sel');
-  if(!sel) return;
-  const allPlayers = [
-    ...(state.teamA.players||[]).map(p=>({...p,team:'a',teamName:state.teamA.name||'Team A'})),
-    ...(state.teamB.players||[]).map(p=>({...p,team:'b',teamName:state.teamB.name||'Team B'}))
-  ];
-  if(!allPlayers.length){ 
-    document.getElementById('player-select-bar').style.display='none'; 
-    return; 
-  }
-  document.getElementById('player-select-bar').style.display='flex';
-  const cur = window._currentPlayerId||'';
-  sel.innerHTML = '<option value="">— Spieler auswählen —</option>' +
-    ['a','b'].map(team=>{
-      const tPlayers = allPlayers.filter(p=>p.team===team);
-      if(!tPlayers.length) return '';
-      const tName = team==='a'?(state.teamA.name||'Team A'):(state.teamB.name||'Team B');
-      return `<optgroup label="🏌️ ${tName}" style="color:${team==='a'?'var(--team-a)':'var(--team-b)'}">
-        ${tPlayers.map(p=>`<option value="${p.id}"${p.id===cur?' selected':''}>${p.name} (Vorg. ${p.hcp||0})</option>`).join('')}
-      </optgroup>`;
-    }).join('');
-  
-  // Gespeicherten Spieler wiederherstellen
-  try{
-    const saved = localStorage.getItem('rc_player_'+state.eventName);
-    if(saved && !window._currentPlayerId){
-      window._currentPlayerId = saved;
-      sel.value = saved;
-    }
-  }catch(e){}
-}
-function getPlayerHcp2(pid){
-  if(!pid)return'–';
-  const all=[...(state.teamA.players||[]),...(state.teamB.players||[])];
-  return all.find(p=>p.id===pid)?.hcp||0;
+  document.getElementById('lb-pairs').innerHTML=html||
+    '<div class="empty-pairs"><div style="font-size:40px">⛳</div><div style="margin-top:8px">Keine Paarungen</div><div style="font-size:11px;margin-top:4px">Admin öffnen zum Einrichten</div></div>';
 }
 
 // ══════════════════════════════════════════════
 // SCORE ENTRY
 // ══════════════════════════════════════════════
-function openScore(pairingId, day){
-  currentPairingId=pairingId;
-  currentDay=day;
-  const p=(state.pairings[day]||[]).find(x=>x.id===pairingId);
+function openScore(pid,day){
+  curPid=pid;curDay=day;
+  const p=getPairing(pid,day);
   if(!p)return;
-  const pA=getPlayerName(p.playerA);
-  const pB=getPlayerName(p.playerB);
-  const mode=p.mode||'stroke';
+  const nA=pName(p.playerA),nB=pName(p.playerB);
+  const mode=p.mode||'matchplay';
+  const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford';
 
-  // Rolle aus gewähltem Spieler im Dropdown bestimmen
-  const myPid = window._currentPlayerId||'';
-  if(!myPid){ alert('Bitte zuerst oben deinen Namen auswählen!'); return; }
-  if(myPid !== p.playerA && myPid !== p.playerB){
-    alert('Du bist nicht in dieser Paarung — bitte die richtige Paarung antippen!'); return;
+  // Spieler-Rolle bestimmen
+  if(!myId){
+    alert('Bitte zuerst oben deinen Namen auswählen!');return;
   }
-  window._myRole = myPid === p.playerA ? 'playerA' : 'playerB';
-  const myName = getPlayerName(myPid);
 
-  document.getElementById('sc-title').textContent=`${pA} vs ${pB}`;
-  document.getElementById('sc-sub').textContent=
-    `Du spielst als: ${myName} · ${mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford'} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
+  if(myId===p.playerA||myId===p.playerB){
+    myRole=myId===p.playerA?'playerA':'playerB';
+    const myN=pName(myId);
+    const otherN=pName(myRole==='playerA'?p.playerB:p.playerA);
+    // Fragen ob für beide oder nur für sich
+    const choice=confirm(
+      `Möchtest du nur für dich eintragen?\n\n` +
+      `OK = Nur mein Score (${myN})\n` +
+      `Abbrechen = Für beide eintragen (${myN} + ${otherN})\n\n` +
+      `"Für beide" = Scores sofort bestätigt, kein Vergleich nötig.`
+    );
+    forBoth=!choice;
+  } else {
+    // Nicht in der Paarung — als Scorer für beide
+    const ok=confirm(`Du bist nicht in dieser Paarung.\n\nAls Scorer für beide eintragen?\n(${nA} + ${nB})`);
+    if(!ok)return;
+    myRole='playerA';forBoth=true;
+  }
 
-  // Load existing scores (confirmed + pending)
+  // Scores laden
   const pending=p.pending||{};
   const confirmed=p.scores||{};
-  currentScores={
-    playerA:[...(pending.playerA||confirmed.playerA||Array(18).fill(null))],
-    playerB:[...(pending.playerB||confirmed.playerB||Array(18).fill(null))]
-  };
-
-  // Konflikt-Hinweis anzeigen
-  if(p.conflict&&p.conflict.length>0){
-    showToast(`⚠️ Abweichung bei Loch ${p.conflict.join(', ')} — bitte korrigieren`);
+  if(forBoth){
+    curScores={
+      playerA:[...(confirmed.playerA||Array(18).fill(null))],
+      playerB:[...(confirmed.playerB||Array(18).fill(null))]
+    };
+  }else{
+    // Eigene pending scores laden falls vorhanden, sonst confirmed
+    curScores={
+      playerA:[...(pending.playerA||confirmed.playerA||Array(18).fill(null))],
+      playerB:[...(pending.playerB||confirmed.playerB||Array(18).fill(null))]
+    };
   }
-  // Column header
-  const modeCol=mode==='matchplay'?'RESULT':mode==='stableford'?'STBL.':'NETTO';
-  document.getElementById('sc-col-head').style.gridTemplateColumns='32px 1fr 1fr '+( mode==='matchplay'?'80px':'60px');
-  document.getElementById('sc-col-head').innerHTML=`<span>LOCH</span><span style="text-align:center">${esc(pA.split(' ')[0])}</span><span style="text-align:center">${esc(pB.split(' ')[0])}</span><span style="text-align:center">${modeCol}</span>`;
-  scTab='front';
-  document.getElementById('sc-tab-front').classList.add('active');
-  document.getElementById('sc-tab-back').classList.remove('active');
-  renderScHoles();
-  updateScStatus();
+
+  document.getElementById('sc-title').textContent=`${nA} vs ${nB}`;
+  document.getElementById('sc-sub').textContent=forBoth
+    ?`Scorer für beide · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`
+    :`Du: ${pName(myId)} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
+
+  // Conflict warning
+  const cw=document.getElementById('conflict-warn');
+  if(p.conflict&&p.conflict.length){
+    cw.style.display='block';
+    cw.textContent=`⚠️ Abweichung bei Loch ${p.conflict.join(', ')} — bitte korrigieren und erneut speichern.`;
+  }else{cw.style.display='none';}
+
+  document.getElementById('sct-front').classList.add('active');
+  document.getElementById('sct-back').classList.remove('active');
+  curTab='front';
+
+  // Col head
+  const colW=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+  document.getElementById('sc-colhead').style.gridTemplateColumns=colW;
+  document.getElementById('sc-colhead').innerHTML=`<span>LOCH</span><span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span><span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span><span style="text-align:center">RESULT</span>`;
+
+  renderHoles();
+  updateStatus();
   showView('score');
 }
 
-function scSetTab(tab){
-  scTab=tab;
-  document.getElementById('sc-tab-front').classList.toggle('active',tab==='front');
-  document.getElementById('sc-tab-back').classList.toggle('active',tab==='back');
-  renderScHoles();
+function scTab(t){
+  curTab=t;
+  document.getElementById('sct-front').classList.toggle('active',t==='front');
+  document.getElementById('sct-back').classList.toggle('active',t==='back');
+  renderHoles();
 }
 
-function renderScHoles(){
-  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
-  if(!p)return;
-  const course=state.courses[currentDay]||{par:DEFAULT_PAR,si:DEFAULT_SI};
-  const par=course.par||DEFAULT_PAR;
-  const si=course.si||DEFAULT_SI;
-  const hcpA=Number(p.hcpA)||getPlayerHcp(p.playerA);
-  const hcpB=Number(p.hcpB)||getPlayerHcp(p.playerB);
-  const mode=p.mode||'stroke';
+function renderHoles(){
+  const p=getPairing(curPid,curDay);if(!p)return;
+  const c=getCourse(curDay);
+  const par=c.par||DPAR,si=c.si||DSI;
+  const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
+  const mode=p.mode||'matchplay';
   const bn=p.bruttoNetto||'brutto';
-  const start=scTab==='front'?0:9;
+  const start=curTab==='front'?0:9;
   const holes=Array.from({length:9},(_,i)=>start+i);
-
-  document.getElementById('sc-col-head').style.gridTemplateColumns='32px 1fr 1fr '+(mode==='matchplay'?'80px':'60px');
+  const conflicts=p.conflict||[];
+  const colW=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
 
   document.getElementById('sc-holes').innerHTML=holes.map(i=>{
-    const pv=par[i]||4, siv=si[i]||i+1;
-    const sA=currentScores.playerA[i], sB=currentScores.playerB[i];
-    const nA=nettoScore(sA,i,hcpA,si), nB=nettoScore(sB,i,hcpB,si);
-    const bdA=sA!=null?sA-pv:null, bdB=sB!=null?sB-pv:null;
+    const pv=par[i]||4,siv=si[i]||i+1;
+    const sA=curScores.playerA[i],sB=curScores.playerB[i];
+    const nA2=netto(sA,i,hA,si),nB2=netto(sB,i,hB,si);
+    const isConflict=conflicts.includes(i+1);
+    const filled=sA!=null||sB!=null;
+
+    // Nur eigene Seite editierbar wenn nicht forBoth
+    const editA=forBoth||myRole==='playerA';
+    const editB=forBoth||myRole==='playerB';
 
     // Hole result
-    let holeResult='<span style="color:#aaa">–</span>';
+    let hRes='<span style="color:#aaa;font-size:12px">–</span>';
     if(sA!=null&&sB!=null){
-      const vA=bn==='netto'?nA:sA;
-      const vB=bn==='netto'?nB:sB;
+      const vA=bn==='netto'?nA2:sA;
+      const vB=bn==='netto'?nB2:sB;
       if(mode==='matchplay'){
-        if(vA<vB) holeResult=`<span style="font-weight:900;color:var(--team-a);font-size:13px">${esc(getPlayerName(p.playerA).split(' ')[0])}</span>`;
-        else if(vB<vA) holeResult=`<span style="font-weight:900;color:var(--team-b);font-size:13px">${esc(getPlayerName(p.playerB).split(' ')[0])}</span>`;
-        else holeResult=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
-      } else if(mode==='stableford'){
-        const stA=stblPts(nA,pv), stB=stblPts(nB,pv);
-        holeResult=`<span style="font-size:12px;font-weight:700;color:${stA>stB?'var(--team-a)':stB>stA?'var(--team-b)':'#666'}">${stA}–${stB}</span>`;
-      } else {
-        if(vA<vB) holeResult=`<span style="color:var(--team-a);font-weight:700;font-size:12px">A</span>`;
-        else if(vB<vA) holeResult=`<span style="color:var(--team-b);font-weight:700;font-size:12px">B</span>`;
-        else holeResult=`<span style="color:#666;font-weight:700;font-size:12px">½</span>`;
+        if(vA<vB)hRes=`<span style="font-weight:900;color:var(--ta);font-size:14px">◀</span>`;
+        else if(vB<vA)hRes=`<span style="font-weight:900;color:var(--tb);font-size:14px">▶</span>`;
+        else hRes=`<span style="font-weight:700;color:#666;font-size:13px">½</span>`;
+      }else if(mode==='stableford'){
+        const stA=stbl(nA2,pv),stB=stbl(nB2,pv);
+        const c2=stA>stB?'var(--ta)':stB>stA?'var(--tb)':'#666';
+        hRes=`<span style="font-size:12px;font-weight:700;color:${c2}">${stA}:${stB}</span>`;
+      }else{
+        if(sA<sB)hRes=`<span style="color:var(--ta);font-weight:700;font-size:13px">A</span>`;
+        else if(sB<sA)hRes=`<span style="color:var(--tb);font-weight:700;font-size:13px">B</span>`;
+        else hRes=`<span style="color:#666;font-weight:700;font-size:13px">½</span>`;
       }
     }
 
-    return`<div class="hole-row${(sA!=null||sB!=null)?' filled':''}" style="grid-template-columns:32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}">
-      <div class="hole-info"><div class="hole-num">${i+1}</div><div class="hole-par" style="font-size:9px;color:var(--txt3)">P${pv}·SI${siv}</div></div>
-      <div class="stepper" style="height:46px">
-        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerA',${i},-1)">−</button>
-        <div class="${sA!=null?'st-val':'st-val empty'}" style="font-size:20px" id="sv-A-${i}">${sA!=null?sA:'–'}</div>
-        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerA',${i},+1)">+</button>
-      </div>
-      <div class="stepper" style="height:46px">
-        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerB',${i},-1)">−</button>
-        <div class="${sB!=null?'st-val':'st-val empty'}" style="font-size:20px" id="sv-B-${i}">${sB!=null?sB:'–'}</div>
-        <button class="st-btn" style="width:40px;font-size:24px" ontouchstart="" onclick="stepSc('playerB',${i},+1)">+</button>
-      </div>
-      <div class="hole-result" style="display:flex;align-items:center;justify-content:center">${holeResult}</div>
+    const stepA=editA
+      ?`<div class="stepper" style="height:46px">
+          <button class="stbtn" style="width:40px;font-size:24px" ontouchstart="" onclick="step('playerA',${i},-1)">−</button>
+          <div class="${sA!=null?'stval':'stval empty'}" style="font-size:20px" id="sv-A-${i}">${sA!=null?sA:'–'}</div>
+          <button class="stbtn" style="width:40px;font-size:24px" ontouchstart="" onclick="step('playerA',${i},+1)">+</button>
+        </div>`
+      :`<div style="text-align:center;font-size:20px;font-weight:700;color:${sA!=null?'var(--txt)':'#aaa'};padding:8px;background:var(--bg2);border-radius:8px;border:1px solid var(--border-light)">${sA!=null?sA:'–'}</div>`;
+
+    const stepB=editB
+      ?`<div class="stepper" style="height:46px">
+          <button class="stbtn" style="width:40px;font-size:24px" ontouchstart="" onclick="step('playerB',${i},-1)">−</button>
+          <div class="${sB!=null?'stval':'stval empty'}" style="font-size:20px" id="sv-B-${i}">${sB!=null?sB:'–'}</div>
+          <button class="stbtn" style="width:40px;font-size:24px" ontouchstart="" onclick="step('playerB',${i},+1)">+</button>
+        </div>`
+      :`<div style="text-align:center;font-size:20px;font-weight:700;color:${sB!=null?'var(--txt)':'#aaa'};padding:8px;background:var(--bg2);border-radius:8px;border:1px solid var(--border-light)">${sB!=null?sB:'–'}</div>`;
+
+    return`<div class="hole-row${filled?' filled':''}${isConflict?' conflict':''}" style="grid-template-columns:${colW}">
+      <div class="hole-info"><div class="hole-num">${i+1}</div><div class="hole-par">P${pv}·SI${siv}</div></div>
+      ${stepA}
+      ${stepB}
+      <div class="hole-res">${hRes}</div>
     </div>`;
   }).join('');
 }
 
-function stepSc(player, idx, delta){
-  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
-  const course=state.courses[currentDay]||{par:DEFAULT_PAR,si:DEFAULT_SI};
-  const par=course.par||DEFAULT_PAR;
-  const cur=currentScores[player][idx];
+function step(player,idx,delta){
+  const p=getPairing(curPid,curDay);
+  const par=(getCourse(curDay).par||DPAR);
+  const cur=curScores[player][idx];
   let next=cur==null?(par[idx]||4):cur+delta;
   if(next<1)next=1;if(next>15)next=15;
-  currentScores[player][idx]=next;
+  curScores[player][idx]=next;
   const el=document.getElementById(`sv-${player==='playerA'?'A':'B'}-${idx}`);
-  if(el){el.textContent=next;el.className='st-val';}
-  renderScHoles();
-  updateScStatus();
-  // Auto-save nach jedem Loch wenn beide Scores eingetragen
-  const sA=currentScores.playerA[idx], sB=currentScores.playerB[idx];
-  if(sA!=null && sB!=null) autoSave();
+  if(el){el.textContent=next;el.className='stval';}
+  // Loch-Result neu rendern
+  renderHoles();
+  updateStatus();
 }
 
-let autoSaveTimer=null;
-function autoSave(){
-  // Deaktiviert — Vergleichssystem übernimmt
-}
+function updateStatus(){
+  const p=getPairing(curPid,curDay);if(!p)return;
+  const c=getCourse(curDay);
+  const par=c.par||DPAR,si=c.si||DSI;
+  const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
+  const mode=p.mode||'matchplay';
+  const bn=p.bruttoNetto||'brutto';
+  const tempSc={playerA:[...curScores.playerA],playerB:[...curScores.playerB]};
+  const r=calcResult({...p,scores:tempSc},curDay);
+  const nA=pName(p.playerA).split(' ')[0];
+  const nB=pName(p.playerB).split(' ')[0];
 
-function updateScStatus(){
-  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
-  if(!p)return;
-  const tempP={...p,scores:{playerA:currentScores.playerA,playerB:currentScores.playerB},day:currentDay};
-  const res=calcPairingResult(tempP);
-  const el=document.getElementById('sc-status-pill');
-  const lbl=document.getElementById('sc-status-lbl');
+  const pill=document.getElementById('sc-spill');
+  const lbl=document.getElementById('sc-slbl');
+  const bar=document.getElementById('match-bar');
 
-  // Live match bar
-  let barHtml='';
-  if(p.mode==='matchplay'){
-    const lead=res.lead||0;
-    const holesLeft=18-(res.holesPlayed||0);
-    let statusTxt='', statusColor='#666', bgColor='#f5f5f5';
-    if(res.holesPlayed===0){ statusTxt='Noch nicht begonnen'; }
-    else if(lead===0){ statusTxt='ALL SQUARE'; }
+  if(mode==='matchplay'){
+    const lead=r.lead||0;
+    const left=18-(r.played||0);
+    let txt='',bg='#f5f5f5',color='#333';
+    if(r.played===0){txt='Noch kein Loch gespielt';}
+    else if(lead===0){txt='ALL SQUARE';}
     else if(lead>0){
-      const pName=getPlayerName(p.playerA).split(' ')[0];
-      statusTxt=`${pName} ${lead} UP`;
-      statusColor='#fff'; bgColor='var(--team-a)';
-      if(lead>holesLeft) statusTxt+=` — GEWONNEN! 🏆`;
-    } else {
-      const pName=getPlayerName(p.playerB).split(' ')[0];
-      statusTxt=`${pName} ${Math.abs(lead)} UP`;
-      statusColor='#fff'; bgColor='var(--team-b)';
-      if(Math.abs(lead)>holesLeft) statusTxt+=` — GEWONNEN! 🏆`;
+      txt=`${nA} ${lead} UP`;bg='var(--ta)';color='#fff';
+      if(lead>left)txt+=` — GEWONNEN 🏆`;
+    }else{
+      txt=`${nB} ${Math.abs(lead)} UP`;bg='var(--tb)';color='#fff';
+      if(Math.abs(lead)>left)txt+=` — GEWONNEN 🏆`;
     }
-    const holesInfo=res.holesPlayed>0?` · Loch ${res.holesPlayed}/18`:'';
-    barHtml=`<div style="padding:10px 16px;background:${bgColor};color:${statusColor};text-align:center;font-weight:900;font-size:16px;font-family:'Cormorant Garamond',serif;border-bottom:2px solid var(--border)">${statusTxt}<span style="font-size:11px;font-weight:500;opacity:.8">${holesInfo}</span></div>`;
-    // Header pill
-    if(lead===0)el.textContent='A/S';
-    else if(lead>0)el.textContent=`${lead}↑A`;
-    else el.textContent=`${Math.abs(lead)}↑B`;
-    el.style.color=lead>0?'var(--team-a)':lead<0?'var(--team-b)':'#666';
+    bar.style.display='block';
+    bar.style.background=bg;bar.style.color=color;
+    bar.textContent=txt+(r.played>0?` · Loch ${r.played}/18`:'');
+    pill.textContent=lead===0?'A/S':lead>0?`${lead}↑A`:`${Math.abs(lead)}↑B`;
+    pill.style.color=lead>0?'var(--ta)':lead<0?'var(--tb)':'#666';
     lbl.textContent='Matchstand';
-  } else if(p.mode==='stableford'){
-    const pA=getPlayerName(p.playerA).split(' ')[0];
-    const pB=getPlayerName(p.playerB).split(' ')[0];
-    const diff=(res.ptsA||0)-(res.ptsB||0);
-    const lead=diff>0?pA:diff<0?pB:'Gleich';
-    const bgColor=diff>0?'var(--team-a)':diff<0?'var(--team-b)':'#666';
-    barHtml=`<div style="padding:10px 16px;background:${bgColor};color:#fff;text-align:center;font-weight:900;font-size:16px;font-family:'Cormorant Garamond',serif;border-bottom:2px solid var(--border)">${pA}: ${res.ptsA||0} Pkt — ${pB}: ${res.ptsB||0} Pkt</div>`;
-    el.textContent=`${res.ptsA||0}–${res.ptsB||0}`;
-    el.style.color='var(--txt)';
+  }else if(mode==='stableford'){
+    bar.style.display='block';
+    bar.style.background=r.status==='A'?'var(--ta)':r.status==='B'?'var(--tb)':'#666';
+    bar.style.color='#fff';
+    bar.textContent=`${nA}: ${r.ptsA||0} Pkt  —  ${nB}: ${r.ptsB||0} Pkt`;
+    pill.textContent=`${r.ptsA||0}:${r.ptsB||0}`;
+    pill.style.color='var(--txt)';
     lbl.textContent='Punkte';
-  } else {
-    barHtml='';
-    el.textContent='–';
-    lbl.textContent='Stand';
+  }else{
+    bar.style.display='none';
+    pill.textContent='–';lbl.textContent='Stand';
   }
-
-  // Update or create match bar
-  let bar=document.getElementById('match-live-bar');
-  if(!bar){
-    bar=document.createElement('div');
-    bar.id='match-live-bar';
-    const holesEl=document.getElementById('sc-holes');
-    if(holesEl)holesEl.parentNode.insertBefore(bar,holesEl);
-  }
-  bar.innerHTML=barHtml;
 }
 
-// ── Vergleichssystem ──
-// Jeder Spieler speichert seinen eigenen Score als "pending"
-// Erst wenn beide übereinstimmen → wird als offiziell gespeichert
-
-function getMyRole(){
-  // Spieler A oder B? Wird beim Öffnen der Scorecard gesetzt
-  return window._myRole||null;
+function checkConflict(p){
+  const pending=p.pending||{};
+  const pA=pending.playerA||[];
+  const pB=pending.playerB||[];
+  const conflicts=[];
+  for(let i=0;i<18;i++){
+    if(pA[i]!=null&&pB[i]!=null&&pA[i]!==pB[i])conflicts.push(i+1);
+  }
+  return conflicts;
 }
 
-async function savePairingScore(){
-  const btn=document.querySelector('.save-btn');
-  btn.disabled=true; btn.textContent='Speichere…';
-  const p=(state.pairings[currentDay]||[]).find(x=>x.id===currentPairingId);
-  if(!p){ btn.disabled=false; return; }
+async function saveScore(){
+  const btn=document.getElementById('savebtn');
+  btn.disabled=true;btn.textContent='Speichere…';
+  const p=getPairing(curPid,curDay);if(!p){btn.disabled=false;return;}
 
-  // Pending-Scores in Firebase speichern (getrennt von confirmed scores)
-  const role=window._myRole||'playerA'; // A oder B
-  const pendingKey='pending_'+currentPairingId+'_'+currentDay;
-  const pendingData={
-    [role]: [...currentScores[role]]
-  };
-
-  // Lade vorhandene pending scores
-  try{
-    // Speichere eigenen pending score
-    state.pairings[currentDay]=state.pairings[currentDay].map(px=>{
-      if(px.id!==currentPairingId)return px;
-      const pending=px.pending||{};
-      pending[role]=[...currentScores[role]];
-      return{...px,pending};
+  if(forBoth){
+    // Direkt als confirmed speichern — kein Vergleich nötig
+    S.pairings[curDay]=S.pairings[curDay].map(px=>{
+      if(px.id!==curPid)return px;
+      return{...px,
+        scores:{playerA:[...curScores.playerA],playerB:[...curScores.playerB]},
+        pending:null,conflict:null
+      };
     });
-    await window._fbSet('rc_state',state);
+    try{await window._fbSet('rc',S);showToast('✅ Scores für beide gespeichert');}
+    catch(e){showToast('⚠️ Fehler');}
+  }else{
+    // Eigenen pending score speichern
+    S.pairings[curDay]=S.pairings[curDay].map(px=>{
+      if(px.id!==curPid)return px;
+      const pend={...(px.pending||{}),[myRole]:[...curScores[myRole]]};
+      return{...px,pending:pend};
+    });
+    try{
+      await window._fbSet('rc',S);
+      const updP=getPairing(curPid,curDay);
+      const pending=updP?.pending||{};
+      const other=myRole==='playerA'?'playerB':'playerA';
 
-    // Vergleiche mit dem anderen Spieler
-    const updP=state.pairings[currentDay].find(x=>x.id===currentPairingId);
-    const pending=updP?.pending||{};
-    const otherRole=role==='playerA'?'playerB':'playerA';
-    const myScores=pending[role]||[];
-    const otherScores=pending[otherRole]||[];
-
-    if(otherScores.length>0){
-      // Vergleiche Loch für Loch
-      const conflicts=[];
-      for(let i=0;i<18;i++){
-        const mine=myScores[i], other=otherScores[i];
-        if(mine!=null&&other!=null&&mine!==other){
-          conflicts.push(i+1);
+      if(pending[other]&&pending[other].length>0){
+        // Vergleichen
+        const mine=pending[myRole]||[];
+        const theirs=pending[other]||[];
+        const conflicts=[];
+        for(let i=0;i<18;i++){
+          if(mine[i]!=null&&theirs[i]!=null&&mine[i]!==theirs[i])conflicts.push(i+1);
         }
+        if(conflicts.length===0){
+          // ✅ Übereinstimmung → confirmed
+          S.pairings[curDay]=S.pairings[curDay].map(px=>{
+            if(px.id!==curPid)return px;
+            return{...px,
+              scores:{playerA:[...pending.playerA],playerB:[...pending.playerB]},
+              pending:null,conflict:null
+            };
+          });
+          await window._fbSet('rc',S);
+          showToast('✅ Scores übereinstimmend — bestätigt!');
+        }else{
+          // ⚠️ Konflikt
+          S.pairings[curDay]=S.pairings[curDay].map(px=>{
+            if(px.id!==curPid)return px;
+            return{...px,conflict:conflicts};
+          });
+          await window._fbSet('rc',S);
+          const cw=document.getElementById('conflict-warn');
+          cw.style.display='block';
+          cw.textContent=`⚠️ Abweichung bei Loch ${conflicts.join(', ')}! Beide Spieler müssen diese Löcher korrigieren und erneut speichern.`;
+          alert(`⚠️ Abweichung bei Loch ${conflicts.join(', ')}!\n\nBitte beide Scores nochmal eintragen.`);
+          btn.disabled=false;btn.textContent='Score speichern ✓';
+          return;
+        }
+      }else{
+        showToast('✓ Dein Score gespeichert — warte auf Gegner');
       }
-      if(conflicts.length===0){
-        // ✅ Alles stimmt überein → als offiziell speichern
-        state.pairings[currentDay]=state.pairings[currentDay].map(px=>{
-          if(px.id!==currentPairingId)return px;
-          return{...px,
-            scores:{playerA:[...(pending.playerA||[])],playerB:[...(pending.playerB||[])]},
-            pending:null,
-            conflict:null
-          };
-        });
-        await window._fbSet('rc_state',state);
-        showToast('✅ Scores stimmen überein — bestätigt!');
-      } else {
-        // ⚠️ Abweichung gefunden
-        state.pairings[currentDay]=state.pairings[currentDay].map(px=>{
-          if(px.id!==currentPairingId)return px;
-          return{...px,conflict:conflicts};
-        });
-        await window._fbSet('rc_state',state);
-        alert(`⚠️ Abweichung bei Loch ${conflicts.join(', ')}!
-
-Bitte beide Spieler die betroffenen Löcher nochmal eintragen und erneut speichern.`);
-        // Fehlerlöcher rot markieren
-        conflicts.forEach(h=>{
-          const rowA=document.getElementById(`sv-A-${h-1}`);
-          const rowB=document.getElementById(`sv-B-${h-1}`);
-          if(rowA)rowA.style.color='var(--red)';
-          if(rowB)rowB.style.color='var(--red)';
-        });
-        btn.disabled=false; btn.textContent='Score speichern ✓';
-        return;
-      }
-    } else {
-      showToast('✓ Dein Score gespeichert — warte auf Gegner');
-    }
-  }catch(e){showToast('⚠️ Fehler beim Speichern');}
-
-  btn.disabled=false; btn.textContent='Score speichern ✓';
+    }catch(e){showToast('⚠️ Fehler beim Speichern');}
+  }
+  btn.disabled=false;btn.textContent='Score speichern ✓';
   renderLB();
 }
 
 // ══════════════════════════════════════════════
 // ADMIN
 // ══════════════════════════════════════════════
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='admin')initAdmin();
+}
+
 function initAdmin(){
-  document.getElementById('adm-event-name').value=state.eventName||'';
-  document.getElementById('adm-date1').value=state.date1||today();
-  document.getElementById('adm-date2').value=state.date2||today();
-  document.getElementById('adm-team-a-name').value=state.teamA?.name||'Team Rot';
-  document.getElementById('adm-team-b-name').value=state.teamB?.name||'Team Blau';
-  // Courses
-  const c1=state.courses?.[1]||{};
-  const c2=state.courses?.[2]||{};
-  document.getElementById('adm-course1-name').value=c1.name||'';
-  document.getElementById('adm-course1-par').value=c1.par?(c1.par.reduce((a,b)=>a+b,0)||''):'';
-  document.getElementById('adm-course1-si').value=c1.si?c1.si.join(','):'';
-  document.getElementById('adm-course2-name').value=c2.name||'';
-  document.getElementById('adm-course2-par').value=c2.par?(c2.par.reduce((a,b)=>a+b,0)||''):'';
-  document.getElementById('adm-course2-si').value=c2.si?c2.si.join(','):'';
-  renderAdminPlayers();
-  renderAdminPairings();
-  // Load Supabase courses into dropdowns
-  sbLoadCourses().then(courses=>{
-    ['adm-course1-sel','adm-course2-sel'].forEach(id=>{
-      const sel=document.getElementById(id);
+  document.getElementById('a-name').value=S.eventName||'';
+  document.getElementById('a-d1').value=S.date1||today();
+  document.getElementById('a-d2').value=S.date2||today();
+  document.getElementById('a-ta').value=S.teamA?.name||'Team Rot';
+  document.getElementById('a-tb').value=S.teamB?.name||'Team Blau';
+  const c1=S.courses?.[1]||{};const c2=S.courses?.[2]||{};
+  document.getElementById('a-c1-name').value=c1.name||'';
+  document.getElementById('a-c1-par').value=c1.par?(c1.par.reduce((a,b)=>a+b,0)||''):'';
+  document.getElementById('a-c1-si').value=c1.si?c1.si.join(','):'';
+  document.getElementById('a-c2-name').value=c2.name||'';
+  document.getElementById('a-c2-par').value=c2.par?(c2.par.reduce((a,b)=>a+b,0)||''):'';
+  document.getElementById('a-c2-si').value=c2.si?c2.si.join(','):'';
+  renderAdmPlayers();renderAdmPairs();
+  // Load Supabase courses
+  sbGet('courses?select=*&order=name').then(cs=>{
+    [1,2].forEach(d=>{
+      const sel=document.getElementById(`a-c${d}-sel`);
       if(!sel)return;
-      const cur=sel.value;
-      sel.innerHTML='<option value="">— Gespeicherten Platz wählen —</option>'+
-        courses.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
-      if(cur)sel.value=cur;
+      sel.innerHTML='<option value="">— Gespeicherten Platz laden —</option>'+
+        (cs||[]).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
     });
-  });
+  }).catch(()=>{});
 }
 
-async function loadAdminCourse(day,name){
+async function loadCourse(day,name){
   if(!name)return;
-  const courses=await sbLoadCourses();
-  const c=courses.find(x=>x.name===name);
-  if(!c)return;
-  const par=JSON.parse(c.par||'[]');
-  const si=JSON.parse(c.stroke_index||'[]');
-  document.getElementById(`adm-course${day}-name`).value=c.name;
-  document.getElementById(`adm-course${day}-par`).value=par.reduce((a,b)=>a+b,0)||72;
-  document.getElementById(`adm-course${day}-si`).value=si.join(',');
-  showToast('✓ '+c.name+' geladen');
+  try{
+    const cs=await sbGet('courses?select=*&order=name');
+    const c=(cs||[]).find(x=>x.name===name);
+    if(!c)return;
+    const par=JSON.parse(c.par||'[]');
+    const si=JSON.parse(c.stroke_index||'[]');
+    document.getElementById(`a-c${day}-name`).value=c.name;
+    document.getElementById(`a-c${day}-par`).value=par.reduce((a,b)=>a+b,0)||72;
+    document.getElementById(`a-c${day}-si`).value=si.join(',');
+    showToast('✓ '+c.name);
+  }catch(e){showToast('⚠️ Fehler');}
 }
 
-function renderAdminPlayers(){
-  ['a','b'].forEach(team=>{
-    const players=(team==='a'?state.teamA:state.teamB)?.players||[];
-    document.getElementById(`adm-players-${team}`).innerHTML=players.map(p=>`
-      <div class="player-row-admin">
-        <div class="player-name-cell">${esc(p.name)}</div>
+function renderAdmPlayers(){
+  ['a','b'].forEach(t=>{
+    const ps=(t==='a'?S.teamA:S.teamB)?.players||[];
+    document.getElementById(`a-pl-${t}`).innerHTML=ps.map(p=>`
+      <div class="prow">
+        <div class="pcell">${esc(p.name)}</div>
         <input class="inp" type="number" step="0.1" value="${p.hcp||''}" placeholder="Vorg."
           style="text-align:center;padding:8px 4px;font-size:14px"
-          oninput="updPlayerHcp('${team}','${p.id}',this.value)">
-        <button class="rm-btn" onclick="rmPlayer('${team}','${p.id}')">×</button>
+          oninput="updHcp('${t}','${p.id}',this.value)">
+        <button class="rmbtn" onclick="rmP('${t}','${p.id}')">×</button>
       </div>`).join('');
   });
 }
 
-function addPlayer(team){
-  const nameEl=document.getElementById(`new-player-${team}`);
-  const hcpEl=document.getElementById(`new-hcp-${team}`);
-  const name=nameEl.value.trim();if(!name)return;
-  const player={id:uid(),name,hcp:Number(hcpEl.value)||0};
-  if(team==='a') state.teamA.players=[...(state.teamA.players||[]),player];
-  else state.teamB.players=[...(state.teamB.players||[]),player];
-  nameEl.value='';hcpEl.value='';
-  renderAdminPlayers();
-  renderAdminPairings();
+function addP(t){
+  const n=document.getElementById(`np-${t}`).value.trim();if(!n)return;
+  const h=document.getElementById(`nh-${t}`).value;
+  const p={id:uid(),name:n,hcp:Number(h)||0};
+  if(t==='a')S.teamA.players=[...(S.teamA.players||[]),p];
+  else S.teamB.players=[...(S.teamB.players||[]),p];
+  document.getElementById(`np-${t}`).value='';
+  document.getElementById(`nh-${t}`).value='';
+  renderAdmPlayers();renderAdmPairs();
 }
 
-function rmPlayer(team,id){
+function rmP(t,id){
   if(!confirm('Spieler wirklich löschen?'))return;
-  if(team==='a') state.teamA.players=(state.teamA.players||[]).filter(p=>p.id!==id);
-  else state.teamB.players=(state.teamB.players||[]).filter(p=>p.id!==id);
-  renderAdminPlayers();
-  renderAdminPairings();
+  if(t==='a')S.teamA.players=(S.teamA.players||[]).filter(p=>p.id!==id);
+  else S.teamB.players=(S.teamB.players||[]).filter(p=>p.id!==id);
+  renderAdmPlayers();renderAdmPairs();
 }
 
-function updPlayerHcp(team,id,val){
-  const players=team==='a'?state.teamA.players:state.teamB.players;
-  const p=players.find(p=>p.id===id);
-  if(p)p.hcp=Number(val)||0;
+function updHcp(t,id,v){
+  const ps=t==='a'?S.teamA.players:S.teamB.players;
+  const p=ps.find(p=>p.id===id);if(p)p.hcp=Number(v)||0;
 }
 
-function setPairingDay(day){
-  admPairingDay=day;
-  document.querySelectorAll('.day-tab').forEach((b,i)=>b.classList.toggle('active',i+1===day));
-  renderAdminPairings();
+function setPDay(d){
+  admPDay=d;
+  document.querySelectorAll('.dtab').forEach((b,i)=>b.classList.toggle('active',i+1===d));
+  renderAdmPairs();
 }
 
-function renderAdminPairings(){
-  const pairings=(state.pairings&&state.pairings[admPairingDay])||[];
-  const playersA=state.teamA?.players||[];
-  const playersB=state.teamB?.players||[];
-  const allA=`<option value="">– Team A –</option>`+playersA.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  const allB=`<option value="">– Team B –</option>`+playersB.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+function renderAdmPairs(){
+  const pairs=(S.pairings?.[admPDay])||[];
+  const pA=S.teamA?.players||[];
+  const pB=S.teamB?.players||[];
+  const optA='<option value="">– '+( S.teamA?.name||'Team A')+' –</option>'+pA.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const optB='<option value="">– '+(S.teamB?.name||'Team B')+' –</option>'+pB.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
 
-  document.getElementById('adm-pairings').innerHTML=pairings.map((p,idx)=>{
+  document.getElementById('a-pairs').innerHTML=pairs.map((p,i)=>{
     const modes=['matchplay','bestball','stableford'];
     const bns=['brutto','netto'];
-    return`<div class="pairing-admin-card">
+    return`<div class="pair-adm">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:700;color:var(--txt2)">Paarung ${idx+1}</div>
-        <button onclick="rmPairing(${idx})" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer">×</button>
+        <div style="font-size:12px;font-weight:700;color:var(--txt2)">Paarung ${i+1}</div>
+        <button onclick="rmPair(${i})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer">×</button>
       </div>
-      <div class="pairing-admin-row">
-        <select class="inp" style="padding:8px;font-size:13px" onchange="updPairing(${idx},'playerA',this.value)">${allA.replace(`value="${p.playerA}"`,`value="${p.playerA}" selected`)}</select>
-        <div class="pairing-vs-lbl">VS</div>
-        <select class="inp" style="padding:8px;font-size:13px" onchange="updPairing(${idx},'playerB',this.value)">${allB.replace(`value="${p.playerB}"`,`value="${p.playerB}" selected`)}</select>
+      <div class="pair-adm-row">
+        <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerA',this.value)">
+          ${optA.replace(`value="${p.playerA}"`,`value="${p.playerA}" selected`)}
+        </select>
+        <div style="text-align:center;font-size:12px;font-weight:700;color:var(--txt3)">VS</div>
+        <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerB',this.value)">
+          ${optB.replace(`value="${p.playerB}"`,`value="${p.playerB}" selected`)}
+        </select>
       </div>
       <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">SPIELMODUS</div>
-      <div class="mode-select-row">
-        ${modes.map(m=>`<button class="mode-chip${p.mode===m?' active':''}" onclick="updPairing(${idx},'mode','${m}')">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball':'Stableford'}</button>`).join('')}
+      <div class="mode-chips" style="margin-bottom:8px">
+        ${modes.map(m=>`<button class="chip${p.mode===m?' active':''}" onclick="updPair(${i},'mode','${m}')">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball':'Stableford'}</button>`).join('')}
       </div>
-      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin:6px 0 4px">WERTUNG</div>
-      <div class="mode-select-row">
-        ${bns.map(bn=>`<button class="mode-chip${p.bruttoNetto===bn?' active':''}" onclick="updPairing(${idx},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">WERTUNG</div>
+      <div class="mode-chips">
+        ${bns.map(bn=>`<button class="chip${p.bruttoNetto===bn?' active':''}" onclick="updPair(${i},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}
       </div>
     </div>`;
   }).join('');
 }
 
-function addPairing(){
-  if(!state.pairings) state.pairings={1:[],2:[]};
-  if(!state.pairings[admPairingDay]) state.pairings[admPairingDay]=[];
-  state.pairings[admPairingDay].push({
-    id:uid(),playerA:'',playerB:'',mode:'matchplay',bruttoNetto:'brutto',scores:null
-  });
-  renderAdminPairings();
+function addPair(){
+  if(!S.pairings)S.pairings={1:[],2:[]};
+  if(!S.pairings[admPDay])S.pairings[admPDay]=[];
+  S.pairings[admPDay].push({id:uid(),playerA:'',playerB:'',mode:'matchplay',bruttoNetto:'brutto',scores:null});
+  renderAdmPairs();
 }
 
-function rmPairing(idx){
+function rmPair(i){
   if(!confirm('Paarung löschen?'))return;
-  state.pairings[admPairingDay].splice(idx,1);
-  renderAdminPairings();
+  S.pairings[admPDay].splice(i,1);
+  renderAdmPairs();
 }
 
-function updPairing(idx,field,val){
-  if(!state.pairings[admPairingDay][idx])return;
-  state.pairings[admPairingDay][idx][field]=val;
-  renderAdminPairings();
+function updPair(i,f,v){
+  if(!S.pairings[admPDay][i])return;
+  S.pairings[admPDay][i][f]=v;
+  renderAdmPairs();
 }
 
 function resetAll(){
-  if(!confirm('Alles zurücksetzen?'))return;
-  state={
-    eventName:'Privater Ryder Cup',date1:today(),date2:today(),
-    teamA:{name:'Team Rot',players:[]},
-    teamB:{name:'Team Blau',players:[]},
-    courses:{1:{name:'',par:[...DEFAULT_PAR],si:[...DEFAULT_SI]},2:{name:'',par:[...DEFAULT_PAR],si:[...DEFAULT_SI]}},
-    pairings:{1:[],2:[]}
-  };
+  if(!confirm('Alles zurücksetzen? Alle Scores werden gelöscht!'))return;
+  S={eventName:'Ryder Cup Elkofen',date1:today(),date2:today(),
+    teamA:{name:'Team Rot',players:[]},teamB:{name:'Team Blau',players:[]},
+    courses:{1:{name:'',par:[...DPAR],si:[...DSI]},2:{name:'',par:[...DPAR],si:[...DSI]}},
+    pairings:{1:[],2:[]}};
   initAdmin();
 }
 
 async function saveAdmin(){
-  // Read all fields
-  state.eventName=document.getElementById('adm-event-name').value||'Privater Ryder Cup';
-  state.date1=document.getElementById('adm-date1').value||today();
-  state.date2=document.getElementById('adm-date2').value||today();
-  state.teamA.name=document.getElementById('adm-team-a-name').value||'Team Rot';
-  state.teamB.name=document.getElementById('adm-team-b-name').value||'Team Blau';
-
-  // Courses
-  [1,2].forEach(day=>{
-    const name=document.getElementById(`adm-course${day}-name`).value||'';
-    const parTotal=parseInt(document.getElementById(`adm-course${day}-par`).value)||72;
-    const siRaw=document.getElementById(`adm-course${day}-si`).value;
+  for(let d=1;d<=2;d++){
+    const name=document.getElementById(`a-c${d}-name`).value||'';
+    const siRaw=document.getElementById(`a-c${d}-si`).value;
     let si=siRaw?siRaw.split(',').map(Number).filter(n=>n>0):[];
-    // Build par array from total (simplified: distribute around par 4)
-    let par=[...DEFAULT_PAR];
-    if(si.length<18)si=[...DEFAULT_SI];
-    state.courses[day]={name,par,si:si.slice(0,18)};
-  });
-
+    if(si.length<18)si=[...DSI];
+    S.courses[d]={name,par:[...DPAR],si:si.slice(0,18)};
+  }
+  S.eventName=document.getElementById('a-name').value||'Ryder Cup Elkofen';
+  S.date1=document.getElementById('a-d1').value||today();
+  S.date2=document.getElementById('a-d2').value||today();
+  S.teamA.name=document.getElementById('a-ta').value||'Team Rot';
+  S.teamB.name=document.getElementById('a-tb').value||'Team Blau';
   try{
-    await window._fbSet('rc_state',state);
-    showToast('✓ Gespeichert & synchronisiert');
+    await window._fbSet('rc',S);
+    showToast('✅ Gespeichert & synchronisiert');
   }catch(e){showToast('⚠️ Firebase nicht erreichbar');}
   showView('lb');
-  renderLB();
 }
 </script>
 </body>
