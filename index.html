@@ -157,6 +157,14 @@ input,select,button{font-family:'DM Sans',sans-serif}
     </div>
   </div>
 
+  <!-- Spieler-Auswahl -->
+  <div id="player-select-bar" style="background:#fff;border-bottom:2px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;white-space:nowrap">ICH BIN:</div>
+    <select id="current-player-sel" onchange="setCurrentPlayer(this.value)" style="flex:1;background:#fff;border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:14px;font-weight:600;padding:8px 12px;outline:none;cursor:pointer">
+      <option value="">— Spieler auswählen —</option>
+    </select>
+  </div>
+
   <!-- Scoreboard -->
   <div class="scoreboard">
     <div class="team-score-block">
@@ -615,6 +623,7 @@ function renderLB(){
       </div>`;
     });
   });
+  renderPlayerSelectBar();
   document.getElementById('lb-pairings').innerHTML=html||'<div class="empty-pairings"><div style="font-size:40px">⛳</div><div style="margin-top:8px">Keine Paarungen</div><div style="font-size:11px;margin-top:4px">Admin öffnen um Paarungen einzurichten</div></div>';
 }
 
@@ -622,6 +631,46 @@ function getPlayerName(pid){
   if(!pid)return'–';
   const all=[...(state.teamA.players||[]),...(state.teamB.players||[])];
   return all.find(p=>p.id===pid)?.name||pid;
+}
+
+function setCurrentPlayer(pid){
+  window._currentPlayerId = pid;
+  // Spielerrolle merken (localStorage damit sie nach Reload noch da ist)
+  try{ localStorage.setItem('rc_player_'+state.eventName, pid); }catch(e){}
+  if(pid) showToast('✓ Eingeloggt als: '+getPlayerName(pid));
+}
+
+function renderPlayerSelectBar(){
+  const sel = document.getElementById('current-player-sel');
+  if(!sel) return;
+  const allPlayers = [
+    ...(state.teamA.players||[]).map(p=>({...p,team:'a',teamName:state.teamA.name||'Team A'})),
+    ...(state.teamB.players||[]).map(p=>({...p,team:'b',teamName:state.teamB.name||'Team B'}))
+  ];
+  if(!allPlayers.length){ 
+    document.getElementById('player-select-bar').style.display='none'; 
+    return; 
+  }
+  document.getElementById('player-select-bar').style.display='flex';
+  const cur = window._currentPlayerId||'';
+  sel.innerHTML = '<option value="">— Spieler auswählen —</option>' +
+    ['a','b'].map(team=>{
+      const tPlayers = allPlayers.filter(p=>p.team===team);
+      if(!tPlayers.length) return '';
+      const tName = team==='a'?(state.teamA.name||'Team A'):(state.teamB.name||'Team B');
+      return `<optgroup label="🏌️ ${tName}" style="color:${team==='a'?'var(--team-a)':'var(--team-b)'}">
+        ${tPlayers.map(p=>`<option value="${p.id}"${p.id===cur?' selected':''}>${p.name} (Vorg. ${p.hcp||0})</option>`).join('')}
+      </optgroup>`;
+    }).join('');
+  
+  // Gespeicherten Spieler wiederherstellen
+  try{
+    const saved = localStorage.getItem('rc_player_'+state.eventName);
+    if(saved && !window._currentPlayerId){
+      window._currentPlayerId = saved;
+      sel.value = saved;
+    }
+  }catch(e){}
 }
 function getPlayerHcp2(pid){
   if(!pid)return'–';
@@ -641,18 +690,18 @@ function openScore(pairingId, day){
   const pB=getPlayerName(p.playerB);
   const mode=p.mode||'stroke';
 
-  // Rolle wählen — Popup wenn noch nicht gewählt
-  const teamAName=state.teamA?.name||'Team A';
-  const teamBName=state.teamB?.name||'Team B';
-  const choice=confirm(`Welcher Spieler bist du?
-
-OK = ${pA} (${teamAName})
-Abbrechen = ${pB} (${teamBName})`);
-  window._myRole = choice ? 'playerA' : 'playerB';
+  // Rolle aus gewähltem Spieler im Dropdown bestimmen
+  const myPid = window._currentPlayerId||'';
+  if(!myPid){ alert('Bitte zuerst oben deinen Namen auswählen!'); return; }
+  if(myPid !== p.playerA && myPid !== p.playerB){
+    alert('Du bist nicht in dieser Paarung — bitte die richtige Paarung antippen!'); return;
+  }
+  window._myRole = myPid === p.playerA ? 'playerA' : 'playerB';
+  const myName = getPlayerName(myPid);
 
   document.getElementById('sc-title').textContent=`${pA} vs ${pB}`;
   document.getElementById('sc-sub').textContent=
-    `Du spielst als: ${choice?pA:pB} · ${mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford'} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
+    `Du spielst als: ${myName} · ${mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford'} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
 
   // Load existing scores (confirmed + pending)
   const pending=p.pending||{};
