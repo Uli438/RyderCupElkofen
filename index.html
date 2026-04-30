@@ -615,70 +615,23 @@ function openScore(pid,day){
   const mode=p.mode||'matchplay';
   const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford';
 
-  // Spieler-Rolle bestimmen
-  if(!myId){
-    alert('Bitte zuerst oben deinen Namen auswählen!');return;
-  }
+  // Dropdown-Sheet anzeigen zur Rollenauswahl
+  window._pendingPid=pid;
+  window._pendingDay=day;
 
-  if(myId===p.playerA||myId===p.playerB){
-    myRole=myId===p.playerA?'playerA':'playerB';
-    const myN=pName(myId);
-    const otherN=pName(myRole==='playerA'?p.playerB:p.playerA);
-    // Fragen ob für beide oder nur für sich
-    const choice=confirm(
-      `Möchtest du nur für dich eintragen?\n\n` +
-      `OK = Nur mein Score (${myN})\n` +
-      `Abbrechen = Für beide eintragen (${myN} + ${otherN})\n\n` +
-      `"Für beide" = Scores sofort bestätigt, kein Vergleich nötig.`
-    );
-    forBoth=!choice;
-  } else {
-    // Nicht in der Paarung — als Scorer für beide
-    const ok=confirm(`Du bist nicht in dieser Paarung.\n\nAls Scorer für beide eintragen?\n(${nA} + ${nB})`);
-    if(!ok)return;
-    myRole='playerA';forBoth=true;
-  }
+  const sheet=document.getElementById('role-sheet');
+  const sel=document.getElementById('role-sel');
+  sel.innerHTML=
+    `<option value="playerA">🔴 ${esc(nA)} (nur mein Score)</option>`+
+    `<option value="playerB">🔵 ${esc(nB)} (nur mein Score)</option>`+
+    `<option value="both">✏️ Für beide eintragen</option>`;
+  // Vorauswahl basierend auf myId
+  if(myId===p.playerA) sel.value='playerA';
+  else if(myId===p.playerB) sel.value='playerB';
+  else sel.value='both';
 
-  // Scores laden
-  const pending=p.pending||{};
-  const confirmed=p.scores||{};
-  if(forBoth){
-    curScores={
-      playerA:[...(confirmed.playerA||Array(18).fill(null))],
-      playerB:[...(confirmed.playerB||Array(18).fill(null))]
-    };
-  }else{
-    // Eigene pending scores laden falls vorhanden, sonst confirmed
-    curScores={
-      playerA:[...(pending.playerA||confirmed.playerA||Array(18).fill(null))],
-      playerB:[...(pending.playerB||confirmed.playerB||Array(18).fill(null))]
-    };
-  }
-
-  document.getElementById('sc-title').textContent=`${nA} vs ${nB}`;
-  document.getElementById('sc-sub').textContent=forBoth
-    ?`Scorer für beide · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`
-    :`Du: ${pName(myId)} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
-
-  // Conflict warning
-  const cw=document.getElementById('conflict-warn');
-  if(p.conflict&&p.conflict.length){
-    cw.style.display='block';
-    cw.textContent=`⚠️ Abweichung bei Loch ${p.conflict.join(', ')} — bitte korrigieren und erneut speichern.`;
-  }else{cw.style.display='none';}
-
-  document.getElementById('sct-front').classList.add('active');
-  document.getElementById('sct-back').classList.remove('active');
-  curTab='front';
-
-  // Col head
-  const colW=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
-  document.getElementById('sc-colhead').style.gridTemplateColumns=colW;
-  document.getElementById('sc-colhead').innerHTML=`<span>LOCH</span><span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span><span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span><span style="text-align:center">RESULT</span>`;
-
-  renderHoles();
-  updateStatus();
-  showView('score');
+  document.getElementById('role-sheet-title').textContent=`${nA} vs ${nB}`;
+  sheet.style.display='flex';
 }
 
 function scTab(t){
@@ -1077,6 +1030,81 @@ async function saveAdmin(){
   }catch(e){showToast('⚠️ Firebase nicht erreichbar');}
   showView('lb');
 }
+
+function cancelRoleSheet(){
+  document.getElementById('role-sheet').style.display='none';
+}
+
+function confirmRoleSheet(){
+  document.getElementById('role-sheet').style.display='none';
+  const pid=window._pendingPid;
+  const day=window._pendingDay;
+  const role=document.getElementById('role-sel').value;
+  const p=getPairing(pid,day);if(!p)return;
+  const nA=pName(p.playerA),nB=pName(p.playerB);
+  const mode=p.mode||'matchplay';
+  const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford';
+
+  curPid=pid; curDay=day;
+  forBoth=(role==='both');
+  myRole=forBoth?'playerA':(role==='playerA'?'playerA':'playerB');
+
+  // Scores laden
+  const pending=p.pending||{};
+  const confirmed=p.scores||{};
+  if(forBoth){
+    curScores={
+      playerA:[...(confirmed.playerA||Array(18).fill(null))],
+      playerB:[...(confirmed.playerB||Array(18).fill(null))]
+    };
+  }else{
+    curScores={
+      playerA:[...(pending.playerA||confirmed.playerA||Array(18).fill(null))],
+      playerB:[...(pending.playerB||confirmed.playerB||Array(18).fill(null))]
+    };
+  }
+
+  document.getElementById('sc-title').textContent=`${nA} vs ${nB}`;
+  document.getElementById('sc-sub').textContent=forBoth
+    ?`Scorer für beide · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`
+    :role==='playerA'
+      ?`Du: ${nA} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`
+      :`Du: ${nB} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
+
+  const cw=document.getElementById('conflict-warn');
+  if(p.conflict&&p.conflict.length){
+    cw.style.display='block';
+    cw.textContent=`⚠️ Abweichung bei Loch ${p.conflict.join(', ')} — bitte korrigieren.`;
+  }else{cw.style.display='none';}
+
+  document.getElementById('sct-front').classList.add('active');
+  document.getElementById('sct-back').classList.remove('active');
+  curTab='front';
+  const colW=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+  document.getElementById('sc-colhead').style.gridTemplateColumns=colW;
+  document.getElementById('sc-colhead').innerHTML=`<span>LOCH</span><span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span><span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span><span style="text-align:center">RESULT</span>`;
+
+  renderHoles();
+  updateStatus();
+  showView('score');
+}
 </script>
+
+<!-- ══ ROLE SELECTION SHEET ══ -->
+<div id="role-sheet" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center">
+  <div style="background:var(--card);width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:24px 20px 36px;border-top:3px solid var(--border)">
+    <div style="text-align:center;margin-bottom:4px">
+      <div style="width:40px;height:4px;background:var(--border-light);border-radius:4px;margin:0 auto 16px"></div>
+    </div>
+    <div style="font-size:11px;color:var(--txt3);letter-spacing:2px;font-weight:700;margin-bottom:6px">PAARUNG</div>
+    <div class="serif" style="font-size:20px;font-weight:700;color:var(--txt);margin-bottom:16px" id="role-sheet-title"></div>
+    <div style="font-size:11px;color:var(--txt3);letter-spacing:2px;font-weight:700;margin-bottom:8px">ICH TRAGE EIN FÜR:</div>
+    <select id="role-sel" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:12px;color:var(--txt);font-size:16px;font-weight:600;padding:14px;outline:none;cursor:pointer;margin-bottom:16px"></select>
+    <div style="display:flex;gap:10px">
+      <button onclick="cancelRoleSheet()" style="flex:1;padding:13px;background:var(--bg2);border:2px solid var(--border);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:var(--txt2)">Abbrechen</button>
+      <button onclick="confirmRoleSheet()" style="flex:2;padding:13px;background:linear-gradient(135deg,#1565c0,#1976d2);border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:#fff">Weiter →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
