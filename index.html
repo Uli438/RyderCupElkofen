@@ -72,7 +72,7 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .rpb{background:#e3f2fd;color:var(--tb);border:1px solid var(--tb)}
 .rpd{background:#f5f5f5;color:#555;border:1px solid #999}
 .rpo{background:#fff8e1;color:#f57f17;border:1px solid #f57f17}
-.rpc{background:#fff3e0;color:#e65100;border:1px solid #e65100}
+
 .empty-pairs{text-align:center;padding:50px 20px;color:var(--txt3)}
 
 /* header */
@@ -94,7 +94,7 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .col-head{display:grid;padding:7px 14px 4px;gap:6px;font-size:9px;color:var(--txt3);letter-spacing:1px;background:var(--bg2);border-bottom:1px solid var(--border-light)}
 .hole-row{display:grid;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--border-light);background:var(--card)}
 .hole-row.filled{background:#e8f4fd}
-.hole-row.conflict{background:#fff5f5;border-left:4px solid var(--red)}
+
 .hole-info{text-align:center}
 .hole-num{font-size:14px;font-weight:700;color:var(--txt)}
 .hole-par{font-size:9px;color:var(--txt3)}
@@ -109,7 +109,7 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .save-btn:disabled{background:#aaa;border-color:#aaa;box-shadow:none}
 
 /* conflict warning */
-.conflict-bar{background:#ffebee;border:2px solid var(--red);border-radius:10px;padding:10px 14px;margin:10px 14px;font-size:12px;color:var(--red);font-weight:700}
+
 
 /* admin */
 .admin-body{padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:40px}
@@ -200,7 +200,7 @@ input,select,button{font-family:'DM Sans',sans-serif}
     </div>
   </div>
   <div class="match-bar" id="match-bar" style="display:none"></div>
-  <div id="conflict-warn" style="display:none" class="conflict-bar"></div>
+
   <div class="sc-tabs">
     <button class="sc-tab active" id="sct-front" onclick="scTab('front')">FRONT 9 (1–9)</button>
     <button class="sc-tab" id="sct-back" onclick="scTab('back')">BACK 9 (10–18)</button>
@@ -563,13 +563,10 @@ function renderLB(){
       const bnL=p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
       const nA=pName(p.playerA),nB=pName(p.playerB);
       const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
-      // Has conflict?
-      const hasConflict=p.conflict&&p.conflict.length>0;
+      const hasConflict=false;
 
       let rHtml='';
-      if(hasConflict){
-        rHtml=`<div class="rpill rpc">⚠️ Abweichung Loch ${p.conflict.join(', ')}</div>`;
-      }else if(r.status==='open'){
+      if(r.status==='open'){
         rHtml=`<div class="rpill rpo">Noch nicht gespielt</div>`;
       }else{
         let txt='',cls='rpd';
@@ -615,17 +612,17 @@ function openScore(pid,day){
   const mode=p.mode||'matchplay';
   const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford';
 
-  // Dropdown-Sheet anzeigen zur Rollenauswahl
+  // Dropdown-Sheet anzeigen
   window._pendingPid=pid;
   window._pendingDay=day;
 
   const sheet=document.getElementById('role-sheet');
   const sel=document.getElementById('role-sel');
   sel.innerHTML=
-    `<option value="playerA">🔴 ${esc(nA)} (nur mein Score)</option>`+
-    `<option value="playerB">🔵 ${esc(nB)} (nur mein Score)</option>`+
+    `<option value="playerA">🔴 ${esc(nA)} — nur meinen Score</option>`+
+    `<option value="playerB">🔵 ${esc(nB)} — nur meinen Score</option>`+
     `<option value="both">✏️ Für beide eintragen</option>`;
-  // Vorauswahl basierend auf myId
+  // Vorauswahl basierend auf angemeldetem Spieler
   if(myId===p.playerA) sel.value='playerA';
   else if(myId===p.playerB) sel.value='playerB';
   else sel.value='both';
@@ -660,9 +657,9 @@ function renderHoles(){
     const isConflict=conflicts.includes(i+1);
     const filled=sA!=null||sB!=null;
 
-    // Nur eigene Seite editierbar wenn nicht forBoth
-    const editA=forBoth||myRole==='playerA';
-    const editB=forBoth||myRole==='playerB';
+    // Nur eigene Seite editierbar — außer forBoth
+    const editA=forBoth||(myRole==='playerA');
+    const editB=forBoth||(myRole==='playerB');
 
     // Hole result
     let hRes='<span style="color:#aaa;font-size:12px">–</span>';
@@ -690,7 +687,13 @@ function renderHoles(){
           <div class="${sA!=null?'stval':'stval empty'}" style="font-size:20px" id="sv-A-${i}">${sA!=null?sA:'–'}</div>
           <button class="stbtn" style="width:40px;font-size:24px" ontouchstart="" onclick="step('playerA',${i},+1)">+</button>
         </div>`
-      :`<div style="text-align:center;font-size:20px;font-weight:700;color:${sA!=null?'var(--txt)':'#aaa'};padding:8px;background:var(--bg2);border-radius:8px;border:1px solid var(--border-light)">${sA!=null?sA:'–'}</div>`;
+      :`<div style="text-align:center;font-size:22px;font-weight:700;
+          color:${sA!=null?'var(--txt)':'#bbb'};padding:8px;
+          background:#f0f4f8;border-radius:8px;border:2px solid #d0dde8;
+          position:relative" id="sv-A-${i}">
+          ${sA!=null?sA:'–'}
+          <div style="position:absolute;top:2px;right:4px;font-size:8px;color:#aaa">👁</div>
+        </div>`;
 
     const stepB=editB
       ?`<div class="stepper" style="height:46px">
@@ -698,7 +701,13 @@ function renderHoles(){
           <div class="${sB!=null?'stval':'stval empty'}" style="font-size:20px" id="sv-B-${i}">${sB!=null?sB:'–'}</div>
           <button class="stbtn" style="width:40px;font-size:24px" ontouchstart="" onclick="step('playerB',${i},+1)">+</button>
         </div>`
-      :`<div style="text-align:center;font-size:20px;font-weight:700;color:${sB!=null?'var(--txt)':'#aaa'};padding:8px;background:var(--bg2);border-radius:8px;border:1px solid var(--border-light)">${sB!=null?sB:'–'}</div>`;
+      :`<div style="text-align:center;font-size:22px;font-weight:700;
+          color:${sB!=null?'var(--txt)':'#bbb'};padding:8px;
+          background:#f0f4f8;border-radius:8px;border:2px solid #d0dde8;
+          position:relative" id="sv-B-${i}">
+          ${sB!=null?sB:'–'}
+          <div style="position:absolute;top:2px;right:4px;font-size:8px;color:#aaa">👁</div>
+        </div>`;
 
     return`<div class="hole-row${filled?' filled':''}${isConflict?' conflict':''}" style="grid-template-columns:${colW}">
       <div class="hole-info"><div class="hole-num">${i+1}</div><div class="hole-par">P${pv}·SI${siv}</div></div>
@@ -710,6 +719,8 @@ function renderHoles(){
 }
 
 function step(player,idx,delta){
+  // Sicherheitscheck: nur eigene Seite änderbar
+  if(!forBoth && player!==myRole) return;
   const p=getPairing(curPid,curDay);
   const par=(getCourse(curDay).par||DPAR);
   const cur=curScores[player][idx];
@@ -718,7 +729,6 @@ function step(player,idx,delta){
   curScores[player][idx]=next;
   const el=document.getElementById(`sv-${player==='playerA'?'A':'B'}-${idx}`);
   if(el){el.textContent=next;el.className='stval';}
-  // Loch-Result neu rendern
   renderHoles();
   updateStatus();
 }
@@ -772,84 +782,39 @@ function updateStatus(){
   }
 }
 
-function checkConflict(p){
-  const pending=p.pending||{};
-  const pA=pending.playerA||[];
-  const pB=pending.playerB||[];
-  const conflicts=[];
-  for(let i=0;i<18;i++){
-    if(pA[i]!=null&&pB[i]!=null&&pA[i]!==pB[i])conflicts.push(i+1);
-  }
-  return conflicts;
-}
+
 
 async function saveScore(){
   const btn=document.getElementById('savebtn');
   btn.disabled=true;btn.textContent='Speichere…';
   const p=getPairing(curPid,curDay);if(!p){btn.disabled=false;return;}
 
-  if(forBoth){
-    // Direkt als confirmed speichern — kein Vergleich nötig
-    S.pairings[curDay]=S.pairings[curDay].map(px=>{
-      if(px.id!==curPid)return px;
-      return{...px,
-        scores:{playerA:[...curScores.playerA],playerB:[...curScores.playerB]},
-        pending:null,conflict:null
+  // Direkt speichern — kein Vergleich nötig
+  // Nur die eigene Seite aktualisieren (außer forBoth)
+  S.pairings[curDay]=S.pairings[curDay].map(px=>{
+    if(px.id!==curPid)return px;
+    const existing=px.scores||{};
+    let newScores;
+    if(forBoth){
+      newScores={
+        playerA:[...curScores.playerA],
+        playerB:[...curScores.playerB]
       };
-    });
-    try{await window._fbSet('rc',S);showToast('✅ Scores für beide gespeichert');}
-    catch(e){showToast('⚠️ Fehler');}
-  }else{
-    // Eigenen pending score speichern
-    S.pairings[curDay]=S.pairings[curDay].map(px=>{
-      if(px.id!==curPid)return px;
-      const pend={...(px.pending||{}),[myRole]:[...curScores[myRole]]};
-      return{...px,pending:pend};
-    });
-    try{
-      await window._fbSet('rc',S);
-      const updP=getPairing(curPid,curDay);
-      const pending=updP?.pending||{};
-      const other=myRole==='playerA'?'playerB':'playerA';
+    }else{
+      // Nur eigene Seite überschreiben, andere bleibt erhalten
+      newScores={
+        playerA: myRole==='playerA'?[...curScores.playerA]:[...(existing.playerA||Array(18).fill(null))],
+        playerB: myRole==='playerB'?[...curScores.playerB]:[...(existing.playerB||Array(18).fill(null))]
+      };
+    }
+    return{...px,scores:newScores,pending:null,conflict:null};
+  });
 
-      if(pending[other]&&pending[other].length>0){
-        // Vergleichen
-        const mine=pending[myRole]||[];
-        const theirs=pending[other]||[];
-        const conflicts=[];
-        for(let i=0;i<18;i++){
-          if(mine[i]!=null&&theirs[i]!=null&&mine[i]!==theirs[i])conflicts.push(i+1);
-        }
-        if(conflicts.length===0){
-          // ✅ Übereinstimmung → confirmed
-          S.pairings[curDay]=S.pairings[curDay].map(px=>{
-            if(px.id!==curPid)return px;
-            return{...px,
-              scores:{playerA:[...pending.playerA],playerB:[...pending.playerB]},
-              pending:null,conflict:null
-            };
-          });
-          await window._fbSet('rc',S);
-          showToast('✅ Scores übereinstimmend — bestätigt!');
-        }else{
-          // ⚠️ Konflikt
-          S.pairings[curDay]=S.pairings[curDay].map(px=>{
-            if(px.id!==curPid)return px;
-            return{...px,conflict:conflicts};
-          });
-          await window._fbSet('rc',S);
-          const cw=document.getElementById('conflict-warn');
-          cw.style.display='block';
-          cw.textContent=`⚠️ Abweichung bei Loch ${conflicts.join(', ')}! Beide Spieler müssen diese Löcher korrigieren und erneut speichern.`;
-          alert(`⚠️ Abweichung bei Loch ${conflicts.join(', ')}!\n\nBitte beide Scores nochmal eintragen.`);
-          btn.disabled=false;btn.textContent='Score speichern ✓';
-          return;
-        }
-      }else{
-        showToast('✓ Dein Score gespeichert — warte auf Gegner');
-      }
-    }catch(e){showToast('⚠️ Fehler beim Speichern');}
-  }
+  try{
+    await window._fbSet('rc',S);
+    showToast(forBoth?'✅ Beide Scores gespeichert':'✅ Score gespeichert');
+  }catch(e){showToast('⚠️ Fehler beim Speichern');}
+
   btn.disabled=false;btn.textContent='Score speichern ✓';
   renderLB();
 }
@@ -1052,17 +1017,11 @@ function confirmRoleSheet(){
   // Scores laden
   const pending=p.pending||{};
   const confirmed=p.scores||{};
-  if(forBoth){
-    curScores={
-      playerA:[...(confirmed.playerA||Array(18).fill(null))],
-      playerB:[...(confirmed.playerB||Array(18).fill(null))]
-    };
-  }else{
-    curScores={
-      playerA:[...(pending.playerA||confirmed.playerA||Array(18).fill(null))],
-      playerB:[...(pending.playerB||confirmed.playerB||Array(18).fill(null))]
-    };
-  }
+  // Immer die gespeicherten Scores laden (confirmed)
+  curScores={
+    playerA:[...(confirmed.playerA||Array(18).fill(null))],
+    playerB:[...(confirmed.playerB||Array(18).fill(null))]
+  };
 
   document.getElementById('sc-title').textContent=`${nA} vs ${nB}`;
   document.getElementById('sc-sub').textContent=forBoth
@@ -1071,11 +1030,7 @@ function confirmRoleSheet(){
       ?`Du: ${nA} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`
       :`Du: ${nB} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
 
-  const cw=document.getElementById('conflict-warn');
-  if(p.conflict&&p.conflict.length){
-    cw.style.display='block';
-    cw.textContent=`⚠️ Abweichung bei Loch ${p.conflict.join(', ')} — bitte korrigieren.`;
-  }else{cw.style.display='none';}
+
 
   document.getElementById('sct-front').classList.add('active');
   document.getElementById('sct-back').classList.remove('active');
