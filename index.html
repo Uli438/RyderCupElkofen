@@ -373,13 +373,17 @@ async function initFB(){
     if(!snap.exists())return;
     S=snap.val();
     renderLB();
-    // Scorecard aktualisieren wenn offen
+    // Scorecard live aktualisieren wenn offen
     if(document.getElementById('view-score').classList.contains('active')){
       const p=getPairing(curPid,curDay);
-      if(p){
-        // Pending des anderen Spielers laden
+      if(p&&p.scores){
+        // Gegner-Score live aktualisieren (nur die andere Seite, eigene nicht überschreiben)
         const other=myRole==='playerA'?'playerB':'playerA';
-        if(p.pending&&p.pending[other]&&!forBoth) checkConflict(p);
+        if(!forBoth&&p.scores[other]){
+          curScores[other]=[...p.scores[other]];
+          renderHoles();
+          updateStatus();
+        }
       }
     }
   });
@@ -817,6 +821,9 @@ async function saveScore(){
 
   btn.disabled=false;btn.textContent='Score speichern ✓';
   renderLB();
+  // Auf Scorecard bleiben — Spieler kann weitere Löcher eintragen
+  renderHoles();
+  updateStatus();
 }
 
 // ══════════════════════════════════════════════
@@ -826,7 +833,8 @@ function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   window.scrollTo(0,0);
-  if(name==='admin')initAdmin();
+  if(name==='admin') initAdmin();
+  if(name==='lb') renderLB();
 }
 
 function initAdmin(){
