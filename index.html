@@ -398,12 +398,14 @@ async function initFB(){
     if(document.getElementById('view-score').classList.contains('active')&&CUR.pid){
       const p=getP(CUR.pid,CUR.day);
       if(p&&p.scores&&!CUR.forBoth){
-        const other=CUR.role==='playerA'?'playerB':'playerA';
-        if(p.scores[other]){
-          CUR.scores[other]=[...p.scores[other]];
-          renderHoles();
-          updateStatus();
-        }
+        // Alle anderen Rollen aktualisieren (nicht die eigene)
+        ['playerA','playerA2','playerB','playerB2'].forEach(role=>{
+          if(role!==CUR.role&&p.scores[role]){
+            CUR.scores[role]=[...p.scores[role]];
+          }
+        });
+        renderHoles();
+        updateStatus();
       }
     }
   });
@@ -432,7 +434,9 @@ function calcMatch(p,day){
   const bn=p.bruttoNetto||'brutto';
   const mode=p.mode||'matchplay';
   if(mode==='matchplay')return calcMP(sc,hA,hB,par,si,bn);
-  if(mode==='bestball') return calcBB(sc,hA,hB,par,si,bn);
+  const hA2=pHcp(p.playerA2||'');
+  const hB2=pHcp(p.playerB2||'');
+  if(mode==='bestball') return calcBB(sc,hA,hB,par,si,bn,hA2,hB2);
   return calcSF(sc,hA,hB,par,si);
 }
 
@@ -458,16 +462,28 @@ function calcMP(sc,hA,hB,par,si,bn){
   return{ptA:status==='A'?1:status==='draw'?0.5:0,ptB:status==='B'?1:status==='draw'?0.5:0,status,lead,played,wA,wB};
 }
 
-function calcBB(sc,hA,hB,par,si,bn){
+function calcBB(sc,hA,hB,par,si,bn,hA2,hB2){
+  // Best Ball: bestes Ergebnis pro Team pro Loch zählt
   const sA=sc.playerA||Array(18).fill(null);
   const sB=sc.playerB||Array(18).fill(null);
+  const sA2=sc.playerA2||Array(18).fill(null); // 2. Spieler Team A
+  const sB2=sc.playerB2||Array(18).fill(null); // 2. Spieler Team B
   let pA=0,pB=0,played=0;
   for(let i=0;i<18;i++){
-    if(sA[i]==null||sB[i]==null)continue;
+    // Best Ball: Loch zählt wenn mind. 1 Spieler pro Team eingetragen hat
+    const hasA=sA[i]!=null||sA2[i]!=null;
+    const hasB=sB[i]!=null||sB2[i]!=null;
+    if(!hasA||!hasB)continue;
     played++;
-    const vA=bn==='netto'?net(sA[i],i,hA,si):sA[i];
-    const vB=bn==='netto'?net(sB[i],i,hB,si):sB[i];
-    if(vA<vB)pA++;else if(vB<vA)pB++;else{pA+=0.5;pB+=0.5;}
+    // Bestes Ergebnis Team A
+    const vA1=sA[i]!=null?(bn==='netto'?net(sA[i],i,hA,si):sA[i]):999;
+    const vA2=sA2[i]!=null&&hA2!=null?(bn==='netto'?net(sA2[i],i,hA2,si):sA2[i]):999;
+    const bestA=Math.min(vA1,vA2);
+    // Bestes Ergebnis Team B
+    const vB1=sB[i]!=null?(bn==='netto'?net(sB[i],i,hB,si):sB[i]):999;
+    const vB2=sB2[i]!=null&&hB2!=null?(bn==='netto'?net(sB2[i],i,hB2,si):sB2[i]):999;
+    const bestB=Math.min(vB1,vB2);
+    if(bestA<bestB)pA++;else if(bestB<bestA)pB++;else{pA+=0.5;pB+=0.5;}
   }
   const done=played===18;
   const st=played===0?'open':pA>pB?'A':pB>pA?'B':'draw';
@@ -551,7 +567,8 @@ function renderLB(){
       const mL=p.mode==='matchplay'?'MATCHPLAY':p.mode==='bestball'?'BEST BALL':'STABLEFORD';
       const mC=p.mode==='matchplay'?'bm':p.mode==='bestball'?'bb':'bs';
       const bnL=p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
-      const nA=pName(p.playerA),nB=pName(p.playerB);
+      const nA=pName(p.playerA)+(p.mode==='bestball'&&p.playerA2?'/'+pName(p.playerA2):'');
+      const nB=pName(p.playerB)+(p.mode==='bestball'&&p.playerB2?'/'+pName(p.playerB2):'');
       const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
       let rh='';
       if(r.status==='open'){rh=`<div class="rpill rpo">Noch nicht gespielt</div>`;}
@@ -594,26 +611,28 @@ function openSheet(pid,day){
   sheetPid=pid; sheetDay=day;
   const p=getP(pid,day);if(!p)return;
   const nA=pName(p.playerA),nB=pName(p.playerB);
-  document.getElementById('sheet-title').textContent=`${nA} vs ${nB}`;
+  const nA2=p.playerA2?pName(p.playerA2):'';
+  const nB2=p.playerB2?pName(p.playerB2):'';
+  const isBB=p.mode==='bestball';
+  const titleTxt=isBB
+    ?`${nA}${nA2?'/'+nA2:''} vs ${nB}${nB2?'/'+nB2:''}`
+    :`${nA} vs ${nB}`;
+  document.getElementById('sheet-title').textContent=titleTxt;
   const sel=document.getElementById('sheet-sel');
-  // Nur relevante Optionen anzeigen
-  if(myId===p.playerA){
-    // Spieler A angemeldet → nur A oder beide
-    sel.innerHTML=
-      `<option value="playerA">🔴 ${esc(nA)} — meinen Score</option>`+
-      `<option value="both">✏️ Für beide eintragen</option>`;
-    sel.value='playerA';
-  } else if(myId===p.playerB){
-    // Spieler B angemeldet → nur B oder beide
-    sel.innerHTML=
-      `<option value="playerB">🔵 ${esc(nB)} — meinen Score</option>`+
-      `<option value="both">✏️ Für beide eintragen</option>`;
-    sel.value='playerB';
-  } else {
-    // Nicht in der Paarung → nur für beide
-    sel.innerHTML=`<option value="both">✏️ Für beide eintragen</option>`;
-    sel.value='both';
-  }
+  // Relevante Optionen basierend auf angemeldetem Spieler
+  let opts='';
+  if(myId===p.playerA)       opts+=`<option value="playerA">🔴 ${esc(nA)} — meinen Score</option>`;
+  if(isBB&&myId===p.playerA2)opts+=`<option value="playerA2">🔴 ${esc(nA2)} — meinen Score</option>`;
+  if(myId===p.playerB)       opts+=`<option value="playerB">🔵 ${esc(nB)} — meinen Score</option>`;
+  if(isBB&&myId===p.playerB2)opts+=`<option value="playerB2">🔵 ${esc(nB2)} — meinen Score</option>`;
+  opts+=`<option value="both">✏️ Für beide eintragen</option>`;
+  sel.innerHTML=opts;
+  // Vorauswahl
+  if(myId===p.playerA)       sel.value='playerA';
+  else if(isBB&&myId===p.playerA2) sel.value='playerA2';
+  else if(myId===p.playerB)  sel.value='playerB';
+  else if(isBB&&myId===p.playerB2) sel.value='playerB2';
+  else sel.value='both';
   document.getElementById('sheet').classList.add('on');
 }
 
@@ -627,31 +646,57 @@ function confirmSheet(){
   const p=getP(pid,day);if(!p)return;
   const role=document.getElementById('sheet-sel').value;
   const forBoth=(role==='both');
-  const myRole=forBoth?'playerA':(role==='playerA'?'playerA':'playerB');
+  // role kann sein: playerA, playerA2, playerB, playerB2, both
+  const myRole=forBoth?'playerA':role; // bei forBoth irrelevant
+  const isBB=p.mode==='bestball';
 
   // Session setzen
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
 
-  // Scores laden
+  // Scores laden (alle 4 Slots für Best Ball)
   const sc=p.scores||{};
   CUR.scores={
     playerA:[...(sc.playerA||Array(18).fill(null))],
-    playerB:[...(sc.playerB||Array(18).fill(null))]
+    playerA2:[...(sc.playerA2||Array(18).fill(null))],
+    playerB:[...(sc.playerB||Array(18).fill(null))],
+    playerB2:[...(sc.playerB2||Array(18).fill(null))]
   };
 
   // Header
   const nA=pName(p.playerA),nB=pName(p.playerB);
+  const nA2=p.playerA2?pName(p.playerA2):'';
+  const nB2=p.playerB2?pName(p.playerB2):'';
   const mode=p.mode||'matchplay';
-  const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball':'Stableford';
-  const myName=forBoth?'beide':role==='playerA'?nA:nB;
-  document.getElementById('sc-title').textContent=`${nA} vs ${nB}`;
+  const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball 2v2':'Stableford';
+  let myName='beide';
+  if(!forBoth){
+    if(role==='playerA')myName=nA;
+    else if(role==='playerA2')myName=nA2;
+    else if(role==='playerB')myName=nB;
+    else if(role==='playerB2')myName=nB2;
+  }
+  const titleA=nA+(nA2?' / '+nA2:'');
+  const titleB=nB+(nB2?' / '+nB2:'');
+  document.getElementById('sc-title').textContent=`${titleA} vs ${titleB}`;
   document.getElementById('sc-sub').textContent=`Du trägst ein: ${myName} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
 
-  // Column header
-  const cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+  // Column header — Best Ball hat 4 Spalten + Result
+  let cw,colHtml;
+  if(isBB){
+    cw=`28px 1fr 1fr 1fr 1fr 56px`;
+    colHtml=`<span>LOCH</span>
+      <span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span>
+      <span style="text-align:center;color:var(--ta)">${esc((nA2||'–').split(' ')[0])}</span>
+      <span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span>
+      <span style="text-align:center;color:var(--tb)">${esc((nB2||'–').split(' ')[0])}</span>
+      <span style="text-align:center">BEST</span>`;
+  }else{
+    cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+    colHtml=`<span>LOCH</span><span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span><span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span><span style="text-align:center">RESULT</span>`;
+  }
   const colh=document.getElementById('colh');
   colh.style.gridTemplateColumns=cw;
-  colh.innerHTML=`<span>LOCH</span><span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span><span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span><span style="text-align:center">RESULT</span>`;
+  colh.innerHTML=colHtml;
 
   document.getElementById('stf').classList.add('on');
   document.getElementById('stb').classList.remove('on');
@@ -673,31 +718,54 @@ function renderHoles(){
   const c=getCourse(CUR.day);
   const par=c.par||DPAR,si=c.si||DSI;
   const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
+  const hA2=pHcp(p.playerA2||''),hB2=pHcp(p.playerB2||'');
   const mode=p.mode||'matchplay';
+  const isBB=mode==='bestball';
   const bn=p.bruttoNetto||'brutto';
   const start=CUR.tab==='front'?0:9;
   const holes=Array.from({length:9},(_,i)=>start+i);
-  const cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+  const cw=isBB?`28px 1fr 1fr 1fr 1fr 56px`:`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
   const editA=CUR.forBoth||CUR.role==='playerA';
+  const editA2=CUR.forBoth||CUR.role==='playerA2';
   const editB=CUR.forBoth||CUR.role==='playerB';
+  const editB2=CUR.forBoth||CUR.role==='playerB2';
 
   document.getElementById('sc-holes').innerHTML=holes.map(i=>{
     const pv=par[i]||4,siv=si[i]||i+1;
-    const sA=CUR.scores.playerA[i],sB=CUR.scores.playerB[i];
-    const nA2=net(sA,i,hA,si),nB2=net(sB,i,hB,si);
-    const filled=sA!=null||sB!=null;
+    const sA=CUR.scores.playerA[i];
+    const sA2=CUR.scores.playerA2?CUR.scores.playerA2[i]:null;
+    const sB=CUR.scores.playerB[i];
+    const sB2=CUR.scores.playerB2?CUR.scores.playerB2[i]:null;
+    const filled=sA!=null||sB!=null||(isBB&&(sA2!=null||sB2!=null));
 
-    // Hole result display
-    let hres='<span style="color:#aaa;font-size:12px">–</span>';
-    if(sA!=null&&sB!=null){
-      const vA=bn==='netto'?nA2:sA;
-      const vB=bn==='netto'?nB2:sB;
+    // Net scores
+    const nA_=net(sA,i,hA,si),nB_=net(sB,i,hB,si);
+    const nA2_=net(sA2,i,hA2,si),nB2_=net(sB2,i,hB2,si);
+
+    // Hole result
+    let hres='<span style="color:#aaa;font-size:11px">–</span>';
+    if(isBB){
+      // Best Ball: bestes von A1/A2 vs bestes von B1/B2
+      const hasA=(sA!=null||sA2!=null),hasB=(sB!=null||sB2!=null);
+      if(hasA&&hasB){
+        const vA1=sA!=null?(bn==='netto'?nA_:sA):999;
+        const vA2=sA2!=null?(bn==='netto'?nA2_:sA2):999;
+        const vB1=sB!=null?(bn==='netto'?nB_:sB):999;
+        const vB2=sB2!=null?(bn==='netto'?nB2_:sB2):999;
+        const bA=Math.min(vA1,vA2),bB=Math.min(vB1,vB2);
+        if(bA<bB)hres=`<span style="font-weight:900;color:var(--ta);font-size:13px">◀${bA}</span>`;
+        else if(bB<bA)hres=`<span style="font-weight:900;color:var(--tb);font-size:13px">${bB}▶</span>`;
+        else hres=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
+      }
+    }else if(sA!=null&&sB!=null){
+      const vA=bn==='netto'?nA_:sA;
+      const vB=bn==='netto'?nB_:sB;
       if(mode==='matchplay'){
         if(vA<vB)hres=`<span style="font-weight:900;color:var(--ta);font-size:16px">◀</span>`;
         else if(vB<vA)hres=`<span style="font-weight:900;color:var(--tb);font-size:16px">▶</span>`;
         else hres=`<span style="font-weight:700;color:#666;font-size:14px">½</span>`;
       }else if(mode==='stableford'){
-        const stA=stbl(nA2,pv),stB=stbl(nB2,pv);
+        const stA=stbl(nA_,pv),stB=stbl(nB_,pv);
         const col=stA>stB?'var(--ta)':stB>stA?'var(--tb)':'#666';
         hres=`<span style="font-size:12px;font-weight:700;color:${col}">${stA}:${stB}</span>`;
       }else{
@@ -707,26 +775,28 @@ function renderHoles(){
       }
     }
 
-    // Stepper or readonly
+    // Stepper / readonly helpers
+    const stH=46; // height for BB (smaller)
     const mkStep=(player,s,side)=>
-      `<div class="stepper">
-        <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-        <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-        <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+      `<div class="stepper" style="height:${isBB?'44px':'50px'}">
+        <button class="stbtn" style="width:${isBB?'36px':'48px'};font-size:${isBB?'22px':'28px'}" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+        <div class="${s!=null?'stval':'stval e'}" style="font-size:${isBB?'18px':'22px'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+        <button class="stbtn" style="width:${isBB?'36px':'48px'};font-size:${isBB?'22px':'28px'}" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
       </div>`;
     const mkRO=(s,side)=>
-      `<div class="${s!=null?'readonly':'readonly e'}" id="sv-${side}-${i}">
-        ${s!=null?s:'–'}
-        <span class="eye">👁</span>
+      `<div class="${s!=null?'readonly':'readonly e'}" style="height:${isBB?'44px':'50px'};font-size:${isBB?'18px':'22px'}" id="sv-${side}-${i}">
+        ${s!=null?s:'–'}<span class="eye">👁</span>
       </div>`;
 
-    const colA=editA?mkStep('playerA',sA,'A'):mkRO(sA,'A');
-    const colB=editB?mkStep('playerB',sB,'B'):mkRO(sB,'B');
+    const colA =editA ?mkStep('playerA', sA, 'A') :mkRO(sA, 'A');
+    const colA2=isBB?(editA2?mkStep('playerA2',sA2,'A2'):mkRO(sA2,'A2')):'';
+    const colB =editB ?mkStep('playerB', sB, 'B') :mkRO(sB, 'B');
+    const colB2=isBB?(editB2?mkStep('playerB2',sB2,'B2'):mkRO(sB2,'B2')):'';
 
     return`<div class="hrow${filled?' filled':''}" style="grid-template-columns:${cw}">
       <div class="hinfo"><div class="hnum">${i+1}</div><div class="hpar">P${pv}·SI${siv}</div></div>
-      ${colA}
-      ${colB}
+      ${colA}${colA2}
+      ${colB}${colB2}
       <div class="hres">${hres}</div>
     </div>`;
   }).join('');
@@ -791,12 +861,19 @@ async function saveScore(){
   const existing=p.scores||{};
   let newScores;
   if(CUR.forBoth){
-    newScores={playerA:[...CUR.scores.playerA],playerB:[...CUR.scores.playerB]};
-  }else{
-    // Nur eigene Seite speichern, andere Seite aus Firebase behalten
     newScores={
-      playerA:CUR.role==='playerA'?[...CUR.scores.playerA]:[...(existing.playerA||Array(18).fill(null))],
-      playerB:CUR.role==='playerB'?[...CUR.scores.playerB]:[...(existing.playerB||Array(18).fill(null))]
+      playerA:[...CUR.scores.playerA],
+      playerA2:[...CUR.scores.playerA2],
+      playerB:[...CUR.scores.playerB],
+      playerB2:[...CUR.scores.playerB2]
+    };
+  }else{
+    // Nur eigene Rolle speichern, Rest behalten
+    newScores={
+      playerA: CUR.role==='playerA'?[...CUR.scores.playerA]:[...(existing.playerA||Array(18).fill(null))],
+      playerA2:CUR.role==='playerA2'?[...CUR.scores.playerA2]:[...(existing.playerA2||Array(18).fill(null))],
+      playerB: CUR.role==='playerB'?[...CUR.scores.playerB]:[...(existing.playerB||Array(18).fill(null))],
+      playerB2:CUR.role==='playerB2'?[...CUR.scores.playerB2]:[...(existing.playerB2||Array(18).fill(null))]
     };
   }
   S.pairings[CUR.day]=S.pairings[CUR.day].map(px=>
@@ -910,25 +987,45 @@ function renderAPairs(){
   document.getElementById('a-pairs').innerHTML=pairs.map((p,i)=>{
     const modes=['matchplay','bestball','stableford'];
     const bns=['brutto','netto'];
+    const isBB=p.mode==='bestball';
+    // Best Ball: zweiter Spieler pro Team
+    const bb2A=isBB?`
+      <div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${S.teamA?.name||'A'}</div>
+      <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerA2',this.value)">
+        ${optA.replace(`value="${p.playerA2||''}"`,`value="${p.playerA2||''}" selected`)}
+      </select>`:'';
+    const bb2B=isBB?`
+      <div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${S.teamB?.name||'B'}</div>
+      <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerB2',this.value)">
+        ${optB.replace(`value="${p.playerB2||''}"`,`value="${p.playerB2||''}" selected`)}
+      </select>`:'';
     return`<div class="padm">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:700;color:var(--txt2)">Paarung ${i+1}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--txt2)">Paarung ${i+1}${isBB?' · 2v2':''}</div>
         <button onclick="rmPair(${i})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;font-weight:700">×</button>
       </div>
       <div class="padm-r">
-        <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerA',this.value)">
-          ${optA.replace(`value="${p.playerA}"`,`value="${p.playerA}" selected`)}
-        </select>
-        <div style="text-align:center;font-size:12px;font-weight:700;color:var(--txt3)">VS</div>
-        <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerB',this.value)">
-          ${optB.replace(`value="${p.playerB}"`,`value="${p.playerB}" selected`)}
-        </select>
+        <div>
+          <div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin-bottom:4px;font-weight:700">${S.teamA?.name||'TEAM A'}</div>
+          <select class="inp" style="padding:8px;font-size:13px;margin-bottom:4px" onchange="updPair(${i},'playerA',this.value)">
+            ${optA.replace(`value="${p.playerA}"`,`value="${p.playerA}" selected`)}
+          </select>
+          ${bb2A}
+        </div>
+        <div style="text-align:center;font-size:12px;font-weight:700;color:var(--txt3);padding-top:20px">VS</div>
+        <div>
+          <div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin-bottom:4px;font-weight:700">${S.teamB?.name||'TEAM B'}</div>
+          <select class="inp" style="padding:8px;font-size:13px;margin-bottom:4px" onchange="updPair(${i},'playerB',this.value)">
+            ${optB.replace(`value="${p.playerB}"`,`value="${p.playerB}" selected`)}
+          </select>
+          ${bb2B}
+        </div>
       </div>
-      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">SPIELMODUS</div>
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px;margin-top:8px">SPIELMODUS</div>
       <div class="chips">
-        ${modes.map(m=>`<button class="chip${p.mode===m?' on':''}" onclick="updPair(${i},'mode','${m}')">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball':'Stableford'}</button>`).join('')}
+        ${modes.map(m=>`<button class="chip${p.mode===m?' on':''}" onclick="updPair(${i},'mode','${m}');renderAPairs()">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball 2v2':'Stableford'}</button>`).join('')}
       </div>
-      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">WERTUNG</div>
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px;margin-top:8px">WERTUNG</div>
       <div class="chips">
         ${bns.map(bn=>`<button class="chip${p.bruttoNetto===bn?' on':''}" onclick="updPair(${i},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}
       </div>
@@ -939,7 +1036,7 @@ function renderAPairs(){
 function addPair(){
   if(!S.pairings)S.pairings={1:[],2:[]};
   if(!S.pairings[admPDay])S.pairings[admPDay]=[];
-  S.pairings[admPDay].push({id:uid(),playerA:'',playerB:'',mode:'matchplay',bruttoNetto:'brutto',scores:null});
+  S.pairings[admPDay].push({id:uid(),playerA:'',playerA2:'',playerB:'',playerB2:'',mode:'matchplay',bruttoNetto:'brutto',scores:null});
   renderAPairs();
 }
 
