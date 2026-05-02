@@ -804,15 +804,15 @@ function renderHoles(){
     const stH=46; // height for BB (smaller)
     // Bei Best Ball: eigene Felder normal, Gegner-Felder schmal (nur Zahl)
     const mkStep=(player,s,side)=>isBB
-      ?`<div class="stepper" style="height:44px">
-          <button class="stbtn" style="width:28px;font-size:20px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" style="font-size:17px" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" style="width:28px;font-size:20px;padding:0" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+      ?`<div class="stepper" style="height:54px">
+          <button class="stbtn" style="width:30px;font-size:22px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" style="font-size:26px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" style="width:30px;font-size:22px;padding:0" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
         </div>`
-      :`<div class="stepper" style="height:50px">
-          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+      :`<div class="stepper" style="height:64px">
+          <button class="stbtn" style="font-size:34px;width:54px" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" style="font-size:36px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" style="font-size:34px;width:54px" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
         </div>`;
     // Readonly: bei BB sehr schmal — nur Zahl + Auge
     const mkRO=(s,side)=>isBB
