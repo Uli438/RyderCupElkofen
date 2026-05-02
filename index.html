@@ -597,6 +597,14 @@ function renderLB(){
           <div><div class="pnb">${esc(nB)}</div><div class="phcp">Vorg. ${hB}</div></div>
         </div>
         <div class="pr">${rh}</div>
+        ${(()=>{
+          const hasA=p.scores&&p.scores.playerA&&p.scores.playerA.some(s=>s!=null);
+          const hasB=p.scores&&p.scores.playerB&&p.scores.playerB.some(s=>s!=null);
+          if(!hasA&&!hasB)return'';
+          return '<div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:4px">'+
+            (hasA?'🔴 eingetragen':'🔴 ⏳ offen')+' &nbsp;·&nbsp; '+(hasB?'🔵 eingetragen':'🔵 ⏳ offen')+
+            '</div>';
+        })()}
       </div>`;
     });
   });
@@ -683,7 +691,10 @@ function confirmSheet(){
   // Column header — Best Ball hat 4 Spalten + Result
   let cw,colHtml;
   if(isBB){
-    cw=`28px 1fr 1fr 1fr 1fr 56px`;
+    const isA2=myRole==='playerA'||myRole==='playerA2';
+    cw=forBoth?'28px 1fr 1fr 1fr 1fr 50px':
+       isA2?'28px 1fr 1fr 0.55fr 0.55fr 50px':
+            '28px 0.55fr 0.55fr 1fr 1fr 50px';
     colHtml=`<span>LOCH</span>
       <span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span>
       <span style="text-align:center;color:var(--ta)">${esc((nA2||'–').split(' ')[0])}</span>
@@ -698,8 +709,13 @@ function confirmSheet(){
   colh.style.gridTemplateColumns=cw;
   colh.innerHTML=colHtml;
 
-  document.getElementById('stf').classList.add('on');
-  document.getElementById('stb').classList.remove('on');
+  // Auto-Tab: wenn mind. 9 Löcher gespielt → Back Nine
+  const scArr=CUR.scores[CUR.role]||CUR.scores.playerA||[];
+  const played=scArr.filter(s=>s!=null).length;
+  const autoTab=played>=9?'back':'front';
+  CUR.tab=autoTab;
+  document.getElementById('stf').classList.toggle('on',autoTab==='front');
+  document.getElementById('stb').classList.toggle('on',autoTab==='back');
   renderHoles();
   updateStatus();
   showView('score');
@@ -724,7 +740,16 @@ function renderHoles(){
   const bn=p.bruttoNetto||'brutto';
   const start=CUR.tab==='front'?0:9;
   const holes=Array.from({length:9},(_,i)=>start+i);
-  const cw=isBB?`28px 1fr 1fr 1fr 1fr 56px`:`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+  // BB: eigene Spalten 1fr, Gegner-Spalten 0.55fr (schmaler)
+  let cw;
+  if(isBB){
+    const isA=CUR.role==='playerA'||CUR.role==='playerA2';
+    if(CUR.forBoth) cw='28px 1fr 1fr 1fr 1fr 50px';
+    else if(isA)    cw='28px 1fr 1fr 0.55fr 0.55fr 50px'; // A edit, B schmal
+    else            cw='28px 0.55fr 0.55fr 1fr 1fr 50px'; // B edit, A schmal
+  }else{
+    cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
+  }
   const editA=CUR.forBoth||CUR.role==='playerA';
   const editA2=CUR.forBoth||CUR.role==='playerA2';
   const editB=CUR.forBoth||CUR.role==='playerB';
@@ -777,16 +802,29 @@ function renderHoles(){
 
     // Stepper / readonly helpers
     const stH=46; // height for BB (smaller)
-    const mkStep=(player,s,side)=>
-      `<div class="stepper" style="height:${isBB?'44px':'50px'}">
-        <button class="stbtn" style="width:${isBB?'36px':'48px'};font-size:${isBB?'22px':'28px'}" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-        <div class="${s!=null?'stval':'stval e'}" style="font-size:${isBB?'18px':'22px'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-        <button class="stbtn" style="width:${isBB?'36px':'48px'};font-size:${isBB?'22px':'28px'}" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
-      </div>`;
-    const mkRO=(s,side)=>
-      `<div class="${s!=null?'readonly':'readonly e'}" style="height:${isBB?'44px':'50px'};font-size:${isBB?'18px':'22px'}" id="sv-${side}-${i}">
-        ${s!=null?s:'–'}<span class="eye">👁</span>
-      </div>`;
+    // Bei Best Ball: eigene Felder normal, Gegner-Felder schmal (nur Zahl)
+    const mkStep=(player,s,side)=>isBB
+      ?`<div class="stepper" style="height:44px">
+          <button class="stbtn" style="width:28px;font-size:20px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" style="font-size:17px" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" style="width:28px;font-size:20px;padding:0" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+        </div>`
+      :`<div class="stepper" style="height:50px">
+          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+        </div>`;
+    // Readonly: bei BB sehr schmal — nur Zahl + Auge
+    const mkRO=(s,side)=>isBB
+      ?`<div style="display:flex;align-items:center;justify-content:center;height:44px;
+          background:#f0f4f8;border-radius:8px;border:1px solid #d0dde8;
+          font-size:17px;font-weight:700;color:${s!=null?'var(--txt)':'#ccc'};
+          position:relative" id="sv-${side}-${i}">
+          ${s!=null?s:'–'}<span style="position:absolute;top:2px;right:3px;font-size:8px;color:#aaa">👁</span>
+        </div>`
+      :`<div class="${s!=null?'readonly':'readonly e'}" style="height:50px" id="sv-${side}-${i}">
+          ${s!=null?s:'–'}<span class="eye">👁</span>
+        </div>`;
 
     const colA =editA ?mkStep('playerA', sA, 'A') :mkRO(sA, 'A');
     const colA2=isBB?(editA2?mkStep('playerA2',sA2,'A2'):mkRO(sA2,'A2')):'';
