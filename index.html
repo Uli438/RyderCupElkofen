@@ -389,6 +389,8 @@ async function initFB(){
   try{const saved=localStorage.getItem('rc_me_'+S.eventName);if(saved)myId=saved;}catch(e){}
   renderLB();
   toast('🟢 Live verbunden');
+  // Ausstehende Offline-Saves synchronisieren
+  syncOffline();
   // Listen for changes
   db.ref('rc').on('value',snap=>{
     if(!snap.exists())return;
@@ -410,7 +412,15 @@ async function initFB(){
     }
   });
 }
-initFB().catch(e=>{console.warn(e);toast('⚠️ Offline');renderLB();});
+initFB().catch(e=>{
+  console.warn(e);
+  // Lokale Daten laden falls vorhanden
+  const local=loadLocal();
+  if(local){S=local;toast('📶 Offline — lokale Daten geladen');renderLB();}
+  else{toast('⚠️ Offline — keine lokalen Daten');renderLB();}
+  // Alle 30 Sekunden versuchen zu verbinden
+  setInterval(syncOffline,30000);
+});
 
 // ═══════════════ HELPERS ═══════════════
 function allP(){
@@ -892,6 +902,33 @@ function updateStatus(){
   }
 }
 
+// ── Offline-Puffer ──
+const LS_OFFLINE='rc_offline_'+location.pathname;
+
+function saveLocal(state){
+  try{localStorage.setItem(LS_OFFLINE,JSON.stringify(state));}catch(e){}
+}
+function loadLocal(){
+  try{const d=localStorage.getItem(LS_OFFLINE);return d?JSON.parse(d):null;}catch(e){return null;}
+}
+function clearLocal(){
+  try{localStorage.removeItem(LS_OFFLINE);}catch(e){}
+}
+
+async function syncOffline(){
+  const local=loadLocal();
+  if(!local)return;
+  try{
+    await window._fb('rc',local);
+    S=local;
+    clearLocal();
+    toast('📶 Offline-Scores synchronisiert!');
+    renderLB();
+  }catch(e){
+    // Noch kein Empfang — warten
+  }
+}
+
 async function saveScore(){
   const btn=document.getElementById('savebtn');
   btn.disabled=true;btn.textContent='Speichere…';
@@ -906,7 +943,6 @@ async function saveScore(){
       playerB2:[...CUR.scores.playerB2]
     };
   }else{
-    // Nur eigene Rolle speichern, Rest behalten
     newScores={
       playerA: CUR.role==='playerA'?[...CUR.scores.playerA]:[...(existing.playerA||Array(18).fill(null))],
       playerA2:CUR.role==='playerA2'?[...CUR.scores.playerA2]:[...(existing.playerA2||Array(18).fill(null))],
@@ -917,12 +953,23 @@ async function saveScore(){
   S.pairings[CUR.day]=S.pairings[CUR.day].map(px=>
     px.id!==CUR.pid?px:{...px,scores:newScores}
   );
+
+  // 1. Zuerst lokal speichern — sofort, immer
+  saveLocal(S);
+
+  // 2. Firebase versuchen
   try{
     await window._fb('rc',S);
+    clearLocal(); // Erfolg → lokale Kopie nicht mehr nötig
     toast('✅ Score gespeichert');
-  }catch(e){toast('⚠️ Fehler beim Speichern');}
+  }catch(e){
+    // Offline → lokal gespeichert, später synchronisieren
+    toast('📶 Offline — lokal gespeichert');
+    // Automatisch nochmal versuchen in 30 Sekunden
+    setTimeout(syncOffline,30000);
+  }
+
   btn.disabled=false;btn.textContent='Score speichern ✓';
-  // Auf Scorecard bleiben
   renderHoles();
   updateStatus();
 }
@@ -1114,6 +1161,11 @@ async function saveAdmin(){
   catch(e){toast('⚠️ Firebase nicht erreichbar');}
   showView('lb');
 }
+// Automatisch synchronisieren wenn Verbindung zurückkommt
+window.addEventListener('online',()=>{
+  toast('📶 Verbindung zurück — synchronisiere…');
+  setTimeout(syncOffline,1000);
+});
 </script>
 </body>
 </html>
