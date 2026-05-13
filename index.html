@@ -7,171 +7,195 @@
 <title>🏆 Ryder Cup Elkofen</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#daeeff;--bg2:#c8e6fa;--bg3:#b8d8f5;
-  --card:#fff;--border:#2c2c2c;--bl:#8bb8d8;
-  --txt:#111;--txt2:#334455;--txt3:#556677;
-  --acc:#1565c0;--green:#2e7d32;--red:#c62828;
-  --ta:#c62828;--tb:#1565c0;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-input,select,button{font-family:'DM Sans',sans-serif}
-.serif{font-family:'Cormorant Garamond',serif}
-.view{display:none;flex-direction:column;min-height:100vh}
-.view.active{display:flex}
-
-/* hero */
-.hero{background:linear-gradient(135deg,#1a237e,#c62828);padding:22px 16px 16px;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.1);pointer-events:none}
-.hi{position:relative;z-index:1}
-.he{font-size:10px;color:rgba(255,255,255,0.65);letter-spacing:3px;margin-bottom:3px;font-weight:700}
-.ht{font-size:25px;color:#fff;font-weight:700;line-height:1.1}
-.hs{font-size:11px;color:rgba(255,255,255,0.7);margin-top:3px}
-.htabs{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;align-items:center}
-.htab{padding:5px 12px;border-radius:20px;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
-.htab.on{background:#fff;color:var(--acc)}
-.htab.adm{margin-left:auto;background:rgba(0,0,0,0.2)}
-
-/* player bar */
-.pbar{background:var(--card);border-bottom:2px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px}
-.pbar-lbl{font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;white-space:nowrap}
-.pbar-sel{flex:1;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:14px;font-weight:600;padding:8px 12px;outline:none;cursor:pointer}
-
-/* scoreboard */
-.sb{background:linear-gradient(135deg,#1a237e,#c62828);padding:14px 16px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;border-bottom:2px solid var(--border)}
-.sbt{text-align:center}
-.sbt-n{font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.6)}
-.sbt-p{font-size:40px;font-weight:900;line-height:1;font-family:'Cormorant Garamond',serif}
-.sbt-p.a{color:#ffcdd2}.sbt-p.b{color:#bbdefb}
-.sbv{text-align:center;color:rgba(255,255,255,0.5);font-size:12px;font-weight:700}
-.sbv-d{font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px;letter-spacing:1px}
-
-/* pairings */
-.sh{padding:9px 16px 6px;font-size:9px;color:var(--acc);letter-spacing:2px;font-weight:700;background:var(--bg2);border-bottom:1px solid var(--bl)}
-.pc{background:var(--card);border-bottom:1px solid var(--bl);padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.pc:active{background:#e3f2fd}
-.mbadge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:1px;margin-bottom:6px}
-.bm{background:#fff3e0;color:#e65100;border:1px solid #e65100}
-.bb{background:#f3e5f5;color:#6a1b9a;border:1px solid #6a1b9a}
-.bs{background:#e8f5e9;color:#2e7d32;border:1px solid #2e7d32}
-.pg{display:grid;grid-template-columns:1fr 28px 1fr;align-items:center;gap:4px}
-.pna{font-size:15px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--ta);text-align:right}
-.pnb{font-size:15px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--tb);text-align:left}
-.phcp{font-size:10px;color:var(--txt3)}
-.pvs{text-align:center;font-size:11px;font-weight:700;color:var(--txt3)}
-.pr{margin-top:8px;display:flex;justify-content:center}
-.rpill{padding:3px 14px;border-radius:20px;font-size:11px;font-weight:700}
-.rpa{background:#ffebee;color:var(--ta);border:1px solid var(--ta)}
-.rpb{background:#e3f2fd;color:var(--tb);border:1px solid var(--tb)}
-.rpd{background:#f5f5f5;color:#555;border:1px solid #999}
-.rpo{background:#fff8e1;color:#f57f17;border:1px solid #f57f17}
-.empty{text-align:center;padding:50px 20px;color:var(--txt3)}
-
-/* header */
-.hdr{background:var(--bg2);border-bottom:2px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
-.back{background:none;border:none;color:var(--acc);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;font-weight:700}
-.hdr-t{font-size:17px;color:var(--txt);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-s{font-size:10px;color:var(--txt2)}
-.spill{text-align:center;flex-shrink:0}
-.spv{font-size:18px;font-weight:900;line-height:1}
-.spl{font-size:9px;color:var(--txt3)}
-
-/* match bar */
-.mbar{padding:10px 16px;text-align:center;font-weight:900;font-size:17px;font-family:'Cormorant Garamond',serif;border-bottom:2px solid var(--border)}
-
-/* score tabs */
-.stabs{display:flex;background:var(--bg2);border-bottom:2px solid var(--border)}
-.stab{flex:1;padding:9px 0;background:none;border:none;border-bottom:3px solid transparent;color:var(--txt2);font-size:11px;letter-spacing:1.5px;cursor:pointer;font-weight:600}
-.stab.on{border-bottom-color:var(--acc);color:var(--acc)}
-
-/* ── Spaltenköpfe Score-Eingabe ── */
-.colh{display:grid;padding:9px 14px 6px;gap:6px;background:var(--bg2);border-bottom:2px solid var(--border)}
-.colh span{
-  text-align:center;
-  font-size:15px;       /* ← größer (war 9px / inline) */
-  font-weight:800;
-  color:#000;           /* ← schwarz */
-  letter-spacing:0.5px;
-}
-.colh span:first-child{
-  font-size:11px;       /* "LOCH"-Spalte etwas kleiner lassen */
-  font-weight:700;
-  color:var(--txt3);
-}
-.colh span:last-child{
-  font-size:11px;
-  font-weight:700;
-  color:var(--txt3);
+/* ── Design Tokens ── */
+:root {
+  --bg:    #daeeff;
+  --bg2:   #c8e6fa;
+  --card:  #fff;
+  --border:#2c2c2c;
+  --bl:    #8bb8d8;
+  --txt:   #111;
+  --txt2:  #334455;
+  --txt3:  #556677;
+  --acc:   #1565c0;
+  --green: #2e7d32;
+  --red:   #c62828;
+  --ta:    #c62828;
+  --tb:    #1565c0;
 }
 
-.hrow{display:grid;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--bl);background:var(--card)}
-.hrow.filled{background:#e8f4fd}
-.hinfo{text-align:center}
-.hnum{font-size:14px;font-weight:700;color:var(--txt)}
-.hpar{font-size:9px;color:var(--txt3)}
-.stepper{display:flex;align-items:center;background:var(--card);border:2px solid var(--border);border-radius:10px;overflow:hidden;height:50px}
-.stbtn{background:none;border:none;color:var(--acc);font-size:28px;width:48px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;touch-action:manipulation;font-weight:900}
-.stbtn:active{background:#bbdefb}
-.stval{flex:1;text-align:center;font-size:30px;font-weight:900;color:var(--txt);font-family:'Cormorant Garamond',serif}
-.stval.e{color:#aaa;font-size:18px}
-/* Kompakter Stepper für 4-Spalten (Best Ball forBoth) */
-.stepper.compact{height:58px}
-.stepper.compact .stbtn{width:28px;font-size:22px}
-.stepper.compact .stval{font-size:28px;font-weight:900}
-.readonly{display:flex;align-items:center;justify-content:center;height:50px;background:#f0f4f8;border-radius:10px;border:2px solid #d0dde8;font-size:22px;font-weight:700;color:var(--txt);font-family:'Cormorant Garamond',serif;position:relative}
-.readonly.e{color:#bbb;font-size:15px}
-.eye{position:absolute;top:3px;right:6px;font-size:9px;color:#aaa}
-.hres{text-align:center;display:flex;align-items:center;justify-content:center}
-.swrap{position:fixed;bottom:0;left:0;right:0;padding:12px 16px 22px;background:linear-gradient(transparent,var(--bg) 40%)}
-.sbtn{width:100%;padding:14px 0;border:3px solid #1b5e20;border-radius:12px;color:#fff;font-size:18px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#2e7d32,#43a047);box-shadow:0 6px 20px rgba(46,125,50,0.4)}
-.sbtn:disabled{background:#aaa;border-color:#aaa;box-shadow:none}
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input, select, button { font-family: 'DM Sans', sans-serif; }
+.serif { font-family: 'Cormorant Garamond', serif; }
 
-/* sheet */
-.sheet-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.5);align-items:flex-end;justify-content:center}
-.sheet-overlay.on{display:flex}
-.sheet{background:var(--card);width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:24px 20px 36px;border-top:3px solid var(--border)}
-.sheet-handle{width:40px;height:4px;background:var(--bl);border-radius:4px;margin:0 auto 16px}
-.sheet-eye{font-size:9px;color:var(--txt3);letter-spacing:2px;font-weight:700;margin-bottom:6px}
-.sheet-title{font-size:20px;font-weight:700;color:var(--txt);margin-bottom:16px}
-.sheet-lbl{font-size:11px;color:var(--txt3);letter-spacing:2px;font-weight:700;margin-bottom:8px}
-.sheet-sel{width:100%;background:var(--card);border:2px solid var(--border);border-radius:12px;color:var(--txt);font-size:16px;font-weight:600;padding:14px;outline:none;cursor:pointer;margin-bottom:16px}
-.sheet-btns{display:flex;gap:10px}
-.sheet-cancel{flex:1;padding:13px;background:var(--bg2);border:2px solid var(--border);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:var(--txt2)}
-.sheet-ok{flex:2;padding:13px;background:linear-gradient(135deg,var(--acc),#1976d2);border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:#fff}
+/* ── Views ── */
+.view { display: none; flex-direction: column; min-height: 100vh; }
+.view.active { display: flex; }
 
-/* admin */
-.abody{padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:40px}
-.albl{font-size:9px;color:var(--acc);letter-spacing:2px;margin-bottom:8px;font-weight:700}
-.ahint{font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.5}
-.inp{background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 14px;outline:none;width:100%}
-.inp:focus{border-color:var(--acc)}
-.r2{display:flex;gap:8px}.r2 .inp{flex:1}
-.tbox{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-.thdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.tdot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
-.prow{display:grid;grid-template-columns:1fr 80px 36px;gap:6px;margin-bottom:6px;align-items:center}
-.pcell{padding:9px 12px;background:var(--bg2);border:1px solid var(--bl);border-radius:8px;font-size:14px;font-weight:600}
-.rmbtn{background:#ffebee;border:2px solid var(--red);border-radius:8px;color:var(--red);font-size:16px;padding:7px;cursor:pointer;line-height:1;font-weight:700}
-.arow{display:grid;grid-template-columns:1fr 80px auto;gap:6px;margin-top:4px}
-.addbtn{border:none;border-radius:10px;color:#fff;font-size:20px;padding:0 14px;cursor:pointer;font-weight:700}
-.padm{background:var(--card);border:2px solid var(--bl);border-radius:10px;padding:12px;margin-bottom:8px}
-.padm-r{display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center;margin-bottom:8px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.chip{padding:4px 10px;border-radius:20px;border:2px solid var(--bl);background:var(--card);font-size:11px;font-weight:700;cursor:pointer;color:var(--txt2)}
-.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.dtabs{display:flex;background:var(--bg2);border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
-.dtab{flex:1;padding:10px 0;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;font-weight:700}
-.dtab.on{background:var(--acc);color:#fff}
-.cdrop{width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 14px;outline:none;cursor:pointer;margin-bottom:8px}
-.rstbtn{background:#ffebee;border:2px solid var(--red);border-radius:10px;color:var(--red);font-size:14px;padding:11px;cursor:pointer;width:100%;font-weight:600}
-.primbtn{background:linear-gradient(135deg,var(--green),#43a047);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;padding:13px;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,0.3);width:100%}
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, #1a237e, #c62828);
+  padding: 22px 16px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.1);
+  pointer-events: none;
+}
+.hi  { position: relative; z-index: 1; }
+.he  { font-size: 10px; color: rgba(255,255,255,0.65); letter-spacing: 3px; margin-bottom: 3px; font-weight: 700; }
+.ht  { font-size: 25px; color: #fff; font-weight: 700; line-height: 1.1; }
+.hs  { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 3px; }
+.htabs { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.htab  { padding: 5px 12px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.htab.on  { background: #fff; color: var(--acc); }
+.htab.adm { margin-left: auto; background: rgba(0,0,0,0.2); }
+
+/* ── Player Bar ── */
+.pbar     { background: var(--card); border-bottom: 2px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+.pbar-lbl { font-size: 11px; font-weight: 700; color: var(--acc); letter-spacing: 1px; white-space: nowrap; }
+.pbar-sel { flex: 1; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: var(--txt); font-size: 14px; font-weight: 600; padding: 8px 12px; outline: none; cursor: pointer; }
+
+/* ── Scoreboard Banner ── */
+.sb    { background: linear-gradient(135deg, #1a237e, #c62828); padding: 14px 16px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; border-bottom: 2px solid var(--border); }
+.sbt   { text-align: center; }
+.sbt-n { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: rgba(255,255,255,0.6); }
+.sbt-p { font-size: 40px; font-weight: 900; line-height: 1; font-family: 'Cormorant Garamond', serif; }
+.sbt-p.a { color: #ffcdd2; }
+.sbt-p.b { color: #bbdefb; }
+.sbv   { text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; }
+.sbv-d { font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 2px; letter-spacing: 1px; }
+
+/* ── Pairing Cards ── */
+.sh    { padding: 9px 16px 6px; font-size: 9px; color: var(--acc); letter-spacing: 2px; font-weight: 700; background: var(--bg2); border-bottom: 1px solid var(--bl); }
+.pc    { background: var(--card); border-bottom: 1px solid var(--bl); padding: 12px 16px; cursor: pointer; }
+.pc:active { background: #e3f2fd; }
+.mbadge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 6px; }
+.bm { background: #fff3e0; color: #e65100; border: 1px solid #e65100; }
+.bb { background: #f3e5f5; color: #6a1b9a; border: 1px solid #6a1b9a; }
+.bs { background: #e8f5e9; color: #2e7d32;  border: 1px solid #2e7d32; }
+.pg  { display: grid; grid-template-columns: 1fr 28px 1fr; align-items: center; gap: 4px; }
+.pna { font-size: 15px; font-weight: 700; font-family: 'Cormorant Garamond', serif; color: var(--ta); text-align: right; }
+.pnb { font-size: 15px; font-weight: 700; font-family: 'Cormorant Garamond', serif; color: var(--tb); text-align: left; }
+.phcp { font-size: 10px; color: var(--txt3); }
+.pvs  { text-align: center; font-size: 11px; font-weight: 700; color: var(--txt3); }
+.pr   { margin-top: 8px; display: flex; justify-content: center; }
+.rpill { padding: 3px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.rpa  { background: #ffebee; color: var(--ta); border: 1px solid var(--ta); }
+.rpb  { background: #e3f2fd; color: var(--tb); border: 1px solid var(--tb); }
+.rpd  { background: #f5f5f5; color: #555;      border: 1px solid #999; }
+.rpo  { background: #fff8e1; color: #f57f17;   border: 1px solid #f57f17; }
+.empty { text-align: center; padding: 50px 20px; color: var(--txt3); }
+
+/* ── Page Header ── */
+.hdr  { background: var(--bg2); border-bottom: 2px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 20; }
+.back { background: none; border: none; color: var(--acc); font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1; font-weight: 700; }
+.hdr-t { font-size: 17px; color: var(--txt); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hdr-s { font-size: 10px; color: var(--txt2); }
+.spill { text-align: center; flex-shrink: 0; }
+.spv   { font-size: 18px; font-weight: 900; line-height: 1; }
+.spl   { font-size: 9px; color: var(--txt3); }
+
+/* ── Match Status Bar ── */
+.mbar { padding: 10px 16px; text-align: center; font-weight: 900; font-size: 17px; font-family: 'Cormorant Garamond', serif; border-bottom: 2px solid var(--border); }
+
+/* ── Score Tabs ── */
+.stabs { display: flex; background: var(--bg2); border-bottom: 2px solid var(--border); }
+.stab  { flex: 1; padding: 9px 0; background: none; border: none; border-bottom: 3px solid transparent; color: var(--txt2); font-size: 11px; letter-spacing: 1.5px; cursor: pointer; font-weight: 600; }
+.stab.on { border-bottom-color: var(--acc); color: var(--acc); }
+
+/* ── Score Column Header ── */
+.colh { display: grid; padding: 9px 14px 6px; gap: 6px; background: var(--bg2); border-bottom: 2px solid var(--border); }
+.colh span              { text-align: center; font-size: 15px; font-weight: 800; color: #000; letter-spacing: 0.5px; }
+.colh span:first-child  { font-size: 11px; font-weight: 700; color: var(--txt3); }
+.colh span:last-child   { font-size: 11px; font-weight: 700; color: var(--txt3); }
+
+/* ── Hole Rows ── */
+.hrow        { display: grid; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bl); background: var(--card); }
+.hrow.filled { background: #e8f4fd; }
+.hinfo { text-align: center; }
+.hnum  { font-size: 14px; font-weight: 700; color: var(--txt); }
+.hpar  { font-size: 9px;  color: var(--txt3); }
+
+/* ── Stepper ── */
+.stepper { display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; height: 72px; }
+.stbtn   { background: none; border: none; color: var(--acc); font-size: 38px; width: 58px; height: 72px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; touch-action: manipulation; font-weight: 900; }
+.stbtn:active { background: #bbdefb; }
+.stval   { flex: 1; text-align: center; font-size: 36px; font-weight: 900; color: var(--txt); font-family: 'Cormorant Garamond', serif; }
+.stval.e { color: #aaa; font-size: 20px; }
+
+/* ── Readonly Field ── */
+.readonly   { display: flex; align-items: center; justify-content: center; height: 72px; background: #f0f4f8; border-radius: 10px; border: 2px solid #d0dde8; font-size: 32px; font-weight: 700; color: var(--txt); font-family: 'Cormorant Garamond', serif; position: relative; }
+.readonly.e { color: #bbb; font-size: 18px; }
+.eye { position: absolute; top: 4px; right: 6px; font-size: 9px; color: #aaa; }
+.hres { text-align: center; display: flex; align-items: center; justify-content: center; }
+
+/* ── Save Button ── */
+.swrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px 22px; background: linear-gradient(transparent, var(--bg) 40%); }
+.sbtn  { width: 100%; padding: 14px 0; border: 3px solid #1b5e20; border-radius: 12px; color: #fff; font-size: 18px; font-weight: 900; cursor: pointer; background: linear-gradient(135deg, #2e7d32, #43a047); box-shadow: 0 6px 20px rgba(46,125,50,0.4); }
+.sbtn:disabled { background: #aaa; border-color: #aaa; box-shadow: none; }
+
+/* ── Role Sheet ── */
+.sheet-overlay    { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center; }
+.sheet-overlay.on { display: flex; }
+.sheet         { background: var(--card); width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 24px 20px 36px; border-top: 3px solid var(--border); }
+.sheet-handle  { width: 40px; height: 4px; background: var(--bl); border-radius: 4px; margin: 0 auto 16px; }
+.sheet-eye     { font-size: 9px;  color: var(--txt3); letter-spacing: 2px; font-weight: 700; margin-bottom: 6px; }
+.sheet-title   { font-size: 20px; font-weight: 700; color: var(--txt); margin-bottom: 16px; }
+.sheet-lbl     { font-size: 11px; color: var(--txt3); letter-spacing: 2px; font-weight: 700; margin-bottom: 8px; }
+.sheet-sel     { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 12px; color: var(--txt); font-size: 16px; font-weight: 600; padding: 14px; outline: none; cursor: pointer; margin-bottom: 16px; }
+.sheet-btns    { display: flex; gap: 10px; }
+.sheet-cancel  { flex: 1; padding: 13px; background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; color: var(--txt2); }
+.sheet-ok      { flex: 2; padding: 13px; background: linear-gradient(135deg, var(--acc), #1976d2); border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; color: #fff; }
+
+/* ── Admin ── */
+.abody   { padding: 16px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px; }
+.albl    { font-size: 9px; color: var(--acc); letter-spacing: 2px; margin-bottom: 8px; font-weight: 700; }
+.inp     { background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: var(--txt); font-size: 15px; padding: 11px 14px; outline: none; width: 100%; }
+.inp:focus { border-color: var(--acc); }
+.r2      { display: flex; gap: 8px; }
+.r2 .inp { flex: 1; }
+.tbox    { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+.thdr    { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tdot    { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.prow    { display: grid; grid-template-columns: 1fr 80px 36px; gap: 6px; margin-bottom: 6px; align-items: center; }
+.pcell   { padding: 9px 12px; background: var(--bg2); border: 1px solid var(--bl); border-radius: 8px; font-size: 14px; font-weight: 600; }
+.rmbtn   { background: #ffebee; border: 2px solid var(--red); border-radius: 8px; color: var(--red); font-size: 16px; padding: 7px; cursor: pointer; line-height: 1; font-weight: 700; }
+.arow    { display: grid; grid-template-columns: 1fr 80px auto; gap: 6px; margin-top: 4px; }
+.addbtn  { border: none; border-radius: 10px; color: #fff; font-size: 20px; padding: 0 14px; cursor: pointer; font-weight: 700; }
+.padm    { background: var(--card); border: 2px solid var(--bl); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+.padm-r  { display: grid; grid-template-columns: 1fr 28px 1fr; gap: 6px; align-items: center; margin-bottom: 8px; }
+.chips   { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip    { padding: 4px 10px; border-radius: 20px; border: 2px solid var(--bl); background: var(--card); font-size: 11px; font-weight: 700; cursor: pointer; color: var(--txt2); }
+.chip.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+.dtabs   { display: flex; background: var(--bg2); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+.dtab    { flex: 1; padding: 10px 0; background: none; border: none; color: var(--txt2); font-size: 12px; cursor: pointer; font-weight: 700; }
+.dtab.on { background: var(--acc); color: #fff; }
+.cdrop   { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: var(--txt); font-size: 15px; padding: 11px 14px; outline: none; cursor: pointer; margin-bottom: 8px; }
+.rstbtn  { background: #ffebee; border: 2px solid var(--red); border-radius: 10px; color: var(--red); font-size: 14px; padding: 11px; cursor: pointer; width: 100%; font-weight: 600; }
+.primbtn { background: linear-gradient(135deg, var(--green), #43a047); border: none; border-radius: 12px; color: #fff; font-size: 17px; font-weight: 700; padding: 13px; cursor: pointer; box-shadow: 0 4px 14px rgba(46,125,50,0.3); width: 100%; }
+
+/* ── Toast ── */
+.toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--acc); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 700; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
+
 <div class="toast" id="toast"></div>
 
 <!-- ROLE SHEET -->
@@ -184,12 +208,12 @@ input,select,button{font-family:'DM Sans',sans-serif}
     <select class="sheet-sel" id="sheet-sel"></select>
     <div class="sheet-btns">
       <button class="sheet-cancel" onclick="closeSheet()">Abbrechen</button>
-      <button class="sheet-ok" onclick="confirmSheet()">Weiter →</button>
+      <button class="sheet-ok"     onclick="confirmSheet()">Weiter →</button>
     </div>
   </div>
 </div>
 
-<!-- ══ LEADERBOARD ══ -->
+<!-- VIEW: LEADERBOARD -->
 <div id="view-lb" class="view active">
   <div class="hero">
     <div class="hi">
@@ -197,23 +221,19 @@ input,select,button{font-family:'DM Sans',sans-serif}
       <div class="ht serif" id="lb-name">Ryder Cup Elkofen</div>
       <div class="hs" id="lb-sub">Admin öffnen zum Einrichten</div>
       <div class="htabs">
-        <button class="htab on" data-d="1" onclick="setDay(1)">TAG 1</button>
-        <button class="htab" data-d="2" onclick="setDay(2)">TAG 2</button>
-        <button class="htab" data-d="total" onclick="setDay('total')">GESAMT</button>
-        <button class="htab adm" onclick="showView('admin')">⚙ Admin</button>
+        <button class="htab on" data-d="1"     onclick="setDay(1)">TAG 1</button>
+        <button class="htab"    data-d="2"     onclick="setDay(2)">TAG 2</button>
+        <button class="htab"    data-d="total" onclick="setDay('total')">GESAMT</button>
+        <button class="htab adm"               onclick="showView('admin')">⚙ Admin</button>
       </div>
     </div>
   </div>
-
-  <!-- Spieler-Anmeldung -->
   <div class="pbar" id="pbar" style="display:none">
     <div class="pbar-lbl">ICH BIN:</div>
     <select class="pbar-sel" id="pbar-sel" onchange="setMe(this.value)">
       <option value="">— Spieler auswählen —</option>
     </select>
   </div>
-
-  <!-- Scoreboard -->
   <div class="sb">
     <div class="sbt">
       <div class="sbt-n" id="lb-ta">TEAM A</div>
@@ -225,18 +245,18 @@ input,select,button{font-family:'DM Sans',sans-serif}
       <div class="sbt-p b serif" id="lb-ptb">0</div>
     </div>
   </div>
-
-  <div class="sh" id="lb-sh">PAARUNGEN</div>
+  <div class="sh">PAARUNGEN</div>
   <div id="lb-pairs" style="padding-bottom:20px"></div>
 </div>
 
-<!-- ══ SCORE ENTRY ══ -->
+<!-- VIEW: SCORE ENTRY -->
 <div id="view-score" class="view">
   <div class="hdr">
     <button class="back" onclick="showView('lb')">←</button>
     <div style="flex:1;min-width:0">
       <div class="hdr-t" id="sc-title"></div>
       <div class="hdr-s" id="sc-sub"></div>
+      <div id="sc-scrollhint" style="display:none;font-size:10px;color:#888;margin-top:2px">← scrollen →</div>
     </div>
     <div class="spill">
       <div class="spv" id="sc-pill">–</div>
@@ -246,17 +266,21 @@ input,select,button{font-family:'DM Sans',sans-serif}
   <div class="mbar" id="mbar" style="display:none"></div>
   <div class="stabs">
     <button class="stab on" id="stf" onclick="setScTab('front')">FRONT 9 (1–9)</button>
-    <button class="stab" id="stb" onclick="setScTab('back')">BACK 9 (10–18)</button>
+    <button class="stab"    id="stb" onclick="setScTab('back')">BACK 9 (10–18)</button>
   </div>
-  <div class="colh" id="colh"></div>
-  <div id="sc-holes"></div>
+  <div id="sc-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <div id="sc-inner" style="min-width:100%">
+      <div class="colh" id="colh"></div>
+      <div id="sc-holes"></div>
+    </div>
+  </div>
   <div style="height:82px"></div>
   <div class="swrap">
     <button class="sbtn serif" id="savebtn" onclick="saveScore()">Score speichern ✓</button>
   </div>
 </div>
 
-<!-- ══ ADMIN ══ -->
+<!-- VIEW: ADMIN -->
 <div id="view-admin" class="view">
   <div class="hdr">
     <button class="back" onclick="showView('lb')">←</button>
@@ -271,27 +295,25 @@ input,select,button{font-family:'DM Sans',sans-serif}
         <input class="inp" type="date" id="a-d2">
       </div>
     </section>
-
     <section>
       <div class="albl">PLÄTZE</div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600">TAG 1</div>
       <select class="cdrop" id="ac1s" onchange="loadCourse(1,this.value)"><option value="">— Gespeicherten Platz laden —</option></select>
       <input class="inp" id="ac1n" placeholder="Platzname Tag 1" style="margin-bottom:4px">
       <div class="r2" style="margin-bottom:10px">
-        <input class="inp" type="number" id="ac1p" placeholder="Par (z.B. 72)">
-        <input class="inp" id="ac1si" placeholder="SI kommagetrennt" style="font-size:12px">
+        <input class="inp" type="number" id="ac1p"  placeholder="Par (z.B. 72)">
+        <input class="inp"               id="ac1si" placeholder="SI kommagetrennt" style="font-size:12px">
       </div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600">TAG 2</div>
       <select class="cdrop" id="ac2s" onchange="loadCourse(2,this.value)"><option value="">— Gespeicherten Platz laden —</option></select>
       <input class="inp" id="ac2n" placeholder="Platzname Tag 2" style="margin-bottom:4px">
       <div class="r2">
-        <input class="inp" type="number" id="ac2p" placeholder="Par (z.B. 72)">
-        <input class="inp" id="ac2si" placeholder="SI kommagetrennt" style="font-size:12px">
+        <input class="inp" type="number" id="ac2p"  placeholder="Par (z.B. 72)">
+        <input class="inp"               id="ac2si" placeholder="SI kommagetrennt" style="font-size:12px">
       </div>
     </section>
-
     <section>
-      <div class="albl">TEAMS & SPIELER</div>
+      <div class="albl">TEAMS &amp; SPIELER</div>
       <div class="tbox">
         <div class="thdr">
           <div class="tdot" style="background:var(--ta)"></div>
@@ -317,682 +339,719 @@ input,select,button{font-family:'DM Sans',sans-serif}
         </div>
       </div>
     </section>
-
     <section>
       <div class="albl">PAARUNGEN</div>
       <div class="dtabs">
         <button class="dtab on" onclick="setPD(1)">TAG 1</button>
-        <button class="dtab" onclick="setPD(2)">TAG 2</button>
+        <button class="dtab"    onclick="setPD(2)">TAG 2</button>
       </div>
       <div id="a-pairs"></div>
       <button onclick="addPair()" style="width:100%;padding:10px;background:var(--bg2);border:2px dashed var(--acc);border-radius:10px;color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px">+ Paarung hinzufügen</button>
     </section>
-
-    <button class="rstbtn" onclick="resetAll()">Alles zurücksetzen</button>
-    <button class="primbtn serif" onclick="saveAdmin()">Speichern & Starten ✓</button>
+    <button class="rstbtn"       onclick="resetAll()">Alles zurücksetzen</button>
+    <button class="primbtn serif" onclick="saveAdmin()">Speichern &amp; Starten ✓</button>
   </div>
 </div>
 
 <script>
-// ═══════════════ FIREBASE ═══════════════
-const FB={
-  apiKey:"AIzaSyDiijlLGQJebM0plfZXssTh4bXb1qTQ5YQ",
-  authDomain:"rydercupelkofen.firebaseapp.com",
-  databaseURL:"https://rydercupelkofen-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"rydercupelkofen",
-  storageBucket:"rydercupelkofen.firebasestorage.app",
-  messagingSenderId:"494603962762",
-  appId:"1:494603962762:web:ab4b5156d61dc3572de073"
-};
+'use strict';
 
-// ═══════════════ SUPABASE ═══════════════
-const SBU='https://pukixlbdbdbbsmqobfhj.supabase.co';
-const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
-async function sbGet(p){
-  const r=await fetch(SBU+'/rest/v1/'+p,{headers:{apikey:SBK,Authorization:'Bearer '+SBK}});
-  return r.ok?r.json():[];
+// ─────────────────────────────────────────
+// KONFIGURATION
+// ─────────────────────────────────────────
+const FB_CONFIG = {
+  apiKey:            'AIzaSyDiijlLGQJebM0plfZXssTh4bXb1qTQ5YQ',
+  authDomain:        'rydercupelkofen.firebaseapp.com',
+  databaseURL:       'https://rydercupelkofen-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId:         'rydercupelkofen',
+  storageBucket:     'rydercupelkofen.firebasestorage.app',
+  messagingSenderId: '494603962762',
+  appId:             '1:494603962762:web:ab4b5156d61dc3572de073'
+};
+const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
+
+const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
+const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
+
+// ─────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────
+const today   = () => new Date().toISOString().slice(0,10);
+const uid     = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const esc     = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const firstName = n => (n||'–').split(' ')[0];
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// ═══════════════ CONSTANTS ═══════════════
-const DPAR=[4,5,3,4,4,3,5,4,4,4,4,3,5,4,3,4,5,4];
-const DSI=[7,1,15,11,5,17,3,9,13,8,2,16,12,6,18,4,10,14];
-
-function today(){return new Date().toISOString().slice(0,10);}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-function dc(d){if(d<=-2)return'#f4c430';if(d===-1)return'#4ade80';if(d===0)return'#94a3b8';if(d===1)return'#fb923c';return'#f87171';}
-function dl(d){if(d<=-2)return'Eagle';if(d===-1)return'Birdie';if(d===0)return'Par';if(d===1)return'Bogey';if(d===2)return'Double';return`+${d}`;}
-
-function xStr(idx,hcp,si){
-  const s=(si||DSI)[idx]||idx+1;
-  const h=Math.round(Math.abs(hcp))*(hcp<0?-1:1);
-  if(h>=0)return Math.floor(h/18)+(h%18>=s?1:0);
-  const a=Math.abs(h);return-(Math.floor(a/18)+(a%18>=s?1:0));
+async function sbGet(path) {
+  const r = await fetch(SB_URL+'/rest/v1/'+path, { headers:{ apikey:SB_KEY, Authorization:'Bearer '+SB_KEY } });
+  return r.ok ? r.json() : [];
 }
-function net(b,i,h,si){return b==null?null:b-xStr(i,h,si);}
-function stbl(n,p){if(n==null)return 0;const d=n-p;if(d>=2)return 0;if(d===1)return 1;if(d===0)return 2;if(d===-1)return 3;if(d===-2)return 4;return 5;}
 
-// ═══════════════ STATE ═══════════════
-let S={
-  eventName:'Ryder Cup Elkofen',date1:today(),date2:today(),
-  teamA:{name:'Team Rot',players:[]},
-  teamB:{name:'Team Blau',players:[]},
-  courses:{1:{name:'',par:[...DPAR],si:[...DSI]},2:{name:'',par:[...DPAR],si:[...DSI]}},
-  pairings:{1:[],2:[]}
+// ─────────────────────────────────────────
+// HANDICAP & SCORING
+// ─────────────────────────────────────────
+
+/**
+ * Extraschläge für ein Loch.
+ *
+ * Formel:
+ *   base  = floor(|hcp| / 18)   → Schläge die jedes Loch bekommt
+ *   rem   = |hcp| % 18          → verbleibende Schläge für die besten rem Löcher
+ *   Ein Loch bekommt einen Extraschlag wenn holeSI <= rem  (und rem > 0)
+ *
+ * Beispiel hcp=20, holeSI=3:
+ *   base=1, rem=2 → holeSI 3 > rem 2 → kein extra → gesamt 1
+ * Beispiel hcp=20, holeSI=1:
+ *   base=1, rem=2 → holeSI 1 <= rem 2 → extra 1  → gesamt 2
+ * Beispiel hcp=18, holeSI=1:
+ *   base=1, rem=0 → rem==0 → kein extra → gesamt 1 (alle Löcher bekommen genau 1)
+ */
+function extraStrokes(holeIdx, hcp, si) {
+  const holeSI = (si || DEF_SI)[holeIdx] || (holeIdx + 1);
+  const h = Math.round(Math.abs(hcp)) * (hcp < 0 ? -1 : 1);
+  if (h >= 0) {
+    const base = Math.floor(h / 18);
+    const rem  = h % 18;
+    return base + (rem > 0 && holeSI <= rem ? 1 : 0);
+  } else {
+    const a    = Math.abs(h);
+    const base = Math.floor(a / 18);
+    const rem  = a % 18;
+    return -(base + (rem > 0 && holeSI <= rem ? 1 : 0));
+  }
+}
+
+/** Netto-Score = Brutto minus Extraschläge */
+function netScore(brutto, holeIdx, hcp, si) {
+  if (brutto == null) return null;
+  return brutto - extraStrokes(holeIdx, hcp, si);
+}
+
+/**
+ * Stableford-Punkte (Netto gegen Par):
+ *   Eagle oder besser (+2) → 4 Pkt
+ *   Birdie           (+1) → 3 Pkt
+ *   Par               (0) → 2 Pkt
+ *   Bogey            (-1) → 1 Pkt
+ *   Double oder schlechter → 0 Pkt
+ */
+function stablefordPts(netto, par) {
+  if (netto == null) return 0;
+  const diff = netto - par;
+  if (diff <= -2) return 4;
+  if (diff === -1) return 3;
+  if (diff ===  0) return 2;
+  if (diff ===  1) return 1;
+  return 0;
+}
+
+// ─────────────────────────────────────────
+// MATCH BERECHNUNG
+// ─────────────────────────────────────────
+
+function calcMatch(pairing, day) {
+  if (!pairing) return { ptA:0, ptB:0, status:'open' };
+  const sc   = pairing.scores || {};
+  const c    = getCourse(Number(day) || 1);
+  const par  = c.par || DEF_PAR;
+  const si   = c.si  || DEF_SI;
+  const bn   = pairing.bruttoNetto || 'brutto';
+  const mode = pairing.mode || 'matchplay';
+  const hA   = playerHcp(pairing.playerA);
+  const hB   = playerHcp(pairing.playerB);
+  const hA2  = playerHcp(pairing.playerA2 || '');
+  const hB2  = playerHcp(pairing.playerB2 || '');
+  if (mode === 'matchplay') return calcMatchplay(sc, hA, hB, par, si, bn);
+  if (mode === 'bestball')  return calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn);
+  return calcStableford(sc, hA, hB, par, si);
+}
+
+/**
+ * MATCHPLAY 1v1
+ * Gewinner pro Loch: niedrigerer Score (Netto oder Brutto).
+ * Match endet sobald der Vorsprung die verbleibenden Löcher übersteigt.
+ */
+function calcMatchplay(sc, hA, hB, par, si, bn) {
+  const sA = sc.playerA || Array(18).fill(null);
+  const sB = sc.playerB || Array(18).fill(null);
+  let wA = 0, wB = 0, played = 0;
+  for (let i = 0; i < 18; i++) {
+    if (sA[i] == null || sB[i] == null) continue;
+    played++;
+    const vA = bn === 'netto' ? netScore(sA[i], i, hA, si) : sA[i];
+    const vB = bn === 'netto' ? netScore(sB[i], i, hB, si) : sB[i];
+    if      (vA < vB) wA++;
+    else if (vB < vA) wB++;
+  }
+  return matchStatus(wA, wB, played);
+}
+
+/**
+ * BEST BALL 2v2
+ * Bestes Ergebnis je Team pro Loch zählt.
+ * Loch wird gewertet wenn mind. ein Spieler pro Team eingetragen hat.
+ * Match endet wie Matchplay (vorzeitiges Ende möglich).
+ */
+function calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn) {
+  const sA  = sc.playerA  || Array(18).fill(null);
+  const sA2 = sc.playerA2 || Array(18).fill(null);
+  const sB  = sc.playerB  || Array(18).fill(null);
+  const sB2 = sc.playerB2 || Array(18).fill(null);
+  let wA = 0, wB = 0, played = 0;
+  for (let i = 0; i < 18; i++) {
+    const hasA = sA[i] != null || sA2[i] != null;
+    const hasB = sB[i] != null || sB2[i] != null;
+    if (!hasA || !hasB) continue;
+    played++;
+    const vA1 = sA[i]  != null ? (bn === 'netto' ? netScore(sA[i],  i, hA,  si) : sA[i])  : 999;
+    const vA2 = sA2[i] != null ? (bn === 'netto' ? netScore(sA2[i], i, hA2, si) : sA2[i]) : 999;
+    const vB1 = sB[i]  != null ? (bn === 'netto' ? netScore(sB[i],  i, hB,  si) : sB[i])  : 999;
+    const vB2 = sB2[i] != null ? (bn === 'netto' ? netScore(sB2[i], i, hB2, si) : sB2[i]) : 999;
+    const bestA = Math.min(vA1, vA2);
+    const bestB = Math.min(vB1, vB2);
+    if      (bestA < bestB) wA++;
+    else if (bestB < bestA) wB++;
+  }
+  return matchStatus(wA, wB, played);
+}
+
+/** Gemeinsame Matchplay-Statusberechnung (für 1v1 und 2v2) */
+function matchStatus(wA, wB, played) {
+  const lead = wA - wB;
+  const left = 18 - played;
+  let status = 'open';
+  if (played > 0) {
+    if      (lead  >  left) status = 'A';
+    else if (-lead >  left) status = 'B';
+    else if (played === 18) status = lead > 0 ? 'A' : lead < 0 ? 'B' : 'draw';
+    else                    status = 'running';
+  }
+  return {
+    ptA:    status === 'A'    ? 1 : status === 'draw' ? 0.5 : 0,
+    ptB:    status === 'B'    ? 1 : status === 'draw' ? 0.5 : 0,
+    status, lead, played, wA, wB
+  };
+}
+
+/**
+ * STABLEFORD 1v1
+ * Jeder Spieler sammelt Stableford-Punkte (Netto gegen Par).
+ * Matchpunkt nach 18 Löchern: mehr Punkte gewinnt.
+ */
+function calcStableford(sc, hA, hB, par, si) {
+  const sA = sc.playerA || Array(18).fill(null);
+  const sB = sc.playerB || Array(18).fill(null);
+  let pA = 0, pB = 0, played = 0;
+  for (let i = 0; i < 18; i++) {
+    if (sA[i] == null || sB[i] == null) continue;
+    played++;
+    pA += stablefordPts(netScore(sA[i], i, hA, si), par[i] || 4);
+    pB += stablefordPts(netScore(sB[i], i, hB, si), par[i] || 4);
+  }
+  const done   = played === 18;
+  const status = played === 0 ? 'open' : !done ? 'running' : pA > pB ? 'A' : pB > pA ? 'B' : 'draw';
+  return {
+    ptA:    done ? (pA > pB ? 1 : pA === pB ? 0.5 : 0) : 0,
+    ptB:    done ? (pB > pA ? 1 : pA === pB ? 0.5 : 0) : 0,
+    status, played, ptsA: pA, ptsB: pB
+  };
+}
+
+function dayPoints(day) {
+  let pA = 0, pB = 0;
+  (S.pairings?.[day] || []).forEach(p => {
+    const r = calcMatch(p, Number(day));
+    pA += r.ptA;
+    pB += r.ptB;
+  });
+  return { pA, pB };
+}
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let S = {
+  eventName: 'Ryder Cup Elkofen',
+  date1: today(), date2: today(),
+  teamA: { name: 'Team Rot',  players: [] },
+  teamB: { name: 'Team Blau', players: [] },
+  courses: {
+    1: { name:'', par:[...DEF_PAR], si:[...DEF_SI] },
+    2: { name:'', par:[...DEF_PAR], si:[...DEF_SI] }
+  },
+  pairings: { 1:[], 2:[] }
 };
 
-// Current score session
-let CUR={
-  pid:null,     // pairing id
-  day:null,     // 1 or 2
-  role:null,    // 'playerA' or 'playerB'
-  forBoth:false,
-  scores:{playerA:Array(18).fill(null),playerB:Array(18).fill(null)},
+let CUR = {
+  pid:null, day:null, role:null, forBoth:false,
+  scores:{ playerA:Array(18).fill(null), playerA2:Array(18).fill(null), playerB:Array(18).fill(null), playerB2:Array(18).fill(null) },
   tab:'front'
 };
 
-let myId='';   // logged-in player id
-let curDay=1;
-let admPDay=1;
+let myId = '', curDay = 1, admPDay = 1;
 
-// ═══════════════ FIREBASE INIT ═══════════════
-window._fb=async()=>{};
-function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+// ─────────────────────────────────────────
+// FIREBASE
+// ─────────────────────────────────────────
+window._fbSet = async () => {};
 
-async function initFB(){
+function loadScript(src) {
+  return new Promise((res,rej) => { const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+}
+
+async function initFirebase() {
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js');
-  if(!firebase.apps.length)firebase.initializeApp(FB);
-  const db=firebase.database();
-  window._fb=(path,data)=>db.ref(path).set(data);
-  // Load initial state
-  const snap=await db.ref('rc').get();
-  if(snap.exists())S=snap.val();
-  // Restore logged-in player
-  try{const saved=localStorage.getItem('rc_me_'+S.eventName);if(saved)myId=saved;}catch(e){}
+  if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+  const db = firebase.database();
+  window._fbSet = (path, data) => db.ref(path).set(data);
+  const snap = await db.ref('rc').get();
+  if (snap.exists()) S = snap.val();
+  try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
   renderLB();
   toast('🟢 Live verbunden');
-  // Ausstehende Offline-Saves synchronisieren
   syncOffline();
-  // Listen for changes
-  db.ref('rc').on('value',snap=>{
-    if(!snap.exists())return;
-    S=snap.val();
+  db.ref('rc').on('value', snap => {
+    if (!snap.exists()) return;
+    S = snap.val();
     renderLB();
-    // Update scorecard if open: refresh opponent's scores
-    if(document.getElementById('view-score').classList.contains('active')&&CUR.pid){
-      const p=getP(CUR.pid,CUR.day);
-      if(p&&p.scores&&!CUR.forBoth){
-        // Alle anderen Rollen aktualisieren (nicht die eigene)
-        ['playerA','playerA2','playerB','playerB2'].forEach(role=>{
-          if(role!==CUR.role&&p.scores[role]){
-            CUR.scores[role]=[...p.scores[role]];
-          }
+    if (document.getElementById('view-score').classList.contains('active') && CUR.pid) {
+      const p = getPairing(CUR.pid, CUR.day);
+      if (p && p.scores && !CUR.forBoth) {
+        ['playerA','playerA2','playerB','playerB2'].forEach(role => {
+          if (role !== CUR.role && p.scores[role]) CUR.scores[role] = [...p.scores[role]];
         });
         renderHoles();
-        updateStatus();
+        updateMatchStatus();
       }
     }
   });
 }
-initFB().catch(e=>{
-  console.warn(e);
-  // Lokale Daten laden falls vorhanden
-  const local=loadLocal();
-  if(local){S=local;toast('📶 Offline — lokale Daten geladen');renderLB();}
-  else{toast('⚠️ Offline — keine lokalen Daten');renderLB();}
-  // Alle 30 Sekunden versuchen zu verbinden
-  setInterval(syncOffline,30000);
+
+initFirebase().catch(err => {
+  console.warn('Firebase:', err);
+  const local = loadLocalState();
+  if (local) { S = local; toast('📶 Offline — lokale Daten geladen'); }
+  else          toast('⚠️ Offline — keine lokalen Daten');
+  renderLB();
+  setInterval(syncOffline, 30000);
 });
 
-// ═══════════════ HELPERS ═══════════════
-function allP(){
-  return[
-    ...(S.teamA?.players||[]).map(p=>({...p,team:'a'})),
-    ...(S.teamB?.players||[]).map(p=>({...p,team:'b'}))
-  ];
-}
-function pName(id){return allP().find(p=>p.id===id)?.name||'–';}
-function pHcp(id){return Number(allP().find(p=>p.id===id)?.hcp)||0;}
-function getCourse(d){return S.courses?.[Number(d)]||{par:DPAR,si:DSI};}
-function getP(id,day){return(S.pairings?.[day]||[]).find(p=>p.id===id)||null;}
+// ─────────────────────────────────────────
+// OFFLINE BUFFER
+// ─────────────────────────────────────────
+const LS_KEY = 'rc_offline_' + location.pathname;
+const saveLocalState  = state => { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {} };
+const loadLocalState  = ()    => { try { const d=localStorage.getItem(LS_KEY); return d?JSON.parse(d):null; } catch(e){ return null; } };
+const clearLocalState = ()    => { try { localStorage.removeItem(LS_KEY); } catch(e) {} };
 
-// ═══════════════ CALC ═══════════════
-function calcMatch(p,day){
-  if(!p)return{ptA:0,ptB:0,status:'open'};
-  const sc=p.scores||{};
-  const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
-  const c=getCourse(Number(day)||1);
-  const par=c.par||DPAR,si=c.si||DSI;
-  const bn=p.bruttoNetto||'brutto';
-  const mode=p.mode||'matchplay';
-  if(mode==='matchplay')return calcMP(sc,hA,hB,par,si,bn);
-  const hA2=pHcp(p.playerA2||'');
-  const hB2=pHcp(p.playerB2||'');
-  if(mode==='bestball') return calcBB(sc,hA,hB,par,si,bn,hA2,hB2);
-  return calcSF(sc,hA,hB,par,si);
+async function syncOffline() {
+  const local = loadLocalState();
+  if (!local) return;
+  try {
+    await window._fbSet('rc', local);
+    S = local; clearLocalState();
+    toast('📶 Offline-Scores synchronisiert!');
+    renderLB();
+  } catch(e) {}
 }
+window.addEventListener('online', () => { toast('📶 Verbindung zurück…'); setTimeout(syncOffline, 1000); });
 
-function calcMP(sc,hA,hB,par,si,bn){
-  const sA=sc.playerA||Array(18).fill(null);
-  const sB=sc.playerB||Array(18).fill(null);
-  let wA=0,wB=0,played=0;
-  for(let i=0;i<18;i++){
-    if(sA[i]==null||sB[i]==null)continue;
-    played++;
-    const vA=bn==='netto'?net(sA[i],i,hA,si):sA[i];
-    const vB=bn==='netto'?net(sB[i],i,hB,si):sB[i];
-    if(vA<vB)wA++;else if(vB<vA)wB++;
-  }
-  const lead=wA-wB,left=18-played;
-  let status='open';
-  if(played>0){
-    if(lead>left)status='A';
-    else if(-lead>left)status='B';
-    else if(played===18)status=lead>0?'A':lead<0?'B':'draw';
-    else status='running';
-  }
-  return{ptA:status==='A'?1:status==='draw'?0.5:0,ptB:status==='B'?1:status==='draw'?0.5:0,status,lead,played,wA,wB};
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+const allPlayers  = () => [...(S.teamA?.players||[]).map(p=>({...p,team:'a'})), ...(S.teamB?.players||[]).map(p=>({...p,team:'b'}))];
+const playerName  = id => allPlayers().find(p=>p.id===id)?.name || '–';
+const playerHcp   = id => Number(allPlayers().find(p=>p.id===id)?.hcp) || 0;
+const getCourse   = day => S.courses?.[Number(day)] || { par:DEF_PAR, si:DEF_SI };
+const getPairing  = (id,day) => (S.pairings?.[day]||[]).find(p=>p.id===id) || null;
+
+// ─────────────────────────────────────────
+// PLAYER BAR
+// ─────────────────────────────────────────
+function setMe(id) {
+  myId = id;
+  try { localStorage.setItem('rc_me_'+S.eventName, id); } catch(e) {}
+  if (id) toast('✓ '+playerName(id));
 }
 
-function calcBB(sc,hA,hB,par,si,bn,hA2,hB2){
-  const sA=sc.playerA||Array(18).fill(null);
-  const sB=sc.playerB||Array(18).fill(null);
-  const sA2=sc.playerA2||Array(18).fill(null);
-  const sB2=sc.playerB2||Array(18).fill(null);
-  let pA=0,pB=0,played=0;
-  for(let i=0;i<18;i++){
-    const hasA=sA[i]!=null||sA2[i]!=null;
-    const hasB=sB[i]!=null||sB2[i]!=null;
-    if(!hasA||!hasB)continue;
-    played++;
-    const vA1=sA[i]!=null?(bn==='netto'?net(sA[i],i,hA,si):sA[i]):999;
-    const vA2=sA2[i]!=null&&hA2!=null?(bn==='netto'?net(sA2[i],i,hA2,si):sA2[i]):999;
-    const bestA=Math.min(vA1,vA2);
-    const vB1=sB[i]!=null?(bn==='netto'?net(sB[i],i,hB,si):sB[i]):999;
-    const vB2=sB2[i]!=null&&hB2!=null?(bn==='netto'?net(sB2[i],i,hB2,si):sB2[i]):999;
-    const bestB=Math.min(vB1,vB2);
-    if(bestA<bestB)pA++;else if(bestB<bestA)pB++;else{pA+=0.5;pB+=0.5;}
-  }
-  const done=played===18;
-  const st=played===0?'open':pA>pB?'A':pB>pA?'B':'draw';
-  return{ptA:done?(pA>pB?1:pA===pB?0.5:0):0,ptB:done?(pB>pA?1:pA===pB?0.5:0):0,status:st,played,ptsA:pA,ptsB:pB};
-}
-
-function calcSF(sc,hA,hB,par,si){
-  const sA=sc.playerA||Array(18).fill(null);
-  const sB=sc.playerB||Array(18).fill(null);
-  let pA=0,pB=0,played=0;
-  for(let i=0;i<18;i++){
-    if(sA[i]==null||sB[i]==null)continue;
-    played++;
-    pA+=stbl(net(sA[i],i,hA,si),par[i]||4);
-    pB+=stbl(net(sB[i],i,hB,si),par[i]||4);
-  }
-  const done=played===18;
-  const st=played===0?'open':pA>pB?'A':pB>pA?'B':'draw';
-  return{ptA:done?(pA>pB?1:pA===pB?0.5:0):0,ptB:done?(pB>pA?1:pA===pB?0.5:0):0,status:st,played,ptsA:pA,ptsB:pB};
-}
-
-function dayPts(day){
-  let pA=0,pB=0;
-  const pairs=(S.pairings?.[day])||[];
-  pairs.forEach(p=>{
-    const r=calcMatch(p,Number(day));
-    pA+=r.ptA;pB+=r.ptB;
-  });
-  return{pA,pB};
-}
-
-// ═══════════════ PLAYER BAR ═══════════════
-function setMe(id){
-  myId=id;
-  try{localStorage.setItem('rc_me_'+S.eventName,id);}catch(e){}
-  if(id)toast('✓ '+pName(id));
-}
-
-function renderPBar(){
-  const all=allP();
-  const bar=document.getElementById('pbar');
-  const sel=document.getElementById('pbar-sel');
-  if(!all.length){bar.style.display='none';return;}
+function renderPlayerBar() {
+  const all = allPlayers();
+  const bar = document.getElementById('pbar');
+  const sel = document.getElementById('pbar-sel');
+  if (!all.length) { bar.style.display='none'; return; }
   bar.style.display='flex';
-  sel.innerHTML='<option value="">— Spieler auswählen —</option>'+
-    ['a','b'].map(t=>{
-      const tp=all.filter(p=>p.team===t);if(!tp.length)return'';
-      const tn=t==='a'?(S.teamA?.name||'Team A'):(S.teamB?.name||'Team B');
-      return`<optgroup label="🏌️ ${tn}">${tp.map(p=>`<option value="${p.id}"${p.id===myId?' selected':''}>${esc(p.name)} (${p.hcp||0})</option>`).join('')}</optgroup>`;
+  sel.innerHTML = '<option value="">— Spieler auswählen —</option>' +
+    ['a','b'].map(t => {
+      const tp = all.filter(p=>p.team===t); if (!tp.length) return '';
+      const tn = t==='a'?(S.teamA?.name||'Team A'):(S.teamB?.name||'Team B');
+      return `<optgroup label="🏌️ ${tn}">${tp.map(p=>`<option value="${p.id}"${p.id===myId?' selected':''}>${esc(p.name)} (${p.hcp||0})</option>`).join('')}</optgroup>`;
     }).join('');
 }
 
-// ═══════════════ LEADERBOARD ═══════════════
-function setDay(d){
-  curDay=d;
-  document.querySelectorAll('.htab[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d==d));
+// ─────────────────────────────────────────
+// LEADERBOARD
+// ─────────────────────────────────────────
+function setDay(d) {
+  curDay = d;
+  document.querySelectorAll('.htab[data-d]').forEach(b => b.classList.toggle('on', b.dataset.d==d));
   renderLB();
 }
 
-function renderLB(){
-  document.getElementById('lb-name').textContent=S.eventName||'Ryder Cup';
-  document.getElementById('lb-ta').textContent=S.teamA?.name||'TEAM A';
-  document.getElementById('lb-tb').textContent=S.teamB?.name||'TEAM B';
-  const c=getCourse(curDay==='total'?1:curDay);
-  document.getElementById('lb-sub').textContent=curDay==='total'?'Gesamtstand':`Tag ${curDay}${c.name?' · '+c.name:''}`;
-  document.getElementById('lb-day').textContent=curDay==='total'?'GESAMT':`TAG ${curDay}`;
-  let pA=0,pB=0;
-  if(curDay==='total'){const d1=dayPts(1),d2=dayPts(2);pA=d1.pA+d2.pA;pB=d1.pB+d2.pB;}
-  else{const d=dayPts(curDay);pA=d.pA;pB=d.pB;}
-  document.getElementById('lb-pta').textContent=Number.isInteger(pA)?pA:pA.toFixed(1);
-  document.getElementById('lb-ptb').textContent=Number.isInteger(pB)?pB:pB.toFixed(1);
-  renderPBar();
-  const days=curDay==='total'?[1,2]:[curDay];
-  let html='';
-  days.forEach(day=>{
-    const pairs=S.pairings?.[day]||[];
-    if(curDay==='total')html+=`<div class="sh">TAG ${day}</div>`;
-    if(!pairs.length){html+=`<div class="empty">Keine Paarungen für Tag ${day}</div>`;return;}
-    pairs.forEach(p=>{
-      const r=calcMatch({...p},day);
-      const mL=p.mode==='matchplay'?'MATCHPLAY':p.mode==='bestball'?'BEST BALL':'STABLEFORD';
-      const mC=p.mode==='matchplay'?'bm':p.mode==='bestball'?'bb':'bs';
-      const bnL=p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
-      const nA=pName(p.playerA)+(p.mode==='bestball'&&p.playerA2?'/'+pName(p.playerA2):'');
-      const nB=pName(p.playerB)+(p.mode==='bestball'&&p.playerB2?'/'+pName(p.playerB2):'');
-      const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
-      let rh='';
-      if(r.status==='open'){rh=`<div class="rpill rpo">Noch nicht gespielt</div>`;}
-      else{
-        let txt='',cls='rpd';
-        if(p.mode==='matchplay'){
-          const lead=r.lead||0;
-          if(lead===0){txt='All Square';}
-          else if(lead>0){txt=`${esc(nA.split(' ')[0])} ${lead} UP`;cls='rpa';}
-          else{txt=`${esc(nB.split(' ')[0])} ${Math.abs(lead)} UP`;cls='rpb';}
-          if(r.status==='A'||r.status==='B')txt+=' ✓';
-        }else if(p.mode==='stableford'){
+function renderLB() {
+  document.getElementById('lb-name').textContent = S.eventName || 'Ryder Cup';
+  document.getElementById('lb-ta').textContent   = S.teamA?.name || 'TEAM A';
+  document.getElementById('lb-tb').textContent   = S.teamB?.name || 'TEAM B';
+  const c = getCourse(curDay==='total' ? 1 : curDay);
+  document.getElementById('lb-sub').textContent = curDay==='total' ? 'Gesamtstand' : `Tag ${curDay}${c.name?' · '+c.name:''}`;
+  document.getElementById('lb-day').textContent = curDay==='total' ? 'GESAMT' : `TAG ${curDay}`;
+  let pA=0, pB=0;
+  if (curDay==='total') { const d1=dayPoints(1), d2=dayPoints(2); pA=d1.pA+d2.pA; pB=d1.pB+d2.pB; }
+  else { ({pA,pB}=dayPoints(curDay)); }
+  document.getElementById('lb-pta').textContent = Number.isInteger(pA)?pA:pA.toFixed(1);
+  document.getElementById('lb-ptb').textContent = Number.isInteger(pB)?pB:pB.toFixed(1);
+  renderPlayerBar();
+
+  const days = curDay==='total' ? [1,2] : [curDay];
+  let html = '';
+  days.forEach(day => {
+    const pairs = S.pairings?.[day] || [];
+    if (curDay==='total') html += `<div class="sh">TAG ${day}</div>`;
+    if (!pairs.length) { html += `<div class="empty">Keine Paarungen für Tag ${day}</div>`; return; }
+    pairs.forEach(p => {
+      const r     = calcMatch({...p}, day);
+      const mode  = p.mode || 'matchplay';
+      const mLbl  = mode==='matchplay'?'MATCHPLAY':mode==='bestball'?'BEST BALL':'STABLEFORD';
+      const mCls  = mode==='matchplay'?'bm':mode==='bestball'?'bb':'bs';
+      const bnLbl = p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
+      const nA = playerName(p.playerA)+(mode==='bestball'&&p.playerA2?'/'+playerName(p.playerA2):'');
+      const nB = playerName(p.playerB)+(mode==='bestball'&&p.playerB2?'/'+playerName(p.playerB2):'');
+      const hA = playerHcp(p.playerA), hB = playerHcp(p.playerB);
+
+      let pillHtml = '';
+      if (r.status==='open') {
+        pillHtml = `<div class="rpill rpo">Noch nicht gespielt</div>`;
+      } else {
+        let txt='', cls='rpd';
+        if (mode==='matchplay'||mode==='bestball') {
+          const lead  = r.lead||0;
+          const nameA = esc(firstName(nA));
+          const nameB = esc(firstName(nB));
+          if      (lead===0)  { txt='All Square'; }
+          else if (lead > 0)  { txt=`${nameA} ${lead} UP`; cls='rpa'; }
+          else                { txt=`${nameB} ${Math.abs(lead)} UP`; cls='rpb'; }
+          if (r.status==='A'||r.status==='B') txt+=' ✓';
+        } else {
           txt=`${r.ptsA||0} – ${r.ptsB||0} Pkt`;
           cls=r.status==='A'?'rpa':r.status==='B'?'rpb':'rpd';
-        }else{
-          txt=`Loch ${r.played}/18`;
-          cls=r.status==='A'?'rpa':r.status==='B'?'rpb':'rpd';
         }
-        rh=`<div class="rpill ${cls}">${txt}</div>`;
+        pillHtml = `<div class="rpill ${cls}">${txt}</div>`;
       }
-      html+=`<div class="pc" onclick="openSheet('${p.id}',${day})">
-        <div><span class="mbadge ${mC}">${mL}${bnL}</span></div>
+
+      const hasA = p.scores?.playerA?.some(s=>s!=null);
+      const hasB = p.scores?.playerB?.some(s=>s!=null);
+      const entryInfo = (hasA||hasB) ? `<div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:4px">${hasA?'🔴 eingetragen':'🔴 ⏳ offen'} &nbsp;·&nbsp; ${hasB?'🔵 eingetragen':'🔵 ⏳ offen'}</div>` : '';
+
+      html += `<div class="pc" onclick="openSheet('${p.id}',${day})">
+        <div><span class="mbadge ${mCls}">${mLbl}${bnLbl}</span></div>
         <div class="pg">
           <div><div class="pna">${esc(nA)}</div><div class="phcp" style="text-align:right">Vorg. ${hA}</div></div>
           <div class="pvs">VS</div>
           <div><div class="pnb">${esc(nB)}</div><div class="phcp">Vorg. ${hB}</div></div>
         </div>
-        <div class="pr">${rh}</div>
-        ${(()=>{
-          const hasA=p.scores&&p.scores.playerA&&p.scores.playerA.some(s=>s!=null);
-          const hasB=p.scores&&p.scores.playerB&&p.scores.playerB.some(s=>s!=null);
-          if(!hasA&&!hasB)return'';
-          return '<div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:4px">'+
-            (hasA?'🔴 eingetragen':'🔴 ⏳ offen')+' &nbsp;·&nbsp; '+(hasB?'🔵 eingetragen':'🔵 ⏳ offen')+
-            '</div>';
-        })()}
+        <div class="pr">${pillHtml}</div>
+        ${entryInfo}
       </div>`;
     });
   });
-  document.getElementById('lb-pairs').innerHTML=html||
-    '<div class="empty"><div style="font-size:40px">⛳</div><div style="margin-top:8px">Keine Paarungen</div><div style="font-size:11px;margin-top:4px">Admin öffnen zum Einrichten</div></div>';
+  document.getElementById('lb-pairs').innerHTML = html ||
+    `<div class="empty"><div style="font-size:40px">⛳</div><div style="margin-top:8px">Keine Paarungen</div><div style="font-size:11px;margin-top:4px">Admin öffnen zum Einrichten</div></div>`;
 }
 
-// ═══════════════ SHEET ═══════════════
+// ─────────────────────────────────────────
+// ROLE SHEET
+// ─────────────────────────────────────────
 let sheetPid=null, sheetDay=null;
 
-function openSheet(pid,day){
+function openSheet(pid, day) {
   sheetPid=pid; sheetDay=day;
-  const p=getP(pid,day);if(!p)return;
-  const nA=pName(p.playerA),nB=pName(p.playerB);
-  const nA2=p.playerA2?pName(p.playerA2):'';
-  const nB2=p.playerB2?pName(p.playerB2):'';
-  const isBB=p.mode==='bestball';
-  const titleTxt=isBB
-    ?`${nA}${nA2?'/'+nA2:''} vs ${nB}${nB2?'/'+nB2:''}`
-    :`${nA} vs ${nB}`;
-  document.getElementById('sheet-title').textContent=titleTxt;
-  const sel=document.getElementById('sheet-sel');
+  const p = getPairing(pid, day); if (!p) return;
+  const isBB = p.mode==='bestball';
+  const nA=playerName(p.playerA), nB=playerName(p.playerB);
+  const nA2=p.playerA2?playerName(p.playerA2):'';
+  const nB2=p.playerB2?playerName(p.playerB2):'';
+  document.getElementById('sheet-title').textContent =
+    isBB ? `${nA}${nA2?'/'+nA2:''} vs ${nB}${nB2?'/'+nB2:''}` : `${nA} vs ${nB}`;
+  const sel = document.getElementById('sheet-sel');
   let opts='';
-  if(myId===p.playerA)       opts+=`<option value="playerA">🔴 ${esc(nA)} — meinen Score</option>`;
-  if(isBB&&myId===p.playerA2)opts+=`<option value="playerA2">🔴 ${esc(nA2)} — meinen Score</option>`;
-  if(myId===p.playerB)       opts+=`<option value="playerB">🔵 ${esc(nB)} — meinen Score</option>`;
-  if(isBB&&myId===p.playerB2)opts+=`<option value="playerB2">🔵 ${esc(nB2)} — meinen Score</option>`;
+  if (myId===p.playerA)              opts+=`<option value="playerA">🔴 ${esc(nA)} — meinen Score</option>`;
+  if (isBB&&myId===p.playerA2)       opts+=`<option value="playerA2">🔴 ${esc(nA2)} — meinen Score</option>`;
+  if (myId===p.playerB)              opts+=`<option value="playerB">🔵 ${esc(nB)} — meinen Score</option>`;
+  if (isBB&&myId===p.playerB2)       opts+=`<option value="playerB2">🔵 ${esc(nB2)} — meinen Score</option>`;
   opts+=`<option value="both">✏️ Für beide eintragen</option>`;
   sel.innerHTML=opts;
-  if(myId===p.playerA)       sel.value='playerA';
-  else if(isBB&&myId===p.playerA2) sel.value='playerA2';
-  else if(myId===p.playerB)  sel.value='playerB';
-  else if(isBB&&myId===p.playerB2) sel.value='playerB2';
-  else sel.value='both';
+  if      (myId===p.playerA)         sel.value='playerA';
+  else if (isBB&&myId===p.playerA2)  sel.value='playerA2';
+  else if (myId===p.playerB)         sel.value='playerB';
+  else if (isBB&&myId===p.playerB2)  sel.value='playerB2';
+  else                               sel.value='both';
   document.getElementById('sheet').classList.add('on');
 }
 
-function closeSheet(){
-  document.getElementById('sheet').classList.remove('on');
-}
+function closeSheet()   { document.getElementById('sheet').classList.remove('on'); }
 
-function confirmSheet(){
+function confirmSheet() {
   closeSheet();
   const pid=sheetPid, day=sheetDay;
-  const p=getP(pid,day);if(!p)return;
-  const role=document.getElementById('sheet-sel').value;
-  const forBoth=(role==='both');
-  const myRole=forBoth?'playerA':role;
+  const p=getPairing(pid,day); if (!p) return;
+  const roleVal=document.getElementById('sheet-sel').value;
+  const forBoth=roleVal==='both';
+  const myRole=forBoth?'playerA':roleVal;
   const isBB=p.mode==='bestball';
 
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
-
   const sc=p.scores||{};
   CUR.scores={
-    playerA:[...(sc.playerA||Array(18).fill(null))],
-    playerA2:[...(sc.playerA2||Array(18).fill(null))],
-    playerB:[...(sc.playerB||Array(18).fill(null))],
-    playerB2:[...(sc.playerB2||Array(18).fill(null))]
+    playerA:  [...(sc.playerA  ||Array(18).fill(null))],
+    playerA2: [...(sc.playerA2 ||Array(18).fill(null))],
+    playerB:  [...(sc.playerB  ||Array(18).fill(null))],
+    playerB2: [...(sc.playerB2 ||Array(18).fill(null))]
   };
 
-  const nA=pName(p.playerA),nB=pName(p.playerB);
-  const nA2=p.playerA2?pName(p.playerA2):'';
-  const nB2=p.playerB2?pName(p.playerB2):'';
+  const nA=playerName(p.playerA), nB=playerName(p.playerB);
+  const nA2=p.playerA2?playerName(p.playerA2):'';
+  const nB2=p.playerB2?playerName(p.playerB2):'';
   const mode=p.mode||'matchplay';
-  const mL=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball 2v2':'Stableford';
+  const mLbl=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball 2v2':'Stableford';
   let myName='beide';
-  if(!forBoth){
-    if(role==='playerA')myName=nA;
-    else if(role==='playerA2')myName=nA2;
-    else if(role==='playerB')myName=nB;
-    else if(role==='playerB2')myName=nB2;
+  if (!forBoth) {
+    if      (roleVal==='playerA')  myName=nA;
+    else if (roleVal==='playerA2') myName=nA2;
+    else if (roleVal==='playerB')  myName=nB;
+    else if (roleVal==='playerB2') myName=nB2;
   }
-  const titleA=nA+(nA2?' / '+nA2:'');
-  const titleB=nB+(nB2?' / '+nB2:'');
-  document.getElementById('sc-title').textContent=`${titleA} vs ${titleB}`;
-  document.getElementById('sc-sub').textContent=`Du trägst ein: ${myName} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
+  document.getElementById('sc-title').textContent=`${nA}${nA2?' / '+nA2:''} vs ${nB}${nB2?' / '+nB2:''}`;
+  document.getElementById('sc-sub').textContent=`Du trägst ein: ${myName} · ${mLbl} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
 
-  // ── Spaltenköpfe: Namen schwarz + groß ──
-  // Vorname (alles bis zum ersten Leerzeichen) oder ganzer Name
-  const firstName = n => n.split(' ')[0];
-  let cw,colHtml;
-  if(isBB){
-    const isA2=myRole==='playerA'||myRole==='playerA2';
-    cw=forBoth?'26px 1fr 1fr 1fr 1fr 36px':
-       isA2?'28px 1fr 1fr 0.55fr 0.55fr 50px':
-            '28px 0.55fr 0.55fr 1fr 1fr 50px';
-    colHtml=`<span>LOCH</span>
-      <span>${esc(firstName(nA))}</span>
-      <span>${esc(firstName(nA2||'–'))}</span>
-      <span>${esc(firstName(nB))}</span>
-      <span>${esc(firstName(nB2||'–'))}</span>
-      <span>BEST</span>`;
-  }else{
+  // Spaltenköpfe
+  let cw, colHtml;
+  if (isBB) {
+    const myTeamA = myRole==='playerA'||myRole==='playerA2';
+    cw = forBoth         ? '32px 1fr 1fr 1fr 1fr 50px'
+       : myTeamA         ? '32px 1fr 1fr 0.6fr 0.6fr 50px'
+       :                   '32px 0.6fr 0.6fr 1fr 1fr 50px';
+    colHtml=`<span>LOCH</span><span>${esc(firstName(nA))}</span><span>${esc(firstName(nA2||'–'))}</span><span>${esc(firstName(nB))}</span><span>${esc(firstName(nB2||'–'))}</span><span>BEST</span>`;
+  } else {
     cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
     colHtml=`<span>LOCH</span><span>${esc(firstName(nA))}</span><span>${esc(firstName(nB))}</span><span>RESULT</span>`;
   }
-  const colh=document.getElementById('colh');
-  colh.style.gridTemplateColumns=cw;
-  colh.innerHTML=colHtml;
+  const colhEl=document.getElementById('colh');
+  colhEl.style.gridTemplateColumns=cw;
+  colhEl.innerHTML=colHtml;
+
+  // Horizontales Scrollen bei forBoth (4 große Stepper)
+  const inner=document.getElementById('sc-inner');
+  if (inner) inner.style.minWidth=forBoth?'640px':'100%';
+  const hint=document.getElementById('sc-scrollhint');
+  if (hint) hint.style.display=forBoth?'block':'none';
 
   // Auto-Tab
-  const scArr=CUR.scores[CUR.role]||CUR.scores.playerA||[];
-  const played=scArr.filter(s=>s!=null).length;
-  const autoTab=played>=9?'back':'front';
+  const refScores=CUR.scores[myRole]||CUR.scores.playerA;
+  const autoTab=refScores.filter(s=>s!=null).length>=9?'back':'front';
   CUR.tab=autoTab;
   document.getElementById('stf').classList.toggle('on',autoTab==='front');
   document.getElementById('stb').classList.toggle('on',autoTab==='back');
   renderHoles();
-  updateStatus();
+  updateMatchStatus();
   showView('score');
 }
 
-// ═══════════════ SCORE ENTRY ═══════════════
-function setScTab(t){
+// ─────────────────────────────────────────
+// SCORE ENTRY
+// ─────────────────────────────────────────
+function setScTab(t) {
   CUR.tab=t;
   document.getElementById('stf').classList.toggle('on',t==='front');
   document.getElementById('stb').classList.toggle('on',t==='back');
   renderHoles();
 }
 
-function renderHoles(){
-  const p=getP(CUR.pid,CUR.day);if(!p)return;
+function renderHoles() {
+  const p=getPairing(CUR.pid,CUR.day); if (!p) return;
   const c=getCourse(CUR.day);
-  const par=c.par||DPAR,si=c.si||DSI;
-  const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
-  const hA2=pHcp(p.playerA2||''),hB2=pHcp(p.playerB2||'');
-  const mode=p.mode||'matchplay';
-  const isBB=mode==='bestball';
-  const bn=p.bruttoNetto||'brutto';
-  const start=CUR.tab==='front'?0:9;
-  const holes=Array.from({length:9},(_,i)=>start+i);
+  const par=c.par||DEF_PAR, si=c.si||DEF_SI;
+  const mode=p.mode||'matchplay', isBB=mode==='bestball', bn=p.bruttoNetto||'brutto';
+  const hA=playerHcp(p.playerA), hB=playerHcp(p.playerB);
+  const hA2=playerHcp(p.playerA2||''), hB2=playerHcp(p.playerB2||'');
+
+  // Grid-Spalten identisch zu confirmSheet
   let cw;
-  if(isBB){
-    const isA=CUR.role==='playerA'||CUR.role==='playerA2';
-    if(CUR.forBoth) cw='26px 1fr 1fr 1fr 1fr 36px';
-    else if(isA)    cw='28px 1fr 1fr 0.55fr 0.55fr 50px';
-    else            cw='28px 0.55fr 0.55fr 1fr 1fr 50px';
-  }else{
+  if (isBB) {
+    const myTeamA=CUR.role==='playerA'||CUR.role==='playerA2';
+    cw=CUR.forBoth?'32px 1fr 1fr 1fr 1fr 50px':myTeamA?'32px 1fr 1fr 0.6fr 0.6fr 50px':'32px 0.6fr 0.6fr 1fr 1fr 50px';
+  } else {
     cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
   }
-  const editA=CUR.forBoth||CUR.role==='playerA';
-  const editA2=CUR.forBoth||CUR.role==='playerA2';
-  const editB=CUR.forBoth||CUR.role==='playerB';
-  const editB2=CUR.forBoth||CUR.role==='playerB2';
 
-  document.getElementById('sc-holes').innerHTML=holes.map(i=>{
-    const pv=par[i]||4,siv=si[i]||i+1;
-    const sA=CUR.scores.playerA[i];
-    const sA2=CUR.scores.playerA2?CUR.scores.playerA2[i]:null;
-    const sB=CUR.scores.playerB[i];
-    const sB2=CUR.scores.playerB2?CUR.scores.playerB2[i]:null;
+  const editA  = CUR.forBoth||CUR.role==='playerA';
+  const editA2 = CUR.forBoth||CUR.role==='playerA2';
+  const editB  = CUR.forBoth||CUR.role==='playerB';
+  const editB2 = CUR.forBoth||CUR.role==='playerB2';
+  const start=CUR.tab==='front'?0:9;
+
+  // Stepper HTML
+  const mkStepper=(player,score,sid,hi)=>
+    `<div class="stepper">
+       <button class="stbtn" ontouchstart="" onclick="stepScore('${player}',${hi},-1)">−</button>
+       <div class="${score!=null?'stval':'stval e'}" id="${sid}">${score!=null?score:'–'}</div>
+       <button class="stbtn" ontouchstart="" onclick="stepScore('${player}',${hi},+1)">+</button>
+     </div>`;
+
+  // Readonly HTML
+  const mkReadonly=(score,sid)=>
+    `<div class="${score!=null?'readonly':'readonly e'}" id="${sid}">
+       ${score!=null?score:'–'}<span class="eye">👁</span>
+     </div>`;
+
+  document.getElementById('sc-holes').innerHTML = Array.from({length:9},(_,j)=>start+j).map(i => {
+    const pv=par[i]||4, siv=si[i]||(i+1);
+    const sA=CUR.scores.playerA[i], sA2=CUR.scores.playerA2[i];
+    const sB=CUR.scores.playerB[i], sB2=CUR.scores.playerB2[i];
     const filled=sA!=null||sB!=null||(isBB&&(sA2!=null||sB2!=null));
 
-    const nA_=net(sA,i,hA,si),nB_=net(sB,i,hB,si);
-    const nA2_=net(sA2,i,hA2,si),nB2_=net(sB2,i,hB2,si);
-
-    let hres='<span style="color:#aaa;font-size:11px">–</span>';
-    if(isBB){
-      const hasA=(sA!=null||sA2!=null),hasB=(sB!=null||sB2!=null);
-      if(hasA&&hasB){
-        const vA1=sA!=null?(bn==='netto'?nA_:sA):999;
-        const vA2=sA2!=null?(bn==='netto'?nA2_:sA2):999;
-        const vB1=sB!=null?(bn==='netto'?nB_:sB):999;
-        const vB2=sB2!=null?(bn==='netto'?nB2_:sB2):999;
-        const bA=Math.min(vA1,vA2),bB=Math.min(vB1,vB2);
-        if(bA<bB)hres=`<span style="font-weight:900;color:var(--ta);font-size:13px">◀${bA}</span>`;
-        else if(bB<bA)hres=`<span style="font-weight:900;color:var(--tb);font-size:13px">${bB}▶</span>`;
-        else hres=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
+    // Loch-Ergebnis
+    let hresHtml='<span style="color:#aaa;font-size:11px">–</span>';
+    if (isBB) {
+      const hasA=sA!=null||sA2!=null, hasB=sB!=null||sB2!=null;
+      if (hasA&&hasB) {
+        const vA1=sA !=null?(bn==='netto'?netScore(sA, i,hA, si):sA) :999;
+        const vA2=sA2!=null?(bn==='netto'?netScore(sA2,i,hA2,si):sA2):999;
+        const vB1=sB !=null?(bn==='netto'?netScore(sB, i,hB, si):sB) :999;
+        const vB2=sB2!=null?(bn==='netto'?netScore(sB2,i,hB2,si):sB2):999;
+        const bA=Math.min(vA1,vA2), bB=Math.min(vB1,vB2);
+        if      (bA<bB) hresHtml=`<span style="font-weight:900;color:var(--ta);font-size:13px">◀${bA}</span>`;
+        else if (bB<bA) hresHtml=`<span style="font-weight:900;color:var(--tb);font-size:13px">${bB}▶</span>`;
+        else            hresHtml=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
       }
-    }else if(sA!=null&&sB!=null){
-      const vA=bn==='netto'?nA_:sA;
-      const vB=bn==='netto'?nB_:sB;
-      if(mode==='matchplay'){
-        if(vA<vB)hres=`<span style="font-weight:900;color:var(--ta);font-size:16px">◀</span>`;
-        else if(vB<vA)hres=`<span style="font-weight:900;color:var(--tb);font-size:16px">▶</span>`;
-        else hres=`<span style="font-weight:700;color:#666;font-size:14px">½</span>`;
-      }else if(mode==='stableford'){
-        const stA=stbl(nA_,pv),stB=stbl(nB_,pv);
-        const col=stA>stB?'var(--ta)':stB>stA?'var(--tb)':'#666';
-        hres=`<span style="font-size:12px;font-weight:700;color:${col}">${stA}:${stB}</span>`;
-      }else{
-        if(vA<vB)hres=`<span style="color:var(--ta);font-weight:700;font-size:14px">A</span>`;
-        else if(vB<vA)hres=`<span style="color:var(--tb);font-weight:700;font-size:14px">B</span>`;
-        else hres=`<span style="color:#666;font-weight:700;font-size:14px">½</span>`;
+    } else if (sA!=null&&sB!=null) {
+      const vA=bn==='netto'?netScore(sA,i,hA,si):sA;
+      const vB=bn==='netto'?netScore(sB,i,hB,si):sB;
+      if (mode==='matchplay') {
+        if      (vA<vB) hresHtml=`<span style="font-weight:900;color:var(--ta);font-size:16px">◀</span>`;
+        else if (vB<vA) hresHtml=`<span style="font-weight:900;color:var(--tb);font-size:16px">▶</span>`;
+        else            hresHtml=`<span style="font-weight:700;color:#666;font-size:14px">½</span>`;
+      } else {
+        const ptA=stablefordPts(netScore(sA,i,hA,si),pv);
+        const ptB=stablefordPts(netScore(sB,i,hB,si),pv);
+        const col=ptA>ptB?'var(--ta)':ptB>ptA?'var(--tb)':'#666';
+        hresHtml=`<span style="font-size:12px;font-weight:700;color:${col}">${ptA}:${ptB}</span>`;
       }
     }
 
-    // forBoth = 4 editierbare Spalten → kompakter Stepper damit + sichtbar bleibt
-    const mkStep=(player,s,side)=>CUR.forBoth
-      ?`<div class="stepper compact">
-          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
-        </div>`
-      :isBB
-      ?`<div class="stepper" style="height:62px">
-          <button class="stbtn" style="width:36px;font-size:26px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" style="font-size:30px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" style="width:36px;font-size:26px;padding:0" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
-        </div>`
-      :`<div class="stepper" style="height:72px">
-          <button class="stbtn" style="font-size:38px;width:58px" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" style="font-size:38px;width:58px" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
-        </div>`;
-    const mkRO=(s,side)=>isBB
-      ?`<div style="display:flex;align-items:center;justify-content:center;height:44px;
-          background:#f0f4f8;border-radius:8px;border:1px solid #d0dde8;
-          font-size:17px;font-weight:700;color:${s!=null?'var(--txt)':'#ccc'};
-          position:relative" id="sv-${side}-${i}">
-          ${s!=null?s:'–'}<span style="position:absolute;top:2px;right:3px;font-size:8px;color:#aaa">👁</span>
-        </div>`
-      :`<div class="${s!=null?'readonly':'readonly e'}" style="height:50px" id="sv-${side}-${i}">
-          ${s!=null?s:'–'}<span class="eye">👁</span>
-        </div>`;
+    const colA  = editA  ? mkStepper('playerA', sA,  `sv-A-${i}`,  i) : mkReadonly(sA,  `sv-A-${i}`);
+    const colA2 = isBB   ? (editA2  ? mkStepper('playerA2',sA2,`sv-A2-${i}`,i) : mkReadonly(sA2,`sv-A2-${i}`)) : '';
+    const colB  = editB  ? mkStepper('playerB', sB,  `sv-B-${i}`,  i) : mkReadonly(sB,  `sv-B-${i}`);
+    const colB2 = isBB   ? (editB2  ? mkStepper('playerB2',sB2,`sv-B2-${i}`,i) : mkReadonly(sB2,`sv-B2-${i}`)) : '';
 
-    const colA =editA ?mkStep('playerA', sA, 'A') :mkRO(sA, 'A');
-    const colA2=isBB?(editA2?mkStep('playerA2',sA2,'A2'):mkRO(sA2,'A2')):'';
-    const colB =editB ?mkStep('playerB', sB, 'B') :mkRO(sB, 'B');
-    const colB2=isBB?(editB2?mkStep('playerB2',sB2,'B2'):mkRO(sB2,'B2')):'';
-
-    return`<div class="hrow${filled?' filled':''}" style="grid-template-columns:${cw}">
+    return `<div class="hrow${filled?' filled':''}" style="grid-template-columns:${cw}">
       <div class="hinfo"><div class="hnum">${i+1}</div><div class="hpar">P${pv}·SI${siv}</div></div>
-      ${colA}${colA2}
-      ${colB}${colB2}
-      <div class="hres">${hres}</div>
+      ${colA}${colA2}${colB}${colB2}
+      <div class="hres">${hresHtml}</div>
     </div>`;
   }).join('');
 }
 
-function step(player,idx,delta){
-  if(!CUR.forBoth&&player!==CUR.role)return;
-  const c=getCourse(CUR.day);
-  const par=c.par||DPAR;
+function stepScore(player, idx, delta) {
+  if (!CUR.forBoth && player!==CUR.role) return;
+  const par=getCourse(CUR.day).par||DEF_PAR;
   const cur=CUR.scores[player][idx];
   let next=cur==null?(par[idx]||4):cur+delta;
-  if(next<1)next=1;if(next>15)next=15;
+  if (next<1)  next=1;
+  if (next>15) next=15;
   CUR.scores[player][idx]=next;
-  const side=player==='playerA'?'A':'B';
-  const el=document.getElementById(`sv-${side}-${idx}`);
-  if(el){el.textContent=next;el.className='stval';}
+  const sideMap={playerA:'A',playerA2:'A2',playerB:'B',playerB2:'B2'};
+  const el=document.getElementById(`sv-${sideMap[player]}-${idx}`);
+  if (el) { el.textContent=next; el.className='stval'; }
   renderHoles();
-  updateStatus();
+  updateMatchStatus();
 }
 
-function updateStatus(){
-  const p=getP(CUR.pid,CUR.day);if(!p)return;
-  const c=getCourse(CUR.day);
-  const par=c.par||DPAR,si=c.si||DSI;
-  const hA=pHcp(p.playerA),hB=pHcp(p.playerB);
+function updateMatchStatus() {
+  const p=getPairing(CUR.pid,CUR.day); if (!p) return;
   const mode=p.mode||'matchplay';
-  const bn=p.bruttoNetto||'brutto';
   const r=calcMatch({...p,scores:CUR.scores},CUR.day);
-  const nA=pName(p.playerA).split(' ')[0];
-  const nB=pName(p.playerB).split(' ')[0];
+  const nameA=firstName(playerName(p.playerA));
+  const nameB=firstName(playerName(p.playerB));
   const pill=document.getElementById('sc-pill');
   const plbl=document.getElementById('sc-plbl');
   const bar=document.getElementById('mbar');
 
-  if(mode==='matchplay'){
-    const lead=r.lead||0,left=18-(r.played||0);
-    let txt='',bg='#e0e0e0',col='#333';
-    if(!r.played){txt='Noch kein Loch';}
-    else if(lead===0){txt='ALL SQUARE';}
-    else if(lead>0){txt=`${nA} ${lead} UP`;bg='var(--ta)';col='#fff';if(lead>left)txt+=` — GEWONNEN 🏆`;}
-    else{txt=`${nB} ${Math.abs(lead)} UP`;bg='var(--tb)';col='#fff';if(Math.abs(lead)>left)txt+=` — GEWONNEN 🏆`;}
-    bar.style.display='block';bar.style.background=bg;bar.style.color=col;
+  if (mode==='matchplay'||mode==='bestball') {
+    const lead=r.lead||0, left=18-(r.played||0);
+    let txt='', bg='#e0e0e0', col='#333';
+    if      (!r.played)   txt='Noch kein Loch';
+    else if (lead===0)    txt='ALL SQUARE';
+    else if (lead>0)      { txt=`${nameA} ${lead} UP`; bg='var(--ta)'; col='#fff'; if(lead>left) txt+=' — GEWONNEN 🏆'; }
+    else                  { txt=`${nameB} ${Math.abs(lead)} UP`; bg='var(--tb)'; col='#fff'; if(Math.abs(lead)>left) txt+=' — GEWONNEN 🏆'; }
+    bar.style.display='block'; bar.style.background=bg; bar.style.color=col;
     bar.textContent=txt+(r.played>0?` · Loch ${r.played}/18`:'');
     pill.textContent=lead===0?'A/S':lead>0?`${lead}↑A`:`${Math.abs(lead)}↑B`;
     pill.style.color=lead>0?'var(--ta)':lead<0?'var(--tb)':'#666';
     plbl.textContent='Matchstand';
-  }else if(mode==='stableford'){
+  } else {
     const bg=r.status==='A'?'var(--ta)':r.status==='B'?'var(--tb)':'#888';
-    bar.style.display='block';bar.style.background=bg;bar.style.color='#fff';
-    bar.textContent=`${nA}: ${r.ptsA||0} Pkt  —  ${nB}: ${r.ptsB||0} Pkt`;
-    pill.textContent=`${r.ptsA||0}:${r.ptsB||0}`;pill.style.color='var(--txt)';plbl.textContent='Punkte';
-  }else{
-    bar.style.display='none';pill.textContent='–';plbl.textContent='Stand';
+    bar.style.display='block'; bar.style.background=bg; bar.style.color='#fff';
+    bar.textContent=`${nameA}: ${r.ptsA||0} Pkt  —  ${nameB}: ${r.ptsB||0} Pkt`;
+    pill.textContent=`${r.ptsA||0}:${r.ptsB||0}`; pill.style.color='var(--txt)'; plbl.textContent='Punkte';
   }
 }
 
-// ── Offline-Puffer ──
-const LS_OFFLINE='rc_offline_'+location.pathname;
-
-function saveLocal(state){
-  try{localStorage.setItem(LS_OFFLINE,JSON.stringify(state));}catch(e){}
-}
-function loadLocal(){
-  try{const d=localStorage.getItem(LS_OFFLINE);return d?JSON.parse(d):null;}catch(e){return null;}
-}
-function clearLocal(){
-  try{localStorage.removeItem(LS_OFFLINE);}catch(e){}
-}
-
-async function syncOffline(){
-  const local=loadLocal();
-  if(!local)return;
-  try{
-    await window._fb('rc',local);
-    S=local;
-    clearLocal();
-    toast('📶 Offline-Scores synchronisiert!');
-    renderLB();
-  }catch(e){}
-}
-
-async function saveScore(){
+// ─────────────────────────────────────────
+// SCORE SPEICHERN
+// ─────────────────────────────────────────
+async function saveScore() {
   const btn=document.getElementById('savebtn');
-  btn.disabled=true;btn.textContent='Speichere…';
-  const p=getP(CUR.pid,CUR.day);if(!p){btn.disabled=false;return;}
+  btn.disabled=true; btn.textContent='Speichere…';
+  const p=getPairing(CUR.pid,CUR.day); if (!p) { btn.disabled=false; return; }
   const existing=p.scores||{};
-  let newScores;
-  if(CUR.forBoth){
-    newScores={
-      playerA:[...CUR.scores.playerA],
-      playerA2:[...CUR.scores.playerA2],
-      playerB:[...CUR.scores.playerB],
-      playerB2:[...CUR.scores.playerB2]
-    };
-  }else{
-    newScores={
-      playerA: CUR.role==='playerA'?[...CUR.scores.playerA]:[...(existing.playerA||Array(18).fill(null))],
-      playerA2:CUR.role==='playerA2'?[...CUR.scores.playerA2]:[...(existing.playerA2||Array(18).fill(null))],
-      playerB: CUR.role==='playerB'?[...CUR.scores.playerB]:[...(existing.playerB||Array(18).fill(null))],
-      playerB2:CUR.role==='playerB2'?[...CUR.scores.playerB2]:[...(existing.playerB2||Array(18).fill(null))]
-    };
-  }
-  S.pairings[CUR.day]=S.pairings[CUR.day].map(px=>
-    px.id!==CUR.pid?px:{...px,scores:newScores}
-  );
-
-  saveLocal(S);
-
-  try{
-    await window._fb('rc',S);
-    clearLocal();
-    toast('✅ Score gespeichert');
-  }catch(e){
-    toast('📶 Offline — lokal gespeichert');
-    setTimeout(syncOffline,30000);
-  }
-
-  btn.disabled=false;btn.textContent='Score speichern ✓';
-  renderHoles();
-  updateStatus();
+  const newScores = CUR.forBoth
+    ? { playerA:[...CUR.scores.playerA], playerA2:[...CUR.scores.playerA2], playerB:[...CUR.scores.playerB], playerB2:[...CUR.scores.playerB2] }
+    : {
+        playerA:  CUR.role==='playerA'  ?[...CUR.scores.playerA] :[...(existing.playerA ||Array(18).fill(null))],
+        playerA2: CUR.role==='playerA2' ?[...CUR.scores.playerA2]:[...(existing.playerA2||Array(18).fill(null))],
+        playerB:  CUR.role==='playerB'  ?[...CUR.scores.playerB] :[...(existing.playerB ||Array(18).fill(null))],
+        playerB2: CUR.role==='playerB2' ?[...CUR.scores.playerB2]:[...(existing.playerB2||Array(18).fill(null))]
+      };
+  S.pairings[CUR.day]=S.pairings[CUR.day].map(px=>px.id!==CUR.pid?px:{...px,scores:newScores});
+  saveLocalState(S);
+  try   { await window._fbSet('rc',S); clearLocalState(); toast('✅ Score gespeichert'); }
+  catch { toast('📶 Offline — lokal gespeichert'); setTimeout(syncOffline,30000); }
+  btn.disabled=false; btn.textContent='Score speichern ✓';
+  renderHoles(); updateMatchStatus();
 }
 
-// ═══════════════ VIEW ═══════════════
-function showView(name){
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+function showView(name) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   window.scrollTo(0,0);
-  if(name==='admin')initAdmin();
-  if(name==='lb')renderLB();
+  if (name==='admin') initAdmin();
+  if (name==='lb')    renderLB();
 }
 
-// ═══════════════ ADMIN ═══════════════
-function initAdmin(){
+// ─────────────────────────────────────────
+// ADMIN
+// ─────────────────────────────────────────
+function initAdmin() {
   document.getElementById('a-name').value=S.eventName||'';
   document.getElementById('a-d1').value=S.date1||today();
   document.getElementById('a-d2').value=S.date2||today();
@@ -1001,34 +1060,33 @@ function initAdmin(){
   [1,2].forEach(d=>{
     const c=S.courses?.[d]||{};
     document.getElementById(`ac${d}n`).value=c.name||'';
-    document.getElementById(`ac${d}p`).value=c.par?(c.par.reduce((a,b)=>a+b,0)||''):'';
+    document.getElementById(`ac${d}p`).value=c.par?c.par.reduce((a,b)=>a+b,0):'';
     document.getElementById(`ac${d}si`).value=c.si?c.si.join(','):'';
   });
-  renderAP();renderAPairs();
+  renderAdminPlayers(); renderAdminPairings();
   sbGet('courses?select=*&order=name').then(cs=>{
     [1,2].forEach(d=>{
-      const sel=document.getElementById(`ac${d}s`);if(!sel)return;
+      const sel=document.getElementById(`ac${d}s`); if(!sel)return;
       sel.innerHTML='<option value="">— Gespeicherten Platz laden —</option>'+
         (cs||[]).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
     });
   }).catch(()=>{});
 }
 
-async function loadCourse(day,name){
-  if(!name)return;
-  try{
+async function loadCourse(day, name) {
+  if (!name) return;
+  try {
     const cs=await sbGet('courses?select=*&order=name');
-    const c=(cs||[]).find(x=>x.name===name);if(!c)return;
-    const par=JSON.parse(c.par||'[]');
-    const si=JSON.parse(c.stroke_index||'[]');
+    const c=(cs||[]).find(x=>x.name===name); if(!c)return;
+    const par=JSON.parse(c.par||'[]'), si=JSON.parse(c.stroke_index||'[]');
     document.getElementById(`ac${day}n`).value=c.name;
     document.getElementById(`ac${day}p`).value=par.reduce((a,b)=>a+b,0)||72;
     document.getElementById(`ac${day}si`).value=si.join(',');
     toast('✓ '+c.name);
-  }catch(e){toast('⚠️ Fehler');}
+  } catch(e) { toast('⚠️ Fehler beim Laden'); }
 }
 
-function renderAP(){
+function renderAdminPlayers() {
   ['a','b'].forEach(t=>{
     const ps=(t==='a'?S.teamA:S.teamB)?.players||[];
     document.getElementById(`apl-${t}`).innerHTML=ps.map(p=>`
@@ -1036,143 +1094,114 @@ function renderAP(){
         <div class="pcell">${esc(p.name)}</div>
         <input class="inp" type="number" step="0.1" value="${p.hcp||''}" placeholder="Vorg."
           style="text-align:center;padding:8px 4px;font-size:14px"
-          oninput="updH('${t}','${p.id}',this.value)">
-        <button class="rmbtn" onclick="rmP('${t}','${p.id}')">×</button>
+          oninput="updateHcp('${t}','${p.id}',this.value)">
+        <button class="rmbtn" onclick="removePlayer('${t}','${p.id}')">×</button>
       </div>`).join('');
   });
 }
 
-function addP(t){
-  const n=document.getElementById(`np-${t}`).value.trim();if(!n)return;
-  const h=document.getElementById(`nh-${t}`).value;
-  const p={id:uid(),name:n,hcp:Number(h)||0};
-  if(t==='a')S.teamA.players=[...(S.teamA.players||[]),p];
-  else S.teamB.players=[...(S.teamB.players||[]),p];
-  document.getElementById(`np-${t}`).value='';
-  document.getElementById(`nh-${t}`).value='';
-  renderAP();renderAPairs();
+function addP(t) {
+  const nEl=document.getElementById(`np-${t}`), hEl=document.getElementById(`nh-${t}`);
+  const name=nEl.value.trim(); if(!name)return;
+  const player={id:uid(),name,hcp:Number(hEl.value)||0};
+  if(t==='a') S.teamA.players=[...(S.teamA.players||[]),player];
+  else        S.teamB.players=[...(S.teamB.players||[]),player];
+  nEl.value=''; hEl.value='';
+  renderAdminPlayers(); renderAdminPairings();
 }
 
-function rmP(t,id){
+function removePlayer(t, id) {
   if(!confirm('Spieler wirklich löschen?'))return;
-  if(t==='a')S.teamA.players=(S.teamA.players||[]).filter(p=>p.id!==id);
-  else S.teamB.players=(S.teamB.players||[]).filter(p=>p.id!==id);
-  renderAP();renderAPairs();
+  if(t==='a') S.teamA.players=(S.teamA.players||[]).filter(p=>p.id!==id);
+  else        S.teamB.players=(S.teamB.players||[]).filter(p=>p.id!==id);
+  renderAdminPlayers(); renderAdminPairings();
 }
 
-function updH(t,id,v){
+function updateHcp(t, id, v) {
   const ps=t==='a'?S.teamA.players:S.teamB.players;
-  const p=ps?.find(p=>p.id===id);if(p)p.hcp=Number(v)||0;
+  const p=ps?.find(p=>p.id===id); if(p) p.hcp=Number(v)||0;
 }
 
-function setPD(d){
+function setPD(d) {
   admPDay=d;
   document.querySelectorAll('.dtab').forEach((b,i)=>b.classList.toggle('on',i+1===d));
-  renderAPairs();
+  renderAdminPairings();
 }
 
-function renderAPairs(){
-  const pairs=(S.pairings?.[admPDay])||[];
-  const pA=S.teamA?.players||[];
-  const pB=S.teamB?.players||[];
-  const optA='<option value="">– '+(S.teamA?.name||'A')+' –</option>'+pA.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  const optB='<option value="">– '+(S.teamB?.name||'B')+' –</option>'+pB.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+function renderAdminPairings() {
+  const pairs=S.pairings?.[admPDay]||[];
+  const pA=S.teamA?.players||[], pB=S.teamB?.players||[];
+  const makeOpts=(list,team)=>`<option value="">– ${esc(team)} –</option>`+list.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const optA=makeOpts(pA, S.teamA?.name||'A');
+  const optB=makeOpts(pB, S.teamB?.name||'B');
+  const sel=(opts,val)=>opts.replace(`value="${val}"`,`value="${val}" selected`);
+
   document.getElementById('a-pairs').innerHTML=pairs.map((p,i)=>{
-    const modes=['matchplay','bestball','stableford'];
-    const bns=['brutto','netto'];
     const isBB=p.mode==='bestball';
-    const bb2A=isBB?`
-      <div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${S.teamA?.name||'A'}</div>
-      <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerA2',this.value)">
-        ${optA.replace(`value="${p.playerA2||''}"`,`value="${p.playerA2||''}" selected`)}
-      </select>`:'';
-    const bb2B=isBB?`
-      <div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${S.teamB?.name||'B'}</div>
-      <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerB2',this.value)">
-        ${optB.replace(`value="${p.playerB2||''}"`,`value="${p.playerB2||''}" selected`)}
-      </select>`:'';
-    return`<div class="padm">
+    const modes=['matchplay','bestball','stableford'], bns=['brutto','netto'];
+    const bb2A=isBB?`<div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${esc(S.teamA?.name||'A')}</div><select class="inp" style="padding:8px;font-size:13px" onchange="updatePairing(${i},'playerA2',this.value)">${sel(optA,p.playerA2||'')}</select>`:'';
+    const bb2B=isBB?`<div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${esc(S.teamB?.name||'B')}</div><select class="inp" style="padding:8px;font-size:13px" onchange="updatePairing(${i},'playerB2',this.value)">${sel(optB,p.playerB2||'')}</select>`:'';
+    return `<div class="padm">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div style="font-size:12px;font-weight:700;color:var(--txt2)">Paarung ${i+1}${isBB?' · 2v2':''}</div>
-        <button onclick="rmPair(${i})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;font-weight:700">×</button>
+        <button onclick="removePairing(${i})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;font-weight:700">×</button>
       </div>
       <div class="padm-r">
         <div>
-          <div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin-bottom:4px;font-weight:700">${S.teamA?.name||'TEAM A'}</div>
-          <select class="inp" style="padding:8px;font-size:13px;margin-bottom:4px" onchange="updPair(${i},'playerA',this.value)">
-            ${optA.replace(`value="${p.playerA}"`,`value="${p.playerA}" selected`)}
-          </select>
+          <div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin-bottom:4px;font-weight:700">${esc(S.teamA?.name||'TEAM A')}</div>
+          <select class="inp" style="padding:8px;font-size:13px;margin-bottom:4px" onchange="updatePairing(${i},'playerA',this.value)">${sel(optA,p.playerA)}</select>
           ${bb2A}
         </div>
         <div style="text-align:center;font-size:12px;font-weight:700;color:var(--txt3);padding-top:20px">VS</div>
         <div>
-          <div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin-bottom:4px;font-weight:700">${S.teamB?.name||'TEAM B'}</div>
-          <select class="inp" style="padding:8px;font-size:13px;margin-bottom:4px" onchange="updPair(${i},'playerB',this.value)">
-            ${optB.replace(`value="${p.playerB}"`,`value="${p.playerB}" selected`)}
-          </select>
+          <div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin-bottom:4px;font-weight:700">${esc(S.teamB?.name||'TEAM B')}</div>
+          <select class="inp" style="padding:8px;font-size:13px;margin-bottom:4px" onchange="updatePairing(${i},'playerB',this.value)">${sel(optB,p.playerB)}</select>
           ${bb2B}
         </div>
       </div>
       <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px;margin-top:8px">SPIELMODUS</div>
-      <div class="chips">
-        ${modes.map(m=>`<button class="chip${p.mode===m?' on':''}" onclick="updPair(${i},'mode','${m}');renderAPairs()">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball 2v2':'Stableford'}</button>`).join('')}
-      </div>
+      <div class="chips">${modes.map(m=>`<button class="chip${p.mode===m?' on':''}" onclick="updatePairing(${i},'mode','${m}');renderAdminPairings()">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball 2v2':'Stableford'}</button>`).join('')}</div>
       <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px;margin-top:8px">WERTUNG</div>
-      <div class="chips">
-        ${bns.map(bn=>`<button class="chip${p.bruttoNetto===bn?' on':''}" onclick="updPair(${i},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}
-      </div>
+      <div class="chips">${bns.map(bn=>`<button class="chip${p.bruttoNetto===bn?' on':''}" onclick="updatePairing(${i},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}</div>
     </div>`;
   }).join('');
 }
 
-function addPair(){
-  if(!S.pairings)S.pairings={1:[],2:[]};
-  if(!S.pairings[admPDay])S.pairings[admPDay]=[];
+function addPair() {
+  if (!S.pairings) S.pairings={1:[],2:[]};
+  if (!S.pairings[admPDay]) S.pairings[admPDay]=[];
   S.pairings[admPDay].push({id:uid(),playerA:'',playerA2:'',playerB:'',playerB2:'',mode:'matchplay',bruttoNetto:'brutto',scores:null});
-  renderAPairs();
+  renderAdminPairings();
 }
+function removePairing(i) { if(!confirm('Paarung löschen?'))return; S.pairings[admPDay].splice(i,1); renderAdminPairings(); }
+function updatePairing(i,f,v) { if(S.pairings[admPDay][i]) { S.pairings[admPDay][i][f]=v; renderAdminPairings(); } }
 
-function rmPair(i){
-  if(!confirm('Paarung löschen?'))return;
-  S.pairings[admPDay].splice(i,1);renderAPairs();
-}
-
-function updPair(i,f,v){
-  if(!S.pairings[admPDay][i])return;
-  S.pairings[admPDay][i][f]=v;renderAPairs();
-}
-
-function resetAll(){
+function resetAll() {
   if(!confirm('Alles zurücksetzen? Alle Scores werden gelöscht!'))return;
   S={eventName:'Ryder Cup Elkofen',date1:today(),date2:today(),
-    teamA:{name:'Team Rot',players:[]},teamB:{name:'Team Blau',players:[]},
-    courses:{1:{name:'',par:[...DPAR],si:[...DSI]},2:{name:'',par:[...DPAR],si:[...DSI]}},
-    pairings:{1:[],2:[]}};
+     teamA:{name:'Team Rot',players:[]},teamB:{name:'Team Blau',players:[]},
+     courses:{1:{name:'',par:[...DEF_PAR],si:[...DEF_SI]},2:{name:'',par:[...DEF_PAR],si:[...DEF_SI]}},
+     pairings:{1:[],2:[]}};
   initAdmin();
 }
 
-async function saveAdmin(){
+async function saveAdmin() {
   [1,2].forEach(d=>{
     const name=document.getElementById(`ac${d}n`).value||'';
     const siRaw=document.getElementById(`ac${d}si`).value;
     let si=siRaw?siRaw.split(',').map(Number).filter(n=>n>0):[];
-    if(si.length<18)si=[...DSI];
-    S.courses[d]={name,par:[...DPAR],si:si.slice(0,18)};
+    if(si.length<18) si=[...DEF_SI];
+    S.courses[d]={name,par:[...DEF_PAR],si:si.slice(0,18)};
   });
   S.eventName=document.getElementById('a-name').value||'Ryder Cup Elkofen';
   S.date1=document.getElementById('a-d1').value||today();
   S.date2=document.getElementById('a-d2').value||today();
   S.teamA.name=document.getElementById('a-ta').value||'Team Rot';
   S.teamB.name=document.getElementById('a-tb').value||'Team Blau';
-  try{await window._fb('rc',S);toast('✅ Gespeichert');}
-  catch(e){toast('⚠️ Firebase nicht erreichbar');}
+  try   { await window._fbSet('rc',S); toast('✅ Gespeichert'); }
+  catch { toast('⚠️ Firebase nicht erreichbar'); }
   showView('lb');
 }
-
-window.addEventListener('online',()=>{
-  toast('📶 Verbindung zurück — synchronisiere…');
-  setTimeout(syncOffline,1000);
-});
 </script>
 </body>
 </html>
