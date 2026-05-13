@@ -85,7 +85,27 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .stabs{display:flex;background:var(--bg2);border-bottom:2px solid var(--border)}
 .stab{flex:1;padding:9px 0;background:none;border:none;border-bottom:3px solid transparent;color:var(--txt2);font-size:11px;letter-spacing:1.5px;cursor:pointer;font-weight:600}
 .stab.on{border-bottom-color:var(--acc);color:var(--acc)}
-.colh{display:grid;padding:7px 14px 4px;gap:6px;font-size:9px;color:var(--txt3);letter-spacing:1px;background:var(--bg2);border-bottom:1px solid var(--bl)}
+
+/* ── Spaltenköpfe Score-Eingabe ── */
+.colh{display:grid;padding:9px 14px 6px;gap:6px;background:var(--bg2);border-bottom:2px solid var(--border)}
+.colh span{
+  text-align:center;
+  font-size:15px;       /* ← größer (war 9px / inline) */
+  font-weight:800;
+  color:#000;           /* ← schwarz */
+  letter-spacing:0.5px;
+}
+.colh span:first-child{
+  font-size:11px;       /* "LOCH"-Spalte etwas kleiner lassen */
+  font-weight:700;
+  color:var(--txt3);
+}
+.colh span:last-child{
+  font-size:11px;
+  font-weight:700;
+  color:var(--txt3);
+}
+
 .hrow{display:grid;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--bl);background:var(--card)}
 .hrow.filled{background:#e8f4fd}
 .hinfo{text-align:center}
@@ -473,23 +493,19 @@ function calcMP(sc,hA,hB,par,si,bn){
 }
 
 function calcBB(sc,hA,hB,par,si,bn,hA2,hB2){
-  // Best Ball: bestes Ergebnis pro Team pro Loch zählt
   const sA=sc.playerA||Array(18).fill(null);
   const sB=sc.playerB||Array(18).fill(null);
-  const sA2=sc.playerA2||Array(18).fill(null); // 2. Spieler Team A
-  const sB2=sc.playerB2||Array(18).fill(null); // 2. Spieler Team B
+  const sA2=sc.playerA2||Array(18).fill(null);
+  const sB2=sc.playerB2||Array(18).fill(null);
   let pA=0,pB=0,played=0;
   for(let i=0;i<18;i++){
-    // Best Ball: Loch zählt wenn mind. 1 Spieler pro Team eingetragen hat
     const hasA=sA[i]!=null||sA2[i]!=null;
     const hasB=sB[i]!=null||sB2[i]!=null;
     if(!hasA||!hasB)continue;
     played++;
-    // Bestes Ergebnis Team A
     const vA1=sA[i]!=null?(bn==='netto'?net(sA[i],i,hA,si):sA[i]):999;
     const vA2=sA2[i]!=null&&hA2!=null?(bn==='netto'?net(sA2[i],i,hA2,si):sA2[i]):999;
     const bestA=Math.min(vA1,vA2);
-    // Bestes Ergebnis Team B
     const vB1=sB[i]!=null?(bn==='netto'?net(sB[i],i,hB,si):sB[i]):999;
     const vB2=sB2[i]!=null&&hB2!=null?(bn==='netto'?net(sB2[i],i,hB2,si):sB2[i]):999;
     const bestB=Math.min(vB1,vB2);
@@ -637,7 +653,6 @@ function openSheet(pid,day){
     :`${nA} vs ${nB}`;
   document.getElementById('sheet-title').textContent=titleTxt;
   const sel=document.getElementById('sheet-sel');
-  // Relevante Optionen basierend auf angemeldetem Spieler
   let opts='';
   if(myId===p.playerA)       opts+=`<option value="playerA">🔴 ${esc(nA)} — meinen Score</option>`;
   if(isBB&&myId===p.playerA2)opts+=`<option value="playerA2">🔴 ${esc(nA2)} — meinen Score</option>`;
@@ -645,7 +660,6 @@ function openSheet(pid,day){
   if(isBB&&myId===p.playerB2)opts+=`<option value="playerB2">🔵 ${esc(nB2)} — meinen Score</option>`;
   opts+=`<option value="both">✏️ Für beide eintragen</option>`;
   sel.innerHTML=opts;
-  // Vorauswahl
   if(myId===p.playerA)       sel.value='playerA';
   else if(isBB&&myId===p.playerA2) sel.value='playerA2';
   else if(myId===p.playerB)  sel.value='playerB';
@@ -664,14 +678,11 @@ function confirmSheet(){
   const p=getP(pid,day);if(!p)return;
   const role=document.getElementById('sheet-sel').value;
   const forBoth=(role==='both');
-  // role kann sein: playerA, playerA2, playerB, playerB2, both
-  const myRole=forBoth?'playerA':role; // bei forBoth irrelevant
+  const myRole=forBoth?'playerA':role;
   const isBB=p.mode==='bestball';
 
-  // Session setzen
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
 
-  // Scores laden (alle 4 Slots für Best Ball)
   const sc=p.scores||{};
   CUR.scores={
     playerA:[...(sc.playerA||Array(18).fill(null))],
@@ -680,7 +691,6 @@ function confirmSheet(){
     playerB2:[...(sc.playerB2||Array(18).fill(null))]
   };
 
-  // Header
   const nA=pName(p.playerA),nB=pName(p.playerB);
   const nA2=p.playerA2?pName(p.playerA2):'';
   const nB2=p.playerB2?pName(p.playerB2):'';
@@ -698,7 +708,9 @@ function confirmSheet(){
   document.getElementById('sc-title').textContent=`${titleA} vs ${titleB}`;
   document.getElementById('sc-sub').textContent=`Du trägst ein: ${myName} · ${mL} · ${p.bruttoNetto==='netto'?'Netto':'Brutto'}`;
 
-  // Column header — Best Ball hat 4 Spalten + Result
+  // ── Spaltenköpfe: Namen schwarz + groß ──
+  // Vorname (alles bis zum ersten Leerzeichen) oder ganzer Name
+  const firstName = n => n.split(' ')[0];
   let cw,colHtml;
   if(isBB){
     const isA2=myRole==='playerA'||myRole==='playerA2';
@@ -706,20 +718,20 @@ function confirmSheet(){
        isA2?'28px 1fr 1fr 0.55fr 0.55fr 50px':
             '28px 0.55fr 0.55fr 1fr 1fr 50px';
     colHtml=`<span>LOCH</span>
-      <span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span>
-      <span style="text-align:center;color:var(--ta)">${esc((nA2||'–').split(' ')[0])}</span>
-      <span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span>
-      <span style="text-align:center;color:var(--tb)">${esc((nB2||'–').split(' ')[0])}</span>
-      <span style="text-align:center">BEST</span>`;
+      <span>${esc(firstName(nA))}</span>
+      <span>${esc(firstName(nA2||'–'))}</span>
+      <span>${esc(firstName(nB))}</span>
+      <span>${esc(firstName(nB2||'–'))}</span>
+      <span>BEST</span>`;
   }else{
     cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
-    colHtml=`<span>LOCH</span><span style="text-align:center;color:var(--ta)">${esc(nA.split(' ')[0])}</span><span style="text-align:center;color:var(--tb)">${esc(nB.split(' ')[0])}</span><span style="text-align:center">RESULT</span>`;
+    colHtml=`<span>LOCH</span><span>${esc(firstName(nA))}</span><span>${esc(firstName(nB))}</span><span>RESULT</span>`;
   }
   const colh=document.getElementById('colh');
   colh.style.gridTemplateColumns=cw;
   colh.innerHTML=colHtml;
 
-  // Auto-Tab: wenn mind. 9 Löcher gespielt → Back Nine
+  // Auto-Tab
   const scArr=CUR.scores[CUR.role]||CUR.scores.playerA||[];
   const played=scArr.filter(s=>s!=null).length;
   const autoTab=played>=9?'back':'front';
@@ -750,13 +762,12 @@ function renderHoles(){
   const bn=p.bruttoNetto||'brutto';
   const start=CUR.tab==='front'?0:9;
   const holes=Array.from({length:9},(_,i)=>start+i);
-  // BB: eigene Spalten 1fr, Gegner-Spalten 0.55fr (schmaler)
   let cw;
   if(isBB){
     const isA=CUR.role==='playerA'||CUR.role==='playerA2';
     if(CUR.forBoth) cw='28px 1fr 1fr 1fr 1fr 50px';
-    else if(isA)    cw='28px 1fr 1fr 0.55fr 0.55fr 50px'; // A edit, B schmal
-    else            cw='28px 0.55fr 0.55fr 1fr 1fr 50px'; // B edit, A schmal
+    else if(isA)    cw='28px 1fr 1fr 0.55fr 0.55fr 50px';
+    else            cw='28px 0.55fr 0.55fr 1fr 1fr 50px';
   }else{
     cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
   }
@@ -773,14 +784,11 @@ function renderHoles(){
     const sB2=CUR.scores.playerB2?CUR.scores.playerB2[i]:null;
     const filled=sA!=null||sB!=null||(isBB&&(sA2!=null||sB2!=null));
 
-    // Net scores
     const nA_=net(sA,i,hA,si),nB_=net(sB,i,hB,si);
     const nA2_=net(sA2,i,hA2,si),nB2_=net(sB2,i,hB2,si);
 
-    // Hole result
     let hres='<span style="color:#aaa;font-size:11px">–</span>';
     if(isBB){
-      // Best Ball: bestes von A1/A2 vs bestes von B1/B2
       const hasA=(sA!=null||sA2!=null),hasB=(sB!=null||sB2!=null);
       if(hasA&&hasB){
         const vA1=sA!=null?(bn==='netto'?nA_:sA):999;
@@ -810,9 +818,6 @@ function renderHoles(){
       }
     }
 
-    // Stepper / readonly helpers
-    const stH=46; // height for BB (smaller)
-    // Bei Best Ball: eigene Felder normal, Gegner-Felder schmal (nur Zahl)
     const mkStep=(player,s,side)=>isBB
       ?`<div class="stepper" style="height:54px">
           <button class="stbtn" style="width:30px;font-size:22px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
@@ -824,7 +829,6 @@ function renderHoles(){
           <div class="${s!=null?'stval':'stval e'}" style="font-size:36px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
           <button class="stbtn" style="font-size:34px;width:54px" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
         </div>`;
-    // Readonly: bei BB sehr schmal — nur Zahl + Auge
     const mkRO=(s,side)=>isBB
       ?`<div style="display:flex;align-items:center;justify-content:center;height:44px;
           background:#f0f4f8;border-radius:8px;border:1px solid #d0dde8;
@@ -851,7 +855,6 @@ function renderHoles(){
 }
 
 function step(player,idx,delta){
-  // Sicherheit: nur editierbare Seite
   if(!CUR.forBoth&&player!==CUR.role)return;
   const c=getCourse(CUR.day);
   const par=c.par||DPAR;
@@ -924,9 +927,7 @@ async function syncOffline(){
     clearLocal();
     toast('📶 Offline-Scores synchronisiert!');
     renderLB();
-  }catch(e){
-    // Noch kein Empfang — warten
-  }
+  }catch(e){}
 }
 
 async function saveScore(){
@@ -954,18 +955,14 @@ async function saveScore(){
     px.id!==CUR.pid?px:{...px,scores:newScores}
   );
 
-  // 1. Zuerst lokal speichern — sofort, immer
   saveLocal(S);
 
-  // 2. Firebase versuchen
   try{
     await window._fb('rc',S);
-    clearLocal(); // Erfolg → lokale Kopie nicht mehr nötig
+    clearLocal();
     toast('✅ Score gespeichert');
   }catch(e){
-    // Offline → lokal gespeichert, später synchronisieren
     toast('📶 Offline — lokal gespeichert');
-    // Automatisch nochmal versuchen in 30 Sekunden
     setTimeout(syncOffline,30000);
   }
 
@@ -1073,7 +1070,6 @@ function renderAPairs(){
     const modes=['matchplay','bestball','stableford'];
     const bns=['brutto','netto'];
     const isBB=p.mode==='bestball';
-    // Best Ball: zweiter Spieler pro Team
     const bb2A=isBB?`
       <div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${S.teamA?.name||'A'}</div>
       <select class="inp" style="padding:8px;font-size:13px" onchange="updPair(${i},'playerA2',this.value)">
@@ -1161,7 +1157,7 @@ async function saveAdmin(){
   catch(e){toast('⚠️ Firebase nicht erreichbar');}
   showView('lb');
 }
-// Automatisch synchronisieren wenn Verbindung zurückkommt
+
 window.addEventListener('online',()=>{
   toast('📶 Verbindung zurück — synchronisiere…');
   setTimeout(syncOffline,1000);
