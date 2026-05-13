@@ -114,8 +114,12 @@ input,select,button{font-family:'DM Sans',sans-serif}
 .stepper{display:flex;align-items:center;background:var(--card);border:2px solid var(--border);border-radius:10px;overflow:hidden;height:50px}
 .stbtn{background:none;border:none;color:var(--acc);font-size:28px;width:48px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;touch-action:manipulation;font-weight:900}
 .stbtn:active{background:#bbdefb}
-.stval{flex:1;text-align:center;font-size:22px;font-weight:700;color:var(--txt);font-family:'Cormorant Garamond',serif}
-.stval.e{color:#aaa;font-size:15px}
+.stval{flex:1;text-align:center;font-size:30px;font-weight:900;color:var(--txt);font-family:'Cormorant Garamond',serif}
+.stval.e{color:#aaa;font-size:18px}
+/* Kompakter Stepper für 4-Spalten (Best Ball forBoth) */
+.stepper.compact{height:58px}
+.stepper.compact .stbtn{width:28px;font-size:22px}
+.stepper.compact .stval{font-size:28px;font-weight:900}
 .readonly{display:flex;align-items:center;justify-content:center;height:50px;background:#f0f4f8;border-radius:10px;border:2px solid #d0dde8;font-size:22px;font-weight:700;color:var(--txt);font-family:'Cormorant Garamond',serif;position:relative}
 .readonly.e{color:#bbb;font-size:15px}
 .eye{position:absolute;top:3px;right:6px;font-size:9px;color:#aaa}
@@ -714,7 +718,7 @@ function confirmSheet(){
   let cw,colHtml;
   if(isBB){
     const isA2=myRole==='playerA'||myRole==='playerA2';
-    cw=forBoth?'28px 1fr 1fr 1fr 1fr 50px':
+    cw=forBoth?'26px 1fr 1fr 1fr 1fr 36px':
        isA2?'28px 1fr 1fr 0.55fr 0.55fr 50px':
             '28px 0.55fr 0.55fr 1fr 1fr 50px';
     colHtml=`<span>LOCH</span>
@@ -765,7 +769,7 @@ function renderHoles(){
   let cw;
   if(isBB){
     const isA=CUR.role==='playerA'||CUR.role==='playerA2';
-    if(CUR.forBoth) cw='28px 1fr 1fr 1fr 1fr 50px';
+    if(CUR.forBoth) cw='26px 1fr 1fr 1fr 1fr 36px';
     else if(isA)    cw='28px 1fr 1fr 0.55fr 0.55fr 50px';
     else            cw='28px 0.55fr 0.55fr 1fr 1fr 50px';
   }else{
@@ -818,16 +822,23 @@ function renderHoles(){
       }
     }
 
-    const mkStep=(player,s,side)=>isBB
-      ?`<div class="stepper" style="height:54px">
-          <button class="stbtn" style="width:30px;font-size:22px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" style="font-size:26px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" style="width:30px;font-size:22px;padding:0" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+    // forBoth = 4 editierbare Spalten → kompakter Stepper damit + sichtbar bleibt
+    const mkStep=(player,s,side)=>CUR.forBoth
+      ?`<div class="stepper compact">
+          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
         </div>`
-      :`<div class="stepper" style="height:64px">
-          <button class="stbtn" style="font-size:34px;width:54px" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
-          <div class="${s!=null?'stval':'stval e'}" style="font-size:36px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
-          <button class="stbtn" style="font-size:34px;width:54px" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+      :isBB
+      ?`<div class="stepper" style="height:62px">
+          <button class="stbtn" style="width:36px;font-size:26px;padding:0" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" style="font-size:30px;font-weight:900" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" style="width:36px;font-size:26px;padding:0" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
+        </div>`
+      :`<div class="stepper" style="height:72px">
+          <button class="stbtn" style="font-size:38px;width:58px" ontouchstart="" onclick="step('${player}',${i},-1)">−</button>
+          <div class="${s!=null?'stval':'stval e'}" id="sv-${side}-${i}">${s!=null?s:'–'}</div>
+          <button class="stbtn" style="font-size:38px;width:58px" ontouchstart="" onclick="step('${player}',${i},+1)">+</button>
         </div>`;
     const mkRO=(s,side)=>isBB
       ?`<div style="display:flex;align-items:center;justify-content:center;height:44px;
