@@ -131,15 +131,17 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
 .hnum  { font-size: 14px; font-weight: 700; color: var(--txt); }
 .hpar  { font-size: 9px;  color: var(--txt3); }
 
-/* ── Stepper ── */
-.stepper { display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; height: 72px; }
-.stbtn   { background: none; border: none; color: var(--acc); font-size: 38px; width: 58px; height: 72px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; touch-action: manipulation; font-weight: 900; }
+/* ── Stepper ──
+   Ziffer maximal groß, +/− Buttons schmal aber IMMER sichtbar
+   (min-width + flex-shrink:0 verhindern, dass sie abgeschnitten werden) */
+.stepper { display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; height: 76px; min-width: 0; }
+.stbtn   { background: none; border: none; color: var(--acc); font-size: 34px; width: 44px; min-width: 44px; height: 76px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; touch-action: manipulation; font-weight: 900; }
 .stbtn:active { background: #bbdefb; }
-.stval   { flex: 1; text-align: center; font-size: 36px; font-weight: 900; color: var(--txt); font-family: 'Cormorant Garamond', serif; }
-.stval.e { color: #aaa; font-size: 20px; }
+.stval   { flex: 1; min-width: 0; text-align: center; font-size: 42px; font-weight: 900; color: var(--txt); font-family: 'Cormorant Garamond', serif; line-height: 1; }
+.stval.e { color: #aaa; font-size: 22px; }
 
 /* ── Readonly Field ── */
-.readonly   { display: flex; align-items: center; justify-content: center; height: 72px; background: #f0f4f8; border-radius: 10px; border: 2px solid #d0dde8; font-size: 32px; font-weight: 700; color: var(--txt); font-family: 'Cormorant Garamond', serif; position: relative; }
+.readonly   { display: flex; align-items: center; justify-content: center; height: 76px; background: #f0f4f8; border-radius: 10px; border: 2px solid #d0dde8; font-size: 36px; font-weight: 700; color: var(--txt); font-family: 'Cormorant Garamond', serif; position: relative; }
 .readonly.e { color: #bbb; font-size: 18px; }
 .eye { position: absolute; top: 4px; right: 6px; font-size: 9px; color: #aaa; }
 .hres { text-align: center; display: flex; align-items: center; justify-content: center; }
@@ -452,6 +454,26 @@ function stablefordPts(netto, par) {
   return 0;
 }
 
+/**
+ * MAXIMALER SCORE (Cap) — greift nur bei der Wertung, nicht bei der Eingabe.
+ *
+ *   Brutto-Wertung: max = 2×Par − 1   (Doppel-Par minus 1)
+ *     Par 3 → max 5 · Par 4 → max 7 · Par 5 → max 9
+ *
+ *   Netto-Wertung: max Brutto = Par + 2 + Extraschläge
+ *     → entspricht persönlichem Netto-Doppelbogey (Netto nie über Par+2)
+ *     Beispiel: Par 4, Vorgabe 20, SI 1 → 2 Extraschläge → max Brutto 8
+ */
+function cappedScore(brutto, holeIdx, par, hcp, si, bn) {
+  if (brutto == null) return null;
+  const pv = par[holeIdx] || 4;
+  if (bn === 'netto') {
+    const max = pv + 2 + extraStrokes(holeIdx, hcp, si);
+    return Math.min(brutto, max);
+  }
+  return Math.min(brutto, 2 * pv - 1);
+}
+
 // ─────────────────────────────────────────
 // MATCH BERECHNUNG
 // ─────────────────────────────────────────
@@ -485,8 +507,10 @@ function calcMatchplay(sc, hA, hB, par, si, bn) {
   for (let i = 0; i < 18; i++) {
     if (sA[i] == null || sB[i] == null) continue;
     played++;
-    const vA = bn === 'netto' ? netScore(sA[i], i, hA, si) : sA[i];
-    const vB = bn === 'netto' ? netScore(sB[i], i, hB, si) : sB[i];
+    const cA = cappedScore(sA[i], i, par, hA, si, bn);
+    const cB = cappedScore(sB[i], i, par, hB, si, bn);
+    const vA = bn === 'netto' ? netScore(cA, i, hA, si) : cA;
+    const vB = bn === 'netto' ? netScore(cB, i, hB, si) : cB;
     if      (vA < vB) wA++;
     else if (vB < vA) wB++;
   }
@@ -510,10 +534,14 @@ function calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn) {
     const hasB = sB[i] != null || sB2[i] != null;
     if (!hasA || !hasB) continue;
     played++;
-    const vA1 = sA[i]  != null ? (bn === 'netto' ? netScore(sA[i],  i, hA,  si) : sA[i])  : 999;
-    const vA2 = sA2[i] != null ? (bn === 'netto' ? netScore(sA2[i], i, hA2, si) : sA2[i]) : 999;
-    const vB1 = sB[i]  != null ? (bn === 'netto' ? netScore(sB[i],  i, hB,  si) : sB[i])  : 999;
-    const vB2 = sB2[i] != null ? (bn === 'netto' ? netScore(sB2[i], i, hB2, si) : sB2[i]) : 999;
+    const cA1 = cappedScore(sA[i],  i, par, hA,  si, bn);
+    const cA2 = cappedScore(sA2[i], i, par, hA2, si, bn);
+    const cB1 = cappedScore(sB[i],  i, par, hB,  si, bn);
+    const cB2 = cappedScore(sB2[i], i, par, hB2, si, bn);
+    const vA1 = cA1 != null ? (bn === 'netto' ? netScore(cA1, i, hA,  si) : cA1) : 999;
+    const vA2 = cA2 != null ? (bn === 'netto' ? netScore(cA2, i, hA2, si) : cA2) : 999;
+    const vB1 = cB1 != null ? (bn === 'netto' ? netScore(cB1, i, hB,  si) : cB1) : 999;
+    const vB2 = cB2 != null ? (bn === 'netto' ? netScore(cB2, i, hB2, si) : cB2) : 999;
     const bestA = Math.min(vA1, vA2);
     const bestB = Math.min(vB1, vB2);
     if      (bestA < bestB) wA++;
@@ -544,6 +572,8 @@ function matchStatus(wA, wB, played) {
  * STABLEFORD 1v1
  * Jeder Spieler sammelt Stableford-Punkte (Netto gegen Par).
  * Matchpunkt nach 18 Löchern: mehr Punkte gewinnt.
+ * Hinweis: Score-Cap ist hier nicht nötig — ab Netto-Doppelbogey
+ * gibt es ohnehin 0 Punkte, höhere Scores ändern das Ergebnis nicht.
  */
 function calcStableford(sc, hA, hB, par, si) {
   const sA = sc.playerA || Array(18).fill(null);
@@ -858,7 +888,7 @@ function confirmSheet() {
 
   // Horizontales Scrollen bei forBoth (4 große Stepper)
   const inner=document.getElementById('sc-inner');
-  if (inner) inner.style.minWidth=forBoth?'640px':'100%';
+  if (inner) inner.style.minWidth=forBoth?'680px':'100%';
   const hint=document.getElementById('sc-scrollhint');
   if (hint) hint.style.display=forBoth?'block':'none';
 
@@ -926,23 +956,27 @@ function renderHoles() {
     const sB=CUR.scores.playerB[i], sB2=CUR.scores.playerB2[i];
     const filled=sA!=null||sB!=null||(isBB&&(sA2!=null||sB2!=null));
 
-    // Loch-Ergebnis
+    // Loch-Ergebnis (mit Score-Cap, identisch zur Wertung)
     let hresHtml='<span style="color:#aaa;font-size:11px">–</span>';
     if (isBB) {
       const hasA=sA!=null||sA2!=null, hasB=sB!=null||sB2!=null;
       if (hasA&&hasB) {
-        const vA1=sA !=null?(bn==='netto'?netScore(sA, i,hA, si):sA) :999;
-        const vA2=sA2!=null?(bn==='netto'?netScore(sA2,i,hA2,si):sA2):999;
-        const vB1=sB !=null?(bn==='netto'?netScore(sB, i,hB, si):sB) :999;
-        const vB2=sB2!=null?(bn==='netto'?netScore(sB2,i,hB2,si):sB2):999;
+        const cA1=cappedScore(sA, i,par,hA, si,bn), cA2c=cappedScore(sA2,i,par,hA2,si,bn);
+        const cB1=cappedScore(sB, i,par,hB, si,bn), cB2c=cappedScore(sB2,i,par,hB2,si,bn);
+        const vA1=cA1 !=null?(bn==='netto'?netScore(cA1, i,hA, si):cA1) :999;
+        const vA2=cA2c!=null?(bn==='netto'?netScore(cA2c,i,hA2,si):cA2c):999;
+        const vB1=cB1 !=null?(bn==='netto'?netScore(cB1, i,hB, si):cB1) :999;
+        const vB2=cB2c!=null?(bn==='netto'?netScore(cB2c,i,hB2,si):cB2c):999;
         const bA=Math.min(vA1,vA2), bB=Math.min(vB1,vB2);
         if      (bA<bB) hresHtml=`<span style="font-weight:900;color:var(--ta);font-size:13px">◀${bA}</span>`;
         else if (bB<bA) hresHtml=`<span style="font-weight:900;color:var(--tb);font-size:13px">${bB}▶</span>`;
         else            hresHtml=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
       }
     } else if (sA!=null&&sB!=null) {
-      const vA=bn==='netto'?netScore(sA,i,hA,si):sA;
-      const vB=bn==='netto'?netScore(sB,i,hB,si):sB;
+      const cA=cappedScore(sA,i,par,hA,si,bn);
+      const cB=cappedScore(sB,i,par,hB,si,bn);
+      const vA=bn==='netto'?netScore(cA,i,hA,si):cA;
+      const vB=bn==='netto'?netScore(cB,i,hB,si):cB;
       if (mode==='matchplay') {
         if      (vA<vB) hresHtml=`<span style="font-weight:900;color:var(--ta);font-size:16px">◀</span>`;
         else if (vB<vA) hresHtml=`<span style="font-weight:900;color:var(--tb);font-size:16px">▶</span>`;
