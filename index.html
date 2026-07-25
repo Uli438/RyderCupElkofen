@@ -380,7 +380,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24g';
+const BUILD = '2026-07-24h';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -760,6 +760,10 @@ let S = {
 
 let CUR = {
   pid:null, day:null, role:null, forBoth:false,
+  // Welche Zellen wurden in DIESER Sitzung angefasst? Schlüssel: "rolle:loch".
+  // Nur diese werden geschrieben — sonst überbügelt jedes Speichern die ganze
+  // Karte und löscht Löcher, die andere inzwischen eingetragen haben.
+  dirty:{},
   scores:{ playerA:Array(18).fill(null), playerA2:Array(18).fill(null), playerB:Array(18).fill(null), playerB2:Array(18).fill(null) },
   tab:'front'
 };
@@ -823,9 +827,16 @@ async function initFirebase() {
     renderLB();
     if (document.getElementById('view-score').classList.contains('active') && CUR.pid) {
       const p = getPairing(CUR.pid, CUR.day);
-      if (p && p.scores && !CUR.forBoth) {
-        ['playerA','playerA2','playerB','playerB2'].forEach(role => {
-          if (role !== CUR.role && p.scores[role]) CUR.scores[role] = toArr18(p.scores[role]);
+      if (p && p.scores) {
+        // Zellweise zusammenführen: Server-Werte übernehmen, aber eigene
+        // noch nicht gespeicherte Eingaben (dirty) niemals überschreiben.
+        // So sieht man auch im Modus "für beide" die Einträge der anderen.
+        ALL_ROLES.forEach(role => {
+          const srv = toArr18(p.scores[role]);
+          for (let i = 0; i < 18; i++) {
+            if (CUR.dirty[role + ':' + i]) continue;
+            CUR.scores[role][i] = srv[i];
+          }
         });
         renderHoles();
         updateMatchStatus();
@@ -850,10 +861,30 @@ async function initFirebase() {
 //     sein und fremde Scores überschreiben), sondern nur die eigenen
 //     Loch-Pfade — genau die, die auch online geschrieben worden wären.
 
+/**
+ * localStorage kann scheitern: Speicher voll, privater Modus, Safari räumt auf.
+ * Bisher wurde das stumm verschluckt — Entwürfe und wartende Scores wären
+ * unbemerkt verschwunden. Jetzt wird es einmal deutlich gemeldet.
+ */
+let storageWarned = false;
+function lsSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    if (!storageWarned) {
+      storageWarned = true;
+      try { toast('⚠️ Speicher voll — Scores sofort senden!'); } catch(_) {}
+      console.error('localStorage fehlgeschlagen:', e);
+    }
+    return false;
+  }
+}
+
 const SNAP_KEY   = 'rc_snapshot_' + location.pathname;
 const OUTBOX_KEY = 'rc_outbox_'   + location.pathname;
 
-const saveSnapshot = state => { try { localStorage.setItem(SNAP_KEY, JSON.stringify(state)); } catch(e) {} };
+const saveSnapshot = state => lsSet(SNAP_KEY, JSON.stringify(state));
 const loadSnapshot = ()    => { try { const d=localStorage.getItem(SNAP_KEY); return d?JSON.parse(d):null; } catch(e){ return null; } };
 
 function outboxRead() {
@@ -861,11 +892,12 @@ function outboxRead() {
   catch(e) { return []; }
 }
 function outboxPush(updates) {
-  try {
-    const q = outboxRead();
-    q.push({ ts: Date.now(), v: BUILD, updates });
-    localStorage.setItem(OUTBOX_KEY, JSON.stringify(q));
-  } catch(e) {}
+  const q = outboxRead();
+  q.push({ ts: Date.now(), v: BUILD, updates });
+  // Schlägt das fehl, ist der Score NICHT gesichert — laut melden
+  if (!lsSet(OUTBOX_KEY, JSON.stringify(q))) {
+    try { toast('⚠️ Konnte nicht zwischenspeichern — bitte online gehen!'); } catch(_) {}
+  }
 }
 function outboxClear() { try { localStorage.removeItem(OUTBOX_KEY); } catch(e) {} }
 
@@ -886,9 +918,7 @@ function draftsRead() {
   try { const d = localStorage.getItem(DRAFT_KEY); return d ? JSON.parse(d) : {}; }
   catch(e) { return {}; }
 }
-function draftsWrite(obj) {
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(obj)); } catch(e) {}
-}
+function draftsWrite(obj) { return lsSet(DRAFT_KEY, JSON.stringify(obj)); }
 
 function saveDraft() {
   if (!CUR.pid) return;
@@ -1013,7 +1043,7 @@ async function syncOffline() {
       const fixed = repairPaths(rest[0].updates);
       if (Object.keys(fixed).length) await withTimeout(window._fbUpdate(fixed), 5000, 'nachreichen');
       rest.shift();
-      localStorage.setItem(OUTBOX_KEY, JSON.stringify(rest));
+      lsSet(OUTBOX_KEY, JSON.stringify(rest));
     }
     outboxClear();
     setNetBadge(true);
@@ -1298,6 +1328,7 @@ function confirmSheet() {
   const isBB=p.mode==='bestball';
 
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
+  CUR.dirty = {};
   CUR.scores = normScores(p.scores);
 
   // Nicht gespeicherten Entwurf derselben Scorecard wieder einsetzen.
@@ -1313,8 +1344,13 @@ function confirmSheet() {
       for (let i = 0; i < 18; i++) {
         if (d[i] == null) continue;
         if (isMine) {
-          // Eigene Spalte: der Entwurf ist die neuere Eingabe und gewinnt
-          if (CUR.scores[role][i] !== d[i]) { CUR.scores[role][i] = d[i]; restored++; }
+          // Eigene Spalte: der Entwurf ist die neuere Eingabe und gewinnt.
+          // Als ungespeichert markieren, damit sie beim Speichern mitgeht.
+          if (CUR.scores[role][i] !== d[i]) {
+            CUR.scores[role][i] = d[i];
+            CUR.dirty[role + ':' + i] = true;
+            restored++;
+          }
         } else if (CUR.scores[role][i] == null) {
           // Fremde Spalte: nur Lücken füllen. Ein gespeicherter Score des
           // Gegners hat immer Vorrang vor einem alten Entwurf.
@@ -1480,6 +1516,7 @@ function stepScore(player, idx, delta) {
   if (next<1)  next=1;
   if (next>15) next=15;
   CUR.scores[player][idx]=next;
+  CUR.dirty[player + ':' + idx] = true;
   const sideMap={playerA:'A',playerA2:'A2',playerB:'B',playerB2:'B2'};
   const el=document.getElementById(`sv-${sideMap[player]}-${idx}`);
   if (el) { el.textContent=next; el.className='stval'; }
@@ -1550,14 +1587,27 @@ async function saveScore() {
 
   // Loch-für-Loch-Pfade aufbauen — Schlüssel ist die Paarungs-ID,
   // damit die Pfade auch beim Löschen anderer Paarungen stabil bleiben
+  // NUR die in dieser Sitzung angefassten Löcher schreiben.
+  // Früher wurden alle 18 Löcher jeder eigenen Rolle geschrieben, auch die
+  // leeren. Da null in Firebase löscht, hat ein einziger Tipp die Einträge
+  // vernichtet, die währenddessen von einem anderen Handy kamen.
   const updates = {};
+  let changed = 0;
   roles.forEach(role => {
     const arr = CUR.scores[role] || [];
     for (let i = 0; i < 18; i++) {
-      // null löscht den Pfad in Firebase = "Loch nicht gespielt"
+      if (!CUR.dirty[role + ':' + i]) continue;
       updates[`rc/pairings/${CUR.day}/${CUR.pid}/scores/${role}/${i}`] = arr[i] == null ? null : arr[i];
+      changed++;
     }
   });
+
+  if (!changed) {
+    btn.disabled = false;
+    btn.textContent = 'Score speichern ✓';
+    toast('Nichts Neues zu speichern');
+    return;
+  }
 
   // Lokalen Zustand optimistisch nachziehen (nur eigene Rollen)
   const merged = normScores(target.scores);
@@ -1570,6 +1620,10 @@ async function saveScore() {
   // Nur die tatsächlich gespeicherten Rollen aus dem Entwurf nehmen —
   // Eingaben anderer Spalten bleiben erhalten
   clearDraftRoles(CUR.day, CUR.pid, roles);
+  // Gesicherte Zellen sind nicht mehr "ungespeichert"
+  roles.forEach(role => {
+    for (let i = 0; i < 18; i++) delete CUR.dirty[role + ':' + i];
+  });
 
   btn.disabled = false;
   btn.textContent = 'Score speichern ✓';
@@ -1651,7 +1705,30 @@ function addP(t) {
 }
 
 function removePlayer(t, id) {
-  if(!confirm('Spieler wirklich löschen?'))return;
+  // Prüfen, ob der Spieler in Paarungen steht — und ob dort schon gespielt wurde.
+  // Ohne diese Warnung verschwindet ein Spieler aus der Aufstellung, während
+  // seine Scores verwaist in der Datenbank zurückbleiben.
+  const slots = ['playerA','playerA2','playerB','playerB2'];
+  let inPairings = 0, mitScores = 0;
+  [1,2].forEach(d => (S.pairings?.[d]||[]).forEach(p => {
+    const slot = slots.find(s => p[s] === id);
+    if (!slot) return;
+    inPairings++;
+    mitScores += normScores(p.scores)[slot].filter(v => v != null).length;
+  }));
+
+  let msg = 'Spieler wirklich löschen?';
+  if (mitScores > 0) {
+    msg = `Achtung: ${playerName(id)} steht in ${inPairings} Paarung(en) ` +
+          `und hat bereits ${mitScores} Löcher eingetragen.\n\n` +
+          `Die Paarung wird dann unvollständig und die Scores verwaisen.\n` +
+          `Trotzdem löschen?`;
+  } else if (inPairings > 0) {
+    msg = `Der Spieler steht in ${inPairings} Paarung(en). Diese werden unvollständig.\n` +
+          `Trotzdem löschen?`;
+  }
+  if (!confirm(msg)) return;
+
   if(t==='a') S.teamA.players=(S.teamA.players||[]).filter(p=>p.id!==id);
   else        S.teamB.players=(S.teamB.players||[]).filter(p=>p.id!==id);
   renderAdminPlayers(); renderAdminPairings();
