@@ -380,7 +380,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24e';
+const BUILD = '2026-07-24f';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -834,28 +834,7 @@ async function initFirebase() {
   });
 }
 
-// ── OFFLINE-FIRST-START ────────────────────────────────────
-// Erst den letzten bekannten Stand anzeigen, DANN Firebase versuchen.
-// So ist die App sofort benutzbar, auch wenn die Verbindung hängt oder fehlt.
-(function bootFromSnapshot() {
-  const snapshot = loadSnapshot();
-  if (snapshot) {
-    S = normState(snapshot);
-    try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
-  }
-  renderLB();
-  setNetBadge(false);
-})();
 
-initFirebase().catch(err => {
-  console.warn('Firebase:', err);
-  ONLINE = false;
-  setNetBadge(false);
-  toast(loadSnapshot() ? '📶 Offline — letzter Stand' : '⚠️ Offline — keine lokalen Daten');
-  renderLB();
-  // Regelmäßig versuchen, Wartendes nachzureichen
-  setInterval(() => { syncOffline(); rescueLegacyOffline(); }, 30000);
-});
 
 // ─────────────────────────────────────────
 // OFFLINE: SCHNAPPSCHUSS + OUTBOX
@@ -1787,6 +1766,35 @@ async function saveAdmin() {
   toast(landed ? '✅ Gespeichert' : '📶 Offline — wird nachgereicht');
   showView('lb');
 }
+
+// ═════════════════════════════════════════
+// START — ganz am Ende, damit alle Funktionen
+// und Konstanten oben bereits definiert sind.
+// (let/const sind vor ihrer Zeile nicht nutzbar;
+//  ein Zugriff davor bricht das ganze Skript ab.)
+// ═════════════════════════════════════════
+// ── OFFLINE-FIRST-START ────────────────────────────────────
+// Erst den letzten bekannten Stand anzeigen, DANN Firebase versuchen.
+// So ist die App sofort benutzbar, auch wenn die Verbindung hängt oder fehlt.
+(function bootFromSnapshot() {
+  const snapshot = loadSnapshot();
+  if (snapshot) {
+    S = normState(snapshot);
+    try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
+  }
+  renderLB();
+  setNetBadge(false);
+})();
+
+initFirebase().catch(err => {
+  console.warn('Firebase:', err);
+  ONLINE = false;
+  setNetBadge(false);
+  toast(loadSnapshot() ? '📶 Offline — letzter Stand' : '⚠️ Offline — keine lokalen Daten');
+  renderLB();
+  // Regelmäßig versuchen, Wartendes nachzureichen
+  setInterval(() => { syncOffline(); rescueLegacyOffline(); }, 30000);
+});
 </script>
 </body>
 </html>
