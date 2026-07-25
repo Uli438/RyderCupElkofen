@@ -378,6 +378,8 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
+const BUILD = '2026-07-24d';
+
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
 
@@ -388,6 +390,136 @@ const today   = () => new Date().toISOString().slice(0,10);
 const uid     = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 const esc     = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const firstName = n => (n||'–').split(' ')[0];
+
+/**
+ * FIREBASE-NORMALISIERUNG
+ *
+ * Firebase wirft null-Werte weg und macht aus lückenhaften Arrays Objekte.
+ * Beispiel: [null,null,5] wird als {2:5} gespeichert und kommt als OBJEKT zurück.
+ * Ohne Normalisierung crasht dann jedes [...spread] und jedes .some().
+ *
+ * toArr18 macht daraus immer ein sauberes Array der Länge 18.
+ * Akzeptiert: Array, Objekt mit Index-Keys, null, undefined.
+ */
+function toArr18(val) {
+  const out = Array(18).fill(null);
+  if (val == null) return out;
+  if (Array.isArray(val)) {
+    for (let i = 0; i < 18; i++) {
+      const v = val[i];
+      out[i] = (v === undefined || v === null) ? null : Number(v);
+    }
+    return out;
+  }
+  if (typeof val === 'object') {
+    for (const k in val) {
+      const i = Number(k);
+      if (Number.isInteger(i) && i >= 0 && i < 18) {
+        const v = val[k];
+        out[i] = (v === undefined || v === null) ? null : Number(v);
+      }
+    }
+    return out;
+  }
+  return out;
+}
+
+/**
+ * Firebase macht aus lückenhaften Listen ebenfalls Objekte.
+ * toList gibt immer ein echtes Array zurück (Paarungen, Spieler).
+ */
+function toList(val) {
+  if (Array.isArray(val)) return val.filter(x => x != null);
+  if (val && typeof val === 'object') {
+    return Object.keys(val)
+      .sort((a,b) => Number(a) - Number(b))
+      .map(k => val[k])
+      .filter(x => x != null);
+  }
+  return [];
+}
+
+/**
+ * Paarungen liegen in Firebase unter ihrer ID (nicht unter dem Listen-Index).
+ * Grund: beim Löschen einer Paarung würden sonst alle nachfolgenden Indizes
+ * nachrutschen — und deren Scores säßen plötzlich an der falschen Paarung.
+ *
+ * Im Speicher bleibt es eine Liste (Anzeige-Reihenfolge über das Feld ord).
+ * Altbestand mit Zahlen-Schlüsseln wird weiterhin gelesen.
+ */
+function toPairList(val) {
+  const list = Array.isArray(val)
+    ? val.filter(x => x != null)
+    : (val && typeof val === 'object')
+      ? Object.keys(val).map(k => val[k]).filter(x => x != null)
+      : [];
+  return list
+    .map((p, i) => ({ ...p, ord: Number.isFinite(p.ord) ? p.ord : i }))
+    .sort((a, b) => a.ord - b.ord);
+}
+
+// Welche Paarungs-IDs liegen aktuell auf dem Server? (für gezieltes Löschen)
+const SERVER_PIDS = { 1: [], 2: [] };
+
+/** Kompletten Turnierzustand nach dem Laden aus Firebase geradeziehen */
+function normState(state) {
+  if (!state) return state;
+  state.pairings = state.pairings || {};
+  [1,2].forEach(d => {
+    state.pairings[d] = toPairList(state.pairings[d]);
+    SERVER_PIDS[d] = state.pairings[d].map(p => p.id).filter(Boolean);
+  });
+  if (state.teamA) state.teamA.players = toList(state.teamA.players);
+  if (state.teamB) state.teamB.players = toList(state.teamB.players);
+  return state;
+}
+
+/**
+ * EINMALIGE MIGRATION: Altbestand liegt unter Zahlen-Schlüsseln (0,1,2…).
+ * Wird beim ersten Laden umgeschrieben auf ID-Schlüssel — atomar, inklusive
+ * der bestehenden Scores. Mehrfach ausgeführt schadet es nicht (idempotent).
+ */
+async function migratePairings(rawState) {
+  if (!rawState || !rawState.pairings) return false;
+  const updates = {};
+  let needed = false;
+
+  [1,2].forEach(d => {
+    const node = rawState.pairings[d];
+    if (!node) return;
+    const isArray = Array.isArray(node);
+    const keys = isArray ? node.map((_, i) => String(i)) : Object.keys(node);
+    keys.forEach((k, i) => {
+      const p = node[k];
+      if (!p || !p.id) return;
+      if (k === p.id) return;              // liegt schon richtig
+      needed = true;
+      updates[`rc/pairings/${d}/${p.id}`] = { ...p, ord: Number.isFinite(p.ord) ? p.ord : i };
+      updates[`rc/pairings/${d}/${k}`]    = null;   // alten Zahlen-Schlüssel entfernen
+    });
+  });
+
+  if (!needed) return false;
+  try {
+    await window._fbUpdate(updates);
+    console.info('Paarungen auf ID-Schlüssel migriert');
+    return true;
+  } catch (e) {
+    console.warn('Migration fehlgeschlagen:', e);
+    return false;
+  }
+}
+
+/** Alle vier Score-Slots einer Paarung normalisiert holen */
+function normScores(scores) {
+  const sc = scores || {};
+  return {
+    playerA:  toArr18(sc.playerA),
+    playerA2: toArr18(sc.playerA2),
+    playerB:  toArr18(sc.playerB),
+    playerB2: toArr18(sc.playerB2)
+  };
+}
 
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -506,8 +638,8 @@ function calcMatch(pairing, day) {
  * Match endet sobald der Vorsprung die verbleibenden Löcher übersteigt.
  */
 function calcMatchplay(sc, hA, hB, par, si, bn) {
-  const sA = sc.playerA || Array(18).fill(null);
-  const sB = sc.playerB || Array(18).fill(null);
+  const sA = toArr18(sc.playerA);
+  const sB = toArr18(sc.playerB);
   let wA = 0, wB = 0, played = 0;
   for (let i = 0; i < 18; i++) {
     if (sA[i] == null || sB[i] == null) continue;
@@ -529,10 +661,10 @@ function calcMatchplay(sc, hA, hB, par, si, bn) {
  * Match endet wie Matchplay (vorzeitiges Ende möglich).
  */
 function calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn) {
-  const sA  = sc.playerA  || Array(18).fill(null);
-  const sA2 = sc.playerA2 || Array(18).fill(null);
-  const sB  = sc.playerB  || Array(18).fill(null);
-  const sB2 = sc.playerB2 || Array(18).fill(null);
+  const sA  = toArr18(sc.playerA);
+  const sA2 = toArr18(sc.playerA2);
+  const sB  = toArr18(sc.playerB);
+  const sB2 = toArr18(sc.playerB2);
   let wA = 0, wB = 0, played = 0;
   for (let i = 0; i < 18; i++) {
     const hasA = sA[i] != null || sA2[i] != null;
@@ -581,8 +713,8 @@ function matchStatus(wA, wB, played) {
  * gibt es ohnehin 0 Punkte, höhere Scores ändern das Ergebnis nicht.
  */
 function calcStableford(sc, hA, hB, par, si) {
-  const sA = sc.playerA || Array(18).fill(null);
-  const sB = sc.playerB || Array(18).fill(null);
+  const sA = toArr18(sc.playerA);
+  const sB = toArr18(sc.playerB);
   let pA = 0, pB = 0, played = 0;
   for (let i = 0; i < 18; i++) {
     if (sA[i] == null || sB[i] == null) continue;
@@ -636,6 +768,7 @@ let myId = '', curDay = 1, admPDay = 1;
 // FIREBASE
 // ─────────────────────────────────────────
 window._fbSet = async () => {};
+window._fbUpdate = async () => { throw new Error('offline'); };
 
 function loadScript(src) {
   return new Promise((res,rej) => { const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
@@ -647,21 +780,30 @@ async function initFirebase() {
   if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
   const db = firebase.database();
   window._fbSet = (path, data) => db.ref(path).set(data);
+  // Multi-Path-Update: schreibt mehrere Pfade atomar in EINEM Vorgang.
+  // updates = { 'rc/pairings/1/0/scores/playerA/3': 5, ... }
+  window._fbUpdate = (updates) => db.ref().update(updates);
   const snap = await db.ref('rc').get();
-  if (snap.exists()) S = snap.val();
+  if (snap.exists()) {
+    const raw = snap.val();
+    await migratePairings(raw);   // Altbestand einmalig auf ID-Schlüssel umstellen
+    S = normState(raw);
+  }
   try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
   renderLB();
   toast('🟢 Live verbunden');
-  syncOffline();
+  syncOffline();          // eigene wartende Änderungen nachreichen
+  rescueLegacyOffline();  // Reste aus Versionen vor dem Sicherheits-Umbau
   db.ref('rc').on('value', snap => {
     if (!snap.exists()) return;
-    S = snap.val();
+    S = normState(snap.val());
+    saveSnapshot(S);          // Offline-Schnappschuss bei jedem Update auffrischen
     renderLB();
     if (document.getElementById('view-score').classList.contains('active') && CUR.pid) {
       const p = getPairing(CUR.pid, CUR.day);
       if (p && p.scores && !CUR.forBoth) {
         ['playerA','playerA2','playerB','playerB2'].forEach(role => {
-          if (role !== CUR.role && p.scores[role]) CUR.scores[role] = [...p.scores[role]];
+          if (role !== CUR.role && p.scores[role]) CUR.scores[role] = toArr18(p.scores[role]);
         });
         renderHoles();
         updateMatchStatus();
@@ -672,32 +814,214 @@ async function initFirebase() {
 
 initFirebase().catch(err => {
   console.warn('Firebase:', err);
-  const local = loadLocalState();
-  if (local) { S = local; toast('📶 Offline — lokale Daten geladen'); }
-  else          toast('⚠️ Offline — keine lokalen Daten');
+  const snapshot = loadSnapshot();
+  if (snapshot) { S = normState(snapshot); toast('📶 Offline — letzter Stand geladen'); }
+  else            toast('⚠️ Offline — keine lokalen Daten');
   renderLB();
   setInterval(syncOffline, 30000);
 });
 
 // ─────────────────────────────────────────
-// OFFLINE BUFFER
+// OFFLINE: SCHNAPPSCHUSS + OUTBOX
 // ─────────────────────────────────────────
-const LS_KEY = 'rc_offline_' + location.pathname;
-const saveLocalState  = state => { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {} };
-const loadLocalState  = ()    => { try { const d=localStorage.getItem(LS_KEY); return d?JSON.parse(d):null; } catch(e){ return null; } };
-const clearLocalState = ()    => { try { localStorage.removeItem(LS_KEY); } catch(e) {} };
+//
+// Zwei getrennte Dinge:
+//
+//  1. SCHNAPPSCHUSS (nur zum LESEN) — letzter bekannter Turnierstand,
+//     damit die App ohne Empfang starten und anzeigen kann.
+//
+//  2. OUTBOX (zum SCHREIBEN) — Warteschlange der eigenen Änderungen.
+//     Es wird NIE der komplette Zustand hochgeschoben (der könnte veraltet
+//     sein und fremde Scores überschreiben), sondern nur die eigenen
+//     Loch-Pfade — genau die, die auch online geschrieben worden wären.
 
-async function syncOffline() {
-  const local = loadLocalState();
-  if (!local) return;
+const SNAP_KEY   = 'rc_snapshot_' + location.pathname;
+const OUTBOX_KEY = 'rc_outbox_'   + location.pathname;
+
+const saveSnapshot = state => { try { localStorage.setItem(SNAP_KEY, JSON.stringify(state)); } catch(e) {} };
+const loadSnapshot = ()    => { try { const d=localStorage.getItem(SNAP_KEY); return d?JSON.parse(d):null; } catch(e){ return null; } };
+
+function outboxRead() {
+  try { const d = localStorage.getItem(OUTBOX_KEY); return d ? JSON.parse(d) : []; }
+  catch(e) { return []; }
+}
+function outboxPush(updates) {
   try {
-    await window._fbSet('rc', local);
-    S = local; clearLocalState();
-    toast('📶 Offline-Scores synchronisiert!');
-    renderLB();
+    const q = outboxRead();
+    q.push({ ts: Date.now(), v: BUILD, updates });
+    localStorage.setItem(OUTBOX_KEY, JSON.stringify(q));
   } catch(e) {}
 }
-window.addEventListener('online', () => { toast('📶 Verbindung zurück…'); setTimeout(syncOffline, 1000); });
+function outboxClear() { try { localStorage.removeItem(OUTBOX_KEY); } catch(e) {} }
+
+/**
+ * PFAD-REPARATUR für Einträge aus der Zeit vor der ID-Umstellung.
+ *
+ * Ein Handy kann offline gegangen sein, als die Paarungen noch unter ihrem
+ * Index lagen (rc/pairings/1/0/…). Nach der Migration zeigt dieser Pfad auf
+ * nichts mehr — schlimmer noch, er würde einen toten Zahlen-Schlüssel neu
+ * anlegen. Der alte Index entspricht dem Feld ord, darüber finden wir die ID.
+ *
+ * Lässt sich ein Pfad nicht zuordnen, wird er verworfen statt geraten.
+ */
+function repairPaths(updates) {
+  const out = {};
+  let dropped = 0;
+  for (const path in updates) {
+    const seg = path.split('/');
+    // rc / pairings / <tag> / <schlüssel> / …
+    if (seg[0] === 'rc' && seg[1] === 'pairings' && seg.length > 3 && /^[0-9]+$/.test(seg[3])) {
+      const day = Number(seg[2]);
+      const ord = Number(seg[3]);
+      const match = (S.pairings?.[day] || []).find(p => p.ord === ord);
+      if (!match || !match.id) { dropped++; continue; }
+      seg[3] = match.id;
+      out[seg.join('/')] = updates[path];
+    } else {
+      out[path] = updates[path];
+    }
+  }
+  if (dropped) console.warn(`${dropped} nicht zuordenbare Pfade verworfen`);
+  return out;
+}
+
+/** Wartende Änderungen der Reihe nach nachreichen (älteste zuerst) */
+async function syncOffline() {
+  const queue = outboxRead();
+  if (!queue.length) return;
+  const rest = [...queue];
+  try {
+    while (rest.length) {
+      const fixed = repairPaths(rest[0].updates);
+      if (Object.keys(fixed).length) await window._fbUpdate(fixed);
+      rest.shift();
+      localStorage.setItem(OUTBOX_KEY, JSON.stringify(rest));
+    }
+    outboxClear();
+    toast('📶 Offline-Scores synchronisiert!');
+    renderLB();
+  } catch(e) {
+    // Noch kein Empfang — Rest bleibt in der Warteschlange
+  }
+}
+
+/**
+ * RETTUNG ALTER OFFLINE-DATEN (Versionen vor dem Sicherheits-Umbau)
+ *
+ * Früher wurde offline der KOMPLETTE Turnierzustand zwischengespeichert und
+ * beim Wiederverbinden ungefragt hochgeschoben. Ein Handy, das seit damals
+ * offline ist, würde damit die ganze Datenbank mit einem veralteten Stand
+ * überschreiben — inklusive aller Scores, die andere inzwischen eingetragen
+ * haben.
+ *
+ * Deshalb: NIE hochschieben. Stattdessen nur solche Löcher nachtragen, die
+ * auf dem Server noch leer sind. Alles andere hat Vorrang vor dem alten Stand.
+ */
+const LEGACY_KEY = 'rc_offline_' + location.pathname;
+
+async function rescueLegacyOffline() {
+  let legacy = null;
+  try {
+    const d = localStorage.getItem(LEGACY_KEY);
+    if (!d) return;
+    legacy = JSON.parse(d);
+  } catch(e) { try { localStorage.removeItem(LEGACY_KEY); } catch(_){} return; }
+
+  const updates = {};
+  let rescued = 0;
+
+  [1,2].forEach(day => {
+    const oldList = toPairList(legacy?.pairings?.[day]);
+    oldList.forEach(oldP => {
+      // Passende Paarung auf dem Server: erst über die ID, sonst über ord
+      const live = (S.pairings?.[day] || []).find(p => p.id === oldP.id)
+                || (S.pairings?.[day] || []).find(p => p.ord === oldP.ord);
+      if (!live) return;
+      const oldSc  = normScores(oldP.scores);
+      const liveSc = normScores(live.scores);
+      ['playerA','playerA2','playerB','playerB2'].forEach(role => {
+        for (let i = 0; i < 18; i++) {
+          // Nur echte Lücken füllen — niemals überschreiben
+          if (oldSc[role][i] != null && liveSc[role][i] == null) {
+            updates[`rc/pairings/${day}/${live.id}/scores/${role}/${i}`] = oldSc[role][i];
+            rescued++;
+          }
+        }
+      });
+    });
+  });
+
+  try {
+    if (rescued) {
+      await window._fbUpdate(updates);
+      toast(`📶 ${rescued} alte Löcher nachgetragen`);
+    }
+    localStorage.removeItem(LEGACY_KEY);   // erst nach Erfolg entfernen
+  } catch(e) {
+    // Kein Empfang — beim nächsten Versuch erneut
+  }
+}
+
+window.addEventListener('online', () => {
+  toast('📶 Verbindung zurück…');
+  setTimeout(() => { syncOffline(); rescueLegacyOffline(); }, 1000);
+});
+
+// ─────────────────────────────────────────
+// SERVICE WORKER
+// ─────────────────────────────────────────
+// Damit sich die App auf dem Platz auch ohne Empfang öffnen lässt.
+// Ohne ihn lädt nicht einmal die index.html — dann nützt der beste
+// Offline-Schnappschuss nichts.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+
+      // Neue Version im Hintergrund gefunden → Hinweis einblenden
+      reg.addEventListener('updatefound', () => {
+        const fresh = reg.installing;
+        if (!fresh) return;
+        fresh.addEventListener('statechange', () => {
+          if (fresh.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBar();
+          }
+        });
+      });
+
+    }).catch(err => console.warn('[sw] Registrierung fehlgeschlagen:', err));
+
+    // Nach dem Übernehmen einmal neu laden
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return;
+      reloading = true;
+      location.reload();
+    });
+  });
+}
+
+/** Unaufdringlicher Balken: neue Version verfügbar */
+function showUpdateBar() {
+  if (document.getElementById('updbar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'updbar';
+  bar.style.cssText =
+    'position:fixed;left:0;right:0;bottom:0;z-index:900;background:var(--acc);' +
+    'color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;' +
+    'font-size:13px;font-weight:700;box-shadow:0 -4px 16px rgba(0,0,0,0.25)';
+  bar.innerHTML =
+    '<span style="flex:1">Neue Version verfügbar</span>' +
+    '<button id="updbtn" style="background:#fff;color:var(--acc);border:none;' +
+    'border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">' +
+    'Jetzt laden</button>';
+  document.body.appendChild(bar);
+  document.getElementById('updbtn').onclick = () => {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting');
+      else location.reload();
+    });
+  };
+}
 
 // ─────────────────────────────────────────
 // HELPERS
@@ -745,7 +1069,8 @@ function renderLB() {
   document.getElementById('lb-ta').textContent   = S.teamA?.name || 'TEAM A';
   document.getElementById('lb-tb').textContent   = S.teamB?.name || 'TEAM B';
   const c = getCourse(curDay==='total' ? 1 : curDay);
-  document.getElementById('lb-sub').textContent = curDay==='total' ? 'Gesamtstand' : `Tag ${curDay}${c.name?' · '+c.name:''}`;
+  document.getElementById('lb-sub').textContent =
+    (curDay==='total' ? 'Gesamtstand' : `Tag ${curDay}${c.name?' · '+c.name:''}`) + ` · Build ${BUILD}`;
   document.getElementById('lb-day').textContent = curDay==='total' ? 'GESAMT' : `TAG ${curDay}`;
   let pA=0, pB=0;
   if (curDay==='total') { const d1=dayPoints(1), d2=dayPoints(2); pA=d1.pA+d2.pA; pB=d1.pB+d2.pB; }
@@ -790,8 +1115,9 @@ function renderLB() {
         pillHtml = `<div class="rpill ${cls}">${txt}</div>`;
       }
 
-      const hasA = p.scores?.playerA?.some(s=>s!=null);
-      const hasB = p.scores?.playerB?.some(s=>s!=null);
+      const scNorm = normScores(p.scores);
+      const hasA = scNorm.playerA.some(s=>s!=null) || (mode==='bestball' && scNorm.playerA2.some(s=>s!=null));
+      const hasB = scNorm.playerB.some(s=>s!=null) || (mode==='bestball' && scNorm.playerB2.some(s=>s!=null));
       const entryInfo = (hasA||hasB) ? `<div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:4px">${hasA?'🔴 eingetragen':'🔴 ⏳ offen'} &nbsp;·&nbsp; ${hasB?'🔵 eingetragen':'🔵 ⏳ offen'}</div>` : '';
 
       html += `<div class="pc" onclick="openSheet('${p.id}',${day})">
@@ -852,13 +1178,7 @@ function confirmSheet() {
   const isBB=p.mode==='bestball';
 
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
-  const sc=p.scores||{};
-  CUR.scores={
-    playerA:  [...(sc.playerA  ||Array(18).fill(null))],
-    playerA2: [...(sc.playerA2 ||Array(18).fill(null))],
-    playerB:  [...(sc.playerB  ||Array(18).fill(null))],
-    playerB2: [...(sc.playerB2 ||Array(18).fill(null))]
-  };
+  CUR.scores = normScores(p.scores);
 
   const nA=playerName(p.playerA), nB=playerName(p.playerB);
   const nA2=p.playerA2?playerName(p.playerA2):'';
@@ -1055,25 +1375,63 @@ function updateMatchStatus() {
 // ─────────────────────────────────────────
 // SCORE SPEICHERN
 // ─────────────────────────────────────────
+/**
+ * DELTA-SYNC
+ *
+ * Schreibt NUR die Löcher der eigenen Rolle(n) — Loch für Loch als eigener Pfad.
+ * Vorher wurde der komplette Zustand geschrieben; zwei Flights, die gleichzeitig
+ * speicherten, haben sich gegenseitig die Scores überbügelt.
+ *
+ * Pfad: rc/pairings/<tag>/<index>/scores/<rolle>/<loch>
+ */
 async function saveScore() {
-  const btn=document.getElementById('savebtn');
-  btn.disabled=true; btn.textContent='Speichere…';
-  const p=getPairing(CUR.pid,CUR.day); if (!p) { btn.disabled=false; return; }
-  const existing=p.scores||{};
-  const newScores = CUR.forBoth
-    ? { playerA:[...CUR.scores.playerA], playerA2:[...CUR.scores.playerA2], playerB:[...CUR.scores.playerB], playerB2:[...CUR.scores.playerB2] }
-    : {
-        playerA:  CUR.role==='playerA'  ?[...CUR.scores.playerA] :[...(existing.playerA ||Array(18).fill(null))],
-        playerA2: CUR.role==='playerA2' ?[...CUR.scores.playerA2]:[...(existing.playerA2||Array(18).fill(null))],
-        playerB:  CUR.role==='playerB'  ?[...CUR.scores.playerB] :[...(existing.playerB ||Array(18).fill(null))],
-        playerB2: CUR.role==='playerB2' ?[...CUR.scores.playerB2]:[...(existing.playerB2||Array(18).fill(null))]
-      };
-  S.pairings[CUR.day]=S.pairings[CUR.day].map(px=>px.id!==CUR.pid?px:{...px,scores:newScores});
-  saveLocalState(S);
-  try   { await window._fbSet('rc',S); clearLocalState(); toast('✅ Score gespeichert'); }
-  catch { toast('📶 Offline — lokal gespeichert'); setTimeout(syncOffline,30000); }
-  btn.disabled=false; btn.textContent='Score speichern ✓';
-  renderHoles(); updateMatchStatus();
+  const btn = document.getElementById('savebtn');
+  btn.disabled = true;
+  btn.textContent = 'Speichere…';
+
+  const target = getPairing(CUR.pid, CUR.day);
+  if (!target) {
+    btn.disabled = false;
+    btn.textContent = 'Score speichern ✓';
+    toast('⚠️ Paarung nicht gefunden');
+    return;
+  }
+
+  // Nur die Rollen schreiben, für die diese Session zuständig ist
+  const roles = CUR.forBoth
+    ? ['playerA','playerA2','playerB','playerB2']
+    : [CUR.role];
+
+  // Loch-für-Loch-Pfade aufbauen — Schlüssel ist die Paarungs-ID,
+  // damit die Pfade auch beim Löschen anderer Paarungen stabil bleiben
+  const updates = {};
+  roles.forEach(role => {
+    const arr = CUR.scores[role] || [];
+    for (let i = 0; i < 18; i++) {
+      // null löscht den Pfad in Firebase = "Loch nicht gespielt"
+      updates[`rc/pairings/${CUR.day}/${CUR.pid}/scores/${role}/${i}`] = arr[i] == null ? null : arr[i];
+    }
+  });
+
+  // Lokalen Zustand optimistisch nachziehen (nur eigene Rollen)
+  const merged = normScores(target.scores);
+  roles.forEach(role => { merged[role] = [...CUR.scores[role]]; });
+  target.scores = merged;
+  saveSnapshot(S);
+
+  try {
+    await window._fbUpdate(updates);
+    toast('✅ Score gespeichert');
+  } catch (e) {
+    outboxPush(updates);
+    toast('📶 Offline — lokal gespeichert');
+    setTimeout(syncOffline, 30000);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Score speichern ✓';
+  renderHoles();
+  updateMatchStatus();
 }
 
 // ─────────────────────────────────────────
@@ -1209,10 +1567,30 @@ function renderAdminPairings() {
 function addPair() {
   if (!S.pairings) S.pairings={1:[],2:[]};
   if (!S.pairings[admPDay]) S.pairings[admPDay]=[];
-  S.pairings[admPDay].push({id:uid(),playerA:'',playerA2:'',playerB:'',playerB2:'',mode:'matchplay',bruttoNetto:'brutto',scores:null});
+  const list = S.pairings[admPDay];
+  list.push({
+    id: uid(), ord: list.length,
+    playerA:'', playerA2:'', playerB:'', playerB2:'',
+    mode:'matchplay', bruttoNetto:'brutto', scores:null
+  });
   renderAdminPairings();
 }
-function removePairing(i) { if(!confirm('Paarung löschen?'))return; S.pairings[admPDay].splice(i,1); renderAdminPairings(); }
+
+function removePairing(i) {
+  const p = S.pairings[admPDay][i];
+  if (!p) return;
+  // Warnen wenn schon gespielt wurde — die Scores gehen mit verloren
+  const sc = normScores(p.scores);
+  const holes = ['playerA','playerA2','playerB','playerB2']
+    .reduce((n, r) => n + sc[r].filter(s => s != null).length, 0);
+  const msg = holes > 0
+    ? `Achtung: In dieser Paarung sind bereits ${holes} Löcher eingetragen.\nPaarung mitsamt Scores wirklich löschen?`
+    : 'Paarung löschen?';
+  if (!confirm(msg)) return;
+  S.pairings[admPDay].splice(i,1);
+  S.pairings[admPDay].forEach((px, idx) => { px.ord = idx; });
+  renderAdminPairings();
+}
 function updatePairing(i,f,v) { if(S.pairings[admPDay][i]) { S.pairings[admPDay][i][f]=v; renderAdminPairings(); } }
 
 function resetAll() {
@@ -1224,7 +1602,15 @@ function resetAll() {
   initAdmin();
 }
 
+/**
+ * ADMIN SPEICHERN — schreibt gezielt nur die Setup-Felder.
+ *
+ * Wichtig: die scores-Pfade werden bewusst NICHT angefasst. Früher wurde der
+ * komplette Zustand geschrieben — wenn der Wettspielleiter längere Zeit im
+ * Admin stand, konnte das laufend eingetragene Scores überbügeln.
+ */
 async function saveAdmin() {
+  // Eingaben in den lokalen Zustand übernehmen
   [1,2].forEach(d=>{
     const name=document.getElementById(`ac${d}n`).value||'';
     const siRaw=document.getElementById(`ac${d}si`).value;
@@ -1232,13 +1618,58 @@ async function saveAdmin() {
     if(si.length<18) si=[...DEF_SI];
     S.courses[d]={name,par:[...DEF_PAR],si:si.slice(0,18)};
   });
-  S.eventName=document.getElementById('a-name').value||'Ryder Cup Elkofen';
-  S.date1=document.getElementById('a-d1').value||today();
-  S.date2=document.getElementById('a-d2').value||today();
-  S.teamA.name=document.getElementById('a-ta').value||'Team Rot';
-  S.teamB.name=document.getElementById('a-tb').value||'Team Blau';
-  try   { await window._fbSet('rc',S); toast('✅ Gespeichert'); }
-  catch { toast('⚠️ Firebase nicht erreichbar'); }
+  S.eventName   = document.getElementById('a-name').value||'Ryder Cup Elkofen';
+  S.date1       = document.getElementById('a-d1').value||today();
+  S.date2       = document.getElementById('a-d2').value||today();
+  S.teamA.name  = document.getElementById('a-ta').value||'Team Rot';
+  S.teamB.name  = document.getElementById('a-tb').value||'Team Blau';
+
+  // Gezielte Pfade aufbauen
+  const updates = {
+    'rc/eventName':    S.eventName,
+    'rc/date1':        S.date1,
+    'rc/date2':        S.date2,
+    'rc/teamA/name':   S.teamA.name,
+    'rc/teamB/name':   S.teamB.name,
+    'rc/teamA/players': S.teamA.players || [],
+    'rc/teamB/players': S.teamB.players || [],
+    'rc/courses/1':    S.courses[1],
+    'rc/courses/2':    S.courses[2]
+  };
+
+  // Paarungen: nur die Setup-Felder je Paarung, scores bleiben unberührt.
+  // Schlüssel ist die Paarungs-ID; ord hält die Anzeige-Reihenfolge.
+  [1,2].forEach(d => {
+    const list = S.pairings?.[d] || [];
+    const liveIds = [];
+    list.forEach((p, i) => {
+      p.ord = i;
+      liveIds.push(p.id);
+      const base = `rc/pairings/${d}/${p.id}`;
+      updates[`${base}/id`]          = p.id;
+      updates[`${base}/ord`]         = i;
+      updates[`${base}/playerA`]     = p.playerA  || '';
+      updates[`${base}/playerA2`]    = p.playerA2 || '';
+      updates[`${base}/playerB`]     = p.playerB  || '';
+      updates[`${base}/playerB2`]    = p.playerB2 || '';
+      updates[`${base}/mode`]        = p.mode || 'matchplay';
+      updates[`${base}/bruttoNetto`] = p.bruttoNetto || 'brutto';
+    });
+    // Gelöschte Paarungen gezielt entfernen (samt ihrer Scores)
+    (SERVER_PIDS[d] || []).forEach(pid => {
+      if (!liveIds.includes(pid)) updates[`rc/pairings/${d}/${pid}`] = null;
+    });
+    SERVER_PIDS[d] = liveIds;
+  });
+
+  saveSnapshot(S);
+  try {
+    await window._fbUpdate(updates);
+    toast('✅ Gespeichert');
+  } catch (e) {
+    outboxPush(updates);
+    toast('📶 Offline — wird nachgereicht');
+  }
   showView('lb');
 }
 </script>
