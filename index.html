@@ -227,6 +227,8 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       <div class="he">🏆 RYDER CUP</div>
       <div class="ht serif" id="lb-name">Ryder Cup Elkofen</div>
       <div class="hs" id="lb-sub">Admin öffnen zum Einrichten</div>
+      <div id="netbadge" style="display:none;margin-top:5px;font-size:10px;font-weight:700;
+        color:#fff;background:#78909c;padding:3px 10px;border-radius:20px"></div>
       <div class="htabs">
         <button class="htab on" data-d="1"     onclick="setDay(1)">TAG 1</button>
         <button class="htab"    data-d="2"     onclick="setDay(2)">TAG 2</button>
@@ -378,7 +380,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24d';
+const BUILD = '2026-07-24e';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -501,7 +503,7 @@ async function migratePairings(rawState) {
 
   if (!needed) return false;
   try {
-    await window._fbUpdate(updates);
+    await withTimeout(window._fbUpdate(updates), 6000, 'migration');
     console.info('Paarungen auf ID-Schlüssel migriert');
     return true;
   } catch (e) {
@@ -774,6 +776,21 @@ function loadScript(src) {
   return new Promise((res,rej) => { const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
 }
 
+/**
+ * Bricht ein Versprechen nach n Millisekunden ab.
+ *
+ * Nötig, weil Firebase offline NICHT scheitert: Schreibvorgänge landen in einer
+ * internen Warteschlange und das Promise bleibt unbegrenzt offen. Ohne Timeout
+ * wird der catch-Zweig nie erreicht — und damit nichts in die Outbox gelegt.
+ */
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout: ' + (label || ''))), ms))
+  ]);
+}
+
 async function initFirebase() {
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js');
@@ -781,16 +798,21 @@ async function initFirebase() {
   const db = firebase.database();
   window._fbSet = (path, data) => db.ref(path).set(data);
   // Multi-Path-Update: schreibt mehrere Pfade atomar in EINEM Vorgang.
-  // updates = { 'rc/pairings/1/0/scores/playerA/3': 5, ... }
   window._fbUpdate = (updates) => db.ref().update(updates);
-  const snap = await db.ref('rc').get();
+
+  // Erstes Laden mit Zeitlimit — sonst hängt die App ohne Empfang endlos
+  // und das Turnier erscheint gar nicht.
+  const snap = await withTimeout(db.ref('rc').get(), 6000, 'erstes Laden');
   if (snap.exists()) {
     const raw = snap.val();
     await migratePairings(raw);   // Altbestand einmalig auf ID-Schlüssel umstellen
     S = normState(raw);
+    saveSnapshot(S);
   }
   try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
+  ONLINE = true;
   renderLB();
+  setNetBadge(true);
   toast('🟢 Live verbunden');
   syncOffline();          // eigene wartende Änderungen nachreichen
   rescueLegacyOffline();  // Reste aus Versionen vor dem Sicherheits-Umbau
@@ -812,13 +834,27 @@ async function initFirebase() {
   });
 }
 
+// ── OFFLINE-FIRST-START ────────────────────────────────────
+// Erst den letzten bekannten Stand anzeigen, DANN Firebase versuchen.
+// So ist die App sofort benutzbar, auch wenn die Verbindung hängt oder fehlt.
+(function bootFromSnapshot() {
+  const snapshot = loadSnapshot();
+  if (snapshot) {
+    S = normState(snapshot);
+    try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
+  }
+  renderLB();
+  setNetBadge(false);
+})();
+
 initFirebase().catch(err => {
   console.warn('Firebase:', err);
-  const snapshot = loadSnapshot();
-  if (snapshot) { S = normState(snapshot); toast('📶 Offline — letzter Stand geladen'); }
-  else            toast('⚠️ Offline — keine lokalen Daten');
+  ONLINE = false;
+  setNetBadge(false);
+  toast(loadSnapshot() ? '📶 Offline — letzter Stand' : '⚠️ Offline — keine lokalen Daten');
   renderLB();
-  setInterval(syncOffline, 30000);
+  // Regelmäßig versuchen, Wartendes nachzureichen
+  setInterval(() => { syncOffline(); rescueLegacyOffline(); }, 30000);
 });
 
 // ─────────────────────────────────────────
@@ -854,6 +890,27 @@ function outboxPush(updates) {
 }
 function outboxClear() { try { localStorage.removeItem(OUTBOX_KEY); } catch(e) {} }
 
+// ── ENTWURF (nicht gespeicherte Eingabe) ───────────────────
+// Wer Löcher eintippt und die App verlässt, ohne auf "Speichern" zu drücken,
+// soll nichts verlieren. Bei jedem Tastendruck wird der Stand gesichert und
+// beim erneuten Öffnen derselben Scorecard wieder eingesetzt.
+const DRAFT_KEY = 'rc_draft_' + location.pathname;
+
+function saveDraft() {
+  if (!CUR.pid) return;
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      pid: CUR.pid, day: CUR.day, role: CUR.role,
+      forBoth: CUR.forBoth, scores: CUR.scores, ts: Date.now()
+    }));
+  } catch(e) {}
+}
+function loadDraft() {
+  try { const d = localStorage.getItem(DRAFT_KEY); return d ? JSON.parse(d) : null; }
+  catch(e) { return null; }
+}
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch(e) {} }
+
 /**
  * PFAD-REPARATUR für Einträge aus der Zeit vor der ID-Umstellung.
  *
@@ -885,6 +942,53 @@ function repairPaths(updates) {
   return out;
 }
 
+// Verbindungszustand (nur zur Anzeige)
+let ONLINE = false;
+
+/** Kleines Netz-Symbol im Kopfbereich */
+function setNetBadge(online) {
+  ONLINE = !!online;
+  const el = document.getElementById('netbadge');
+  if (!el) return;
+  const waiting = outboxRead().length;
+  if (online && !waiting) { el.textContent = ''; el.style.display = 'none'; return; }
+  el.style.display = 'inline-block';
+  if (!online && waiting) { el.textContent = `📶 offline · ${waiting} wartet`; el.style.background = '#e65100'; }
+  else if (!online)       { el.textContent = '📶 offline';                    el.style.background = '#78909c'; }
+  else                    { el.textContent = `↑ ${waiting} wartet`;           el.style.background = '#e65100'; }
+}
+
+/**
+ * ZUVERLÄSSIGES SCHREIBEN
+ *
+ * Firebase scheitert offline NICHT — Schreibvorgänge landen in einer internen
+ * Warteschlange und das Versprechen bleibt unbegrenzt offen. Ohne diesen
+ * Wrapper wurde der catch-Zweig nie erreicht und nichts in die Outbox gelegt;
+ * der Score war beim Schließen der App verloren.
+ *
+ * Rückgabe: true = beim Server angekommen, false = in der Outbox geparkt.
+ */
+async function reliableWrite(updates) {
+  // Bekannt offline → gar nicht erst versuchen
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    outboxPush(updates);
+    setNetBadge(false);
+    return false;
+  }
+  try {
+    await withTimeout(window._fbUpdate(updates), 5000, 'schreiben');
+    setNetBadge(true);
+    return true;
+  } catch (e) {
+    // Timeout ODER echter Fehler → sicher zwischenspeichern.
+    // Falls Firebase den Vorgang später doch noch zustellt, ist das
+    // unkritisch: es sind dieselben Werte (idempotent).
+    outboxPush(updates);
+    setNetBadge(false);
+    return false;
+  }
+}
+
 /** Wartende Änderungen der Reihe nach nachreichen (älteste zuerst) */
 async function syncOffline() {
   const queue = outboxRead();
@@ -893,11 +997,12 @@ async function syncOffline() {
   try {
     while (rest.length) {
       const fixed = repairPaths(rest[0].updates);
-      if (Object.keys(fixed).length) await window._fbUpdate(fixed);
+      if (Object.keys(fixed).length) await withTimeout(window._fbUpdate(fixed), 5000, 'nachreichen');
       rest.shift();
       localStorage.setItem(OUTBOX_KEY, JSON.stringify(rest));
     }
     outboxClear();
+    setNetBadge(true);
     toast('📶 Offline-Scores synchronisiert!');
     renderLB();
   } catch(e) {
@@ -953,7 +1058,7 @@ async function rescueLegacyOffline() {
 
   try {
     if (rescued) {
-      await window._fbUpdate(updates);
+      await withTimeout(window._fbUpdate(updates), 5000, 'nachtragen');
       toast(`📶 ${rescued} alte Löcher nachgetragen`);
     }
     localStorage.removeItem(LEGACY_KEY);   // erst nach Erfolg entfernen
@@ -1078,6 +1183,7 @@ function renderLB() {
   document.getElementById('lb-pta').textContent = Number.isInteger(pA)?pA:pA.toFixed(1);
   document.getElementById('lb-ptb').textContent = Number.isInteger(pB)?pB:pB.toFixed(1);
   renderPlayerBar();
+  setNetBadge(ONLINE);
 
   const days = curDay==='total' ? [1,2] : [curDay];
   let html = '';
@@ -1179,6 +1285,24 @@ function confirmSheet() {
 
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
   CUR.scores = normScores(p.scores);
+
+  // Nicht gespeicherten Entwurf derselben Scorecard wieder einsetzen.
+  // Nur für die Rollen, die diese Sitzung selbst bearbeitet — fremde Spalten
+  // kommen weiterhin frisch vom Server.
+  const draft = loadDraft();
+  if (draft && draft.pid === pid && String(draft.day) === String(day) && draft.forBoth === forBoth) {
+    const ownRoles = forBoth ? ['playerA','playerA2','playerB','playerB2'] : [myRole];
+    let restored = 0;
+    ownRoles.forEach(role => {
+      const d = toArr18(draft.scores?.[role]);
+      for (let i = 0; i < 18; i++) {
+        if (d[i] != null && d[i] !== CUR.scores[role][i]) { CUR.scores[role][i] = d[i]; restored++; }
+      }
+    });
+    if (restored) setTimeout(() => toast(`↩️ ${restored} nicht gespeicherte Löcher wiederhergestellt`), 400);
+  } else if (draft) {
+    clearDraft();   // Entwurf gehört zu einer anderen Paarung
+  }
 
   const nA=playerName(p.playerA), nB=playerName(p.playerB);
   const nA2=p.playerA2?playerName(p.playerA2):'';
@@ -1338,6 +1462,7 @@ function stepScore(player, idx, delta) {
   const sideMap={playerA:'A',playerA2:'A2',playerB:'B',playerB2:'B2'};
   const el=document.getElementById(`sv-${sideMap[player]}-${idx}`);
   if (el) { el.textContent=next; el.className='stval'; }
+  saveDraft();   // sofort sichern — auch ohne "Speichern"-Knopf
   renderHoles();
   updateMatchStatus();
 }
@@ -1419,14 +1544,9 @@ async function saveScore() {
   target.scores = merged;
   saveSnapshot(S);
 
-  try {
-    await window._fbUpdate(updates);
-    toast('✅ Score gespeichert');
-  } catch (e) {
-    outboxPush(updates);
-    toast('📶 Offline — lokal gespeichert');
-    setTimeout(syncOffline, 30000);
-  }
+  const landed = await reliableWrite(updates);
+  toast(landed ? '✅ Score gespeichert' : '📶 Offline — sicher zwischengespeichert');
+  clearDraft();   // Score ist jetzt entweder auf dem Server oder in der Outbox
 
   btn.disabled = false;
   btn.textContent = 'Score speichern ✓';
@@ -1663,13 +1783,8 @@ async function saveAdmin() {
   });
 
   saveSnapshot(S);
-  try {
-    await window._fbUpdate(updates);
-    toast('✅ Gespeichert');
-  } catch (e) {
-    outboxPush(updates);
-    toast('📶 Offline — wird nachgereicht');
-  }
+  const landed = await reliableWrite(updates);
+  toast(landed ? '✅ Gespeichert' : '📶 Offline — wird nachgereicht');
   showView('lb');
 }
 </script>
