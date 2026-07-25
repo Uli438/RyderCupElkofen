@@ -380,7 +380,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24f';
+const BUILD = '2026-07-24g';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -875,20 +875,55 @@ function outboxClear() { try { localStorage.removeItem(OUTBOX_KEY); } catch(e) {
 // beim erneuten Öffnen derselben Scorecard wieder eingesetzt.
 const DRAFT_KEY = 'rc_draft_' + location.pathname;
 
+// Entwürfe gehören zur PAARUNG, nicht zur Rollenauswahl.
+// Vorher hing der Entwurf an "für beide eintragen" — beim Umschalten der
+// Auswahl passte er nicht mehr und wurde gelöscht. Jetzt liegt pro Paarung
+// und Tag ein eigener Entwurf, unabhängig davon, wer gerade einträgt.
+const ALL_ROLES = ['playerA','playerA2','playerB','playerB2'];
+const draftKey  = (day, pid) => `${day}:${pid}`;
+
+function draftsRead() {
+  try { const d = localStorage.getItem(DRAFT_KEY); return d ? JSON.parse(d) : {}; }
+  catch(e) { return {}; }
+}
+function draftsWrite(obj) {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(obj)); } catch(e) {}
+}
+
 function saveDraft() {
   if (!CUR.pid) return;
-  try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({
-      pid: CUR.pid, day: CUR.day, role: CUR.role,
-      forBoth: CUR.forBoth, scores: CUR.scores, ts: Date.now()
-    }));
-  } catch(e) {}
+  const all = draftsRead();
+  all[draftKey(CUR.day, CUR.pid)] = { scores: CUR.scores, ts: Date.now() };
+  draftsWrite(all);
 }
-function loadDraft() {
-  try { const d = localStorage.getItem(DRAFT_KEY); return d ? JSON.parse(d) : null; }
-  catch(e) { return null; }
+
+function loadDraft(day, pid) {
+  return draftsRead()[draftKey(day, pid)] || null;
 }
-function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch(e) {} }
+
+/**
+ * Nach dem Speichern nur die gesicherten Rollen aus dem Entwurf nehmen.
+ * Alles andere bleibt stehen — sonst gingen Eingaben verloren, die in einer
+ * anderen Rollenauswahl gemacht wurden und noch nicht geschrieben sind.
+ */
+function clearDraftRoles(day, pid, roles) {
+  const all = draftsRead();
+  const key = draftKey(day, pid);
+  const d = all[key];
+  if (!d) return;
+  d.scores = d.scores || {};
+  roles.forEach(r => { d.scores[r] = null; });
+  const somethingLeft = ALL_ROLES.some(r => toArr18(d.scores[r]).some(v => v != null));
+  if (somethingLeft) all[key] = d; else delete all[key];
+  draftsWrite(all);
+}
+
+/** Kompletten Entwurf einer Paarung verwerfen */
+function clearDraft(day, pid) {
+  const all = draftsRead();
+  delete all[draftKey(day ?? CUR.day, pid ?? CUR.pid)];
+  draftsWrite(all);
+}
 
 /**
  * PFAD-REPARATUR für Einträge aus der Zeit vor der ID-Umstellung.
@@ -1268,19 +1303,26 @@ function confirmSheet() {
   // Nicht gespeicherten Entwurf derselben Scorecard wieder einsetzen.
   // Nur für die Rollen, die diese Sitzung selbst bearbeitet — fremde Spalten
   // kommen weiterhin frisch vom Server.
-  const draft = loadDraft();
-  if (draft && draft.pid === pid && String(draft.day) === String(day) && draft.forBoth === forBoth) {
-    const ownRoles = forBoth ? ['playerA','playerA2','playerB','playerB2'] : [myRole];
+  const draft = loadDraft(day, pid);
+  if (draft) {
+    const ownRoles = forBoth ? ALL_ROLES : [myRole];
     let restored = 0;
-    ownRoles.forEach(role => {
+    ALL_ROLES.forEach(role => {
       const d = toArr18(draft.scores?.[role]);
+      const isMine = ownRoles.includes(role);
       for (let i = 0; i < 18; i++) {
-        if (d[i] != null && d[i] !== CUR.scores[role][i]) { CUR.scores[role][i] = d[i]; restored++; }
+        if (d[i] == null) continue;
+        if (isMine) {
+          // Eigene Spalte: der Entwurf ist die neuere Eingabe und gewinnt
+          if (CUR.scores[role][i] !== d[i]) { CUR.scores[role][i] = d[i]; restored++; }
+        } else if (CUR.scores[role][i] == null) {
+          // Fremde Spalte: nur Lücken füllen. Ein gespeicherter Score des
+          // Gegners hat immer Vorrang vor einem alten Entwurf.
+          CUR.scores[role][i] = d[i]; restored++;
+        }
       }
     });
     if (restored) setTimeout(() => toast(`↩️ ${restored} nicht gespeicherte Löcher wiederhergestellt`), 400);
-  } else if (draft) {
-    clearDraft();   // Entwurf gehört zu einer anderen Paarung
   }
 
   const nA=playerName(p.playerA), nB=playerName(p.playerB);
@@ -1525,7 +1567,9 @@ async function saveScore() {
 
   const landed = await reliableWrite(updates);
   toast(landed ? '✅ Score gespeichert' : '📶 Offline — sicher zwischengespeichert');
-  clearDraft();   // Score ist jetzt entweder auf dem Server oder in der Outbox
+  // Nur die tatsächlich gespeicherten Rollen aus dem Entwurf nehmen —
+  // Eingaben anderer Spalten bleiben erhalten
+  clearDraftRoles(CUR.day, CUR.pid, roles);
 
   btn.disabled = false;
   btn.textContent = 'Score speichern ✓';
