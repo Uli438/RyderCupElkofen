@@ -380,7 +380,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24h';
+const BUILD = '2026-07-24i';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -466,13 +466,29 @@ const SERVER_PIDS = { 1: [], 2: [] };
 /** Kompletten Turnierzustand nach dem Laden aus Firebase geradeziehen */
 function normState(state) {
   if (!state) return state;
+  // Alle Zweige absichern. Fehlte einer (unvollständiger Datenbestand,
+  // Eingriff in der Firebase-Konsole), stürzte saveAdmin stumm ab.
   state.pairings = state.pairings || {};
+  state.courses  = state.courses  || {};
+  [1,2].forEach(d => {
+    const k = state.courses[d] || {};
+    state.courses[d] = {
+      name: k.name || '',
+      par:  Array.isArray(k.par) && k.par.length === 18 ? k.par : [...DEF_PAR],
+      si:   Array.isArray(k.si)  && k.si.length  === 18 ? k.si  : [...DEF_SI]
+    };
+  });
+  state.teamA = state.teamA || { name:'Team Rot',  players:[] };
+  state.teamB = state.teamB || { name:'Team Blau', players:[] };
+  state.teamA.name = state.teamA.name || 'Team Rot';
+  state.teamB.name = state.teamB.name || 'Team Blau';
+  state.eventName  = state.eventName  || 'Ryder Cup Elkofen';
   [1,2].forEach(d => {
     state.pairings[d] = toPairList(state.pairings[d]);
     SERVER_PIDS[d] = state.pairings[d].map(p => p.id).filter(Boolean);
   });
-  if (state.teamA) state.teamA.players = toList(state.teamA.players);
-  if (state.teamB) state.teamB.players = toList(state.teamB.players);
+  state.teamA.players = toList(state.teamA.players);
+  state.teamB.players = toList(state.teamB.players);
   return state;
 }
 
@@ -1033,6 +1049,45 @@ async function reliableWrite(updates) {
   }
 }
 
+/**
+ * VERALTETE EINTRÄGE VERWERFEN
+ *
+ * Ein Handy kann stundenlang ohne Empfang sein. Wird sein Eintrag am Abend
+ * nachgereicht, darf er keine Korrektur zurücksetzen, die inzwischen von
+ * jemand anderem kam. Verglichen wird der Zeitstempel des Wartelisten-
+ * Eintrags mit dem, der am Loch auf dem Server hängt.
+ *
+ * Ohne Zeitstempel auf dem Server (Altbestand) gewinnt der Eintrag —
+ * lieber ein Wert zu viel als ein verlorener Score.
+ */
+function dropStale(updates, entryTs) {
+  if (!entryTs) return updates;
+  const out = {};
+  const verworfen = [];
+  for (const path in updates) {
+    const m = path.match(/^rc\/pairings\/(\d+)\/([^/]+)\/scores\/([^/]+)\/(\d+)$/);
+    if (!m) { out[path] = updates[path]; continue; }
+    const [, tag, pid, rolle, loch] = m;
+    const p = getPairing(pid, Number(tag));
+    const serverTs = p && p.ts ? toArr18(p.ts[rolle])[Number(loch)] : null;
+    if (serverTs != null && Number(serverTs) > entryTs) {
+      verworfen.push(`${rolle}/${loch}`);
+      continue;                       // Server ist neuer → alten Eintrag fallenlassen
+    }
+    out[path] = updates[path];
+  }
+  // Zeitstempel-Pfade ohne zugehörigen Score-Pfad ebenfalls entfernen
+  Object.keys(out).forEach(path => {
+    const m = path.match(/^(rc\/pairings\/\d+\/[^/]+)\/ts\/([^/]+)\/(\d+)$/);
+    if (m && !(`${m[1]}/scores/${m[2]}/${m[3]}` in out)) delete out[path];
+  });
+  if (verworfen.length) {
+    console.info('Veraltete Nachträge verworfen:', verworfen.join(', '));
+    try { toast(`${verworfen.length} veraltete Einträge übersprungen`); } catch(e) {}
+  }
+  return out;
+}
+
 /** Wartende Änderungen der Reihe nach nachreichen (älteste zuerst) */
 async function syncOffline() {
   const queue = outboxRead();
@@ -1040,7 +1095,7 @@ async function syncOffline() {
   const rest = [...queue];
   try {
     while (rest.length) {
-      const fixed = repairPaths(rest[0].updates);
+      const fixed = dropStale(repairPaths(rest[0].updates), rest[0].ts);
       if (Object.keys(fixed).length) await withTimeout(window._fbUpdate(fixed), 5000, 'nachreichen');
       rest.shift();
       lsSet(OUTBOX_KEY, JSON.stringify(rest));
@@ -1593,11 +1648,16 @@ async function saveScore() {
   // vernichtet, die währenddessen von einem anderen Handy kamen.
   const updates = {};
   let changed = 0;
+  const jetzt = Date.now();
   roles.forEach(role => {
     const arr = CUR.scores[role] || [];
     for (let i = 0; i < 18; i++) {
       if (!CUR.dirty[role + ':' + i]) continue;
-      updates[`rc/pairings/${CUR.day}/${CUR.pid}/scores/${role}/${i}`] = arr[i] == null ? null : arr[i];
+      const basis = `rc/pairings/${CUR.day}/${CUR.pid}`;
+      updates[`${basis}/scores/${role}/${i}`] = arr[i] == null ? null : arr[i];
+      // Zeitstempel je Loch — damit ein spät nachgereichter Eintrag aus einer
+      // alten Warteschlange keine neuere Korrektur zurücksetzt
+      updates[`${basis}/ts/${role}/${i}`] = arr[i] == null ? null : jetzt;
       changed++;
     }
   });
