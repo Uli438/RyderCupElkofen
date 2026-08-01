@@ -404,7 +404,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24n';
+const BUILD = '2026-07-24o';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -1982,7 +1982,20 @@ async function loadCourse(day, name) {
       S.courses[day] = { ...(S.courses[day]||{}), par: [...par] };
     }
     document.getElementById(`ac${day}si`).value=si.join(',');
-    toast('✓ '+c.name);
+
+    // Abschläge mit CR/Slope aus der Platzdatenbank übernehmen.
+    // In Supabase steht das als JSON-Text in der Spalte "tees".
+    let tees = [];
+    try {
+      const roh = c.tees;
+      if (roh) tees = typeof roh === 'string' ? JSON.parse(roh) : roh;
+    } catch(e) { console.warn('tees nicht lesbar:', e); }
+    S.courses[day] = { ...(S.courses[day]||{}), tees: normTees(tees) };
+    renderTees(day);
+
+    const mitWerten = normTees(tees).filter(t =>
+      (t.hcr != null && t.hslope != null) || (t.dcr != null && t.dslope != null)).length;
+    toast(mitWerten ? `✓ ${c.name} · ${mitWerten} Abschläge` : '✓ ' + c.name);
   } catch(e) { toast('⚠️ Fehler beim Laden'); }
 }
 
