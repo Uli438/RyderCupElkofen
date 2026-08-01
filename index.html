@@ -27,6 +27,8 @@
   --red:   #c62828;
   --ta:    #c62828;
   --tb:    #1565c0;
+  /* Brillen-Modus: skaliert die Score-Eingabe. 1 = normal, 1.3 = groß */
+  --sc:    1;
 }
 
 /* ── Reset ── */
@@ -125,7 +127,7 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
 
 /* ── Score Column Header ── */
 .colh { display: grid; padding: 9px 14px 6px; gap: 6px; background: var(--bg2); border-bottom: 2px solid var(--border); }
-.colh span              { text-align: center; font-size: 15px; font-weight: 800; color: #000; letter-spacing: 0.5px; }
+.colh span              { text-align: center; font-size: calc(15px * var(--sc)); font-weight: 800; color: #000; letter-spacing: 0.5px; }
 .colh span:first-child  { font-size: 11px; font-weight: 700; color: var(--txt3); }
 .colh span:last-child   { font-size: 11px; font-weight: 700; color: var(--txt3); }
 
@@ -133,21 +135,21 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
 .hrow        { display: grid; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bl); background: var(--card); }
 .hrow.filled { background: #e8f4fd; }
 .hinfo { text-align: center; }
-.hnum  { font-size: 14px; font-weight: 700; color: var(--txt); }
+.hnum  { font-size: calc(14px * var(--sc)); font-weight: 700; color: var(--txt); }
 .hpar  { font-size: 9px;  color: var(--txt3); }
 
 /* ── Stepper ──
    Ziffer maximal groß, +/− Buttons schmal aber IMMER sichtbar
    (min-width + flex-shrink:0 verhindern, dass sie abgeschnitten werden) */
-.stepper { display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; height: 76px; min-width: 0; }
-.stbtn   { background: none; border: none; color: var(--acc); font-size: 34px; width: 44px; min-width: 44px; height: 76px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; touch-action: manipulation; font-weight: 900; }
+.stepper { display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; height: calc(76px * var(--sc)); min-width: 0; }
+.stbtn   { background: none; border: none; color: var(--acc); font-size: calc(34px * var(--sc)); width: calc(44px * var(--sc)); min-width: calc(44px * var(--sc)); height: calc(76px * var(--sc)); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; touch-action: manipulation; font-weight: 900; }
 .stbtn:active { background: #bbdefb; }
-.stval   { flex: 1; min-width: 0; text-align: center; font-size: 42px; font-weight: 900; color: var(--txt); font-family: 'Cormorant Garamond', serif; line-height: 1; }
-.stval.e { color: #aaa; font-size: 22px; }
+.stval   { flex: 1; min-width: 0; text-align: center; font-size: calc(42px * var(--sc)); font-weight: 900; color: var(--txt); font-family: 'Cormorant Garamond', serif; line-height: 1; }
+.stval.e { color: #aaa; font-size: calc(22px * var(--sc)); }
 
 /* ── Readonly Field ── */
-.readonly   { display: flex; align-items: center; justify-content: center; height: 76px; background: #f0f4f8; border-radius: 10px; border: 2px solid #d0dde8; font-size: 36px; font-weight: 700; color: var(--txt); font-family: 'Cormorant Garamond', serif; position: relative; }
-.readonly.e { color: #bbb; font-size: 18px; }
+.readonly   { display: flex; align-items: center; justify-content: center; height: calc(76px * var(--sc)); background: #f0f4f8; border-radius: 10px; border: 2px solid #d0dde8; font-size: calc(36px * var(--sc)); font-weight: 700; color: var(--txt); font-family: 'Cormorant Garamond', serif; position: relative; }
+.readonly.e { color: #bbb; font-size: calc(18px * var(--sc)); }
 .eye { position: absolute; top: 4px; right: 6px; font-size: 9px; color: #aaa; }
 .hres { text-align: center; display: flex; align-items: center; justify-content: center; }
 
@@ -193,6 +195,11 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
 .dtab    { flex: 1; padding: 10px 0; background: none; border: none; color: var(--txt2); font-size: 12px; cursor: pointer; font-weight: 700; }
 .dtab.on { background: var(--acc); color: #fff; }
 .cdrop   { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: var(--txt); font-size: 15px; padding: 11px 14px; outline: none; cursor: pointer; margin-bottom: 8px; }
+.teegrid { display: grid; grid-template-columns: 46px 1fr 1fr 1fr 1fr; gap: 4px; align-items: center; margin-bottom: 6px; }
+.teegrid .kopf { font-size: 9px; color: var(--txt3); font-weight: 700; text-align: center; letter-spacing: 0.5px; }
+.teegrid .farbe { font-size: 11px; font-weight: 700; }
+.teegrid input { background: var(--card); border: 1px solid var(--bl); border-radius: 6px; color: var(--txt); font-size: 12px; padding: 6px 2px; outline: none; width: 100%; text-align: center; }
+.teegrid input:focus { border-color: var(--acc); }
 .rstbtn  { background: #ffebee; border: 2px solid var(--red); border-radius: 10px; color: var(--red); font-size: 14px; padding: 11px; cursor: pointer; width: 100%; font-weight: 600; }
 .primbtn { background: linear-gradient(135deg, var(--green), #43a047); border: none; border-radius: 12px; color: #fff; font-size: 17px; font-weight: 700; padding: 13px; cursor: pointer; box-shadow: 0 4px 14px rgba(46,125,50,0.3); width: 100%; }
 
@@ -233,7 +240,7 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
         <button class="htab on" data-d="1"     onclick="setDay(1)">TAG 1</button>
         <button class="htab"    data-d="2"     onclick="setDay(2)">TAG 2</button>
         <button class="htab"    data-d="total" onclick="setDay('total')">GESAMT</button>
-        <button class="htab adm"               onclick="showView('admin')">⚙ Admin</button>
+        <button class="htab adm"               onclick="oeffneAdmin()">⚙ Admin</button>
       </div>
     </div>
   </div>
@@ -267,6 +274,10 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       <div class="hdr-s" id="sc-sub"></div>
       <div id="sc-scrollhint" style="display:none;font-size:10px;color:#888;margin-top:2px">← scrollen →</div>
     </div>
+    <button id="brillenbtn" onclick="toggleBrille()" title="Große Ziffern"
+      style="background:none;border:2px solid var(--border);border-radius:10px;
+             font-size:20px;line-height:1;padding:6px 9px;cursor:pointer;
+             flex-shrink:0;opacity:0.45">👓</button>
     <div class="spill">
       <div class="spv" id="sc-pill">–</div>
       <div class="spl" id="sc-plbl">Stand</div>
@@ -310,16 +321,24 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       <select class="cdrop" id="ac1s" onchange="loadCourse(1,this.value)"><option value="">— Gespeicherten Platz laden —</option></select>
       <input class="inp" id="ac1n" placeholder="Platzname Tag 1" style="margin-bottom:4px">
       <div class="r2" style="margin-bottom:10px">
-        <input class="inp" type="number" id="ac1p"  placeholder="Par (z.B. 72)">
+        <input class="inp" id="ac1p" placeholder="Par kommagetrennt" style="font-size:12px">
         <input class="inp"               id="ac1si" placeholder="SI kommagetrennt" style="font-size:12px">
       </div>
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin:8px 0 4px;font-weight:700">
+        CR / SLOPE JE ABSCHLAG (optional — nötig für HCP-Modus)
+      </div>
+      <div id="tees1" class="teegrid"></div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600">TAG 2</div>
       <select class="cdrop" id="ac2s" onchange="loadCourse(2,this.value)"><option value="">— Gespeicherten Platz laden —</option></select>
       <input class="inp" id="ac2n" placeholder="Platzname Tag 2" style="margin-bottom:4px">
       <div class="r2">
-        <input class="inp" type="number" id="ac2p"  placeholder="Par (z.B. 72)">
+        <input class="inp" id="ac2p" placeholder="Par kommagetrennt" style="font-size:12px">
         <input class="inp"               id="ac2si" placeholder="SI kommagetrennt" style="font-size:12px">
       </div>
+      <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin:8px 0 4px;font-weight:700">
+        CR / SLOPE JE ABSCHLAG (optional — nötig für HCP-Modus)
+      </div>
+      <div id="tees2" class="teegrid"></div>
     </section>
     <section>
       <div class="albl">TEAMS &amp; SPIELER</div>
@@ -357,6 +376,11 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       <div id="a-pairs"></div>
       <button onclick="addPair()" style="width:100%;padding:10px;background:var(--bg2);border:2px dashed var(--acc);border-radius:10px;color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px">+ Paarung hinzufügen</button>
     </section>
+    <section>
+      <div class="albl">ZUGANG</div>
+      <div id="adminlock"></div>
+    </section>
+
     <button class="rstbtn"       onclick="resetAll()">Alles zurücksetzen</button>
     <button class="primbtn serif" onclick="saveAdmin()">Speichern &amp; Starten ✓</button>
   </div>
@@ -380,7 +404,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24i';
+const BUILD = '2026-07-24n';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -475,7 +499,8 @@ function normState(state) {
     state.courses[d] = {
       name: k.name || '',
       par:  Array.isArray(k.par) && k.par.length === 18 ? k.par : [...DEF_PAR],
-      si:   Array.isArray(k.si)  && k.si.length  === 18 ? k.si  : [...DEF_SI]
+      si:   Array.isArray(k.si)  && k.si.length  === 18 ? k.si  : [...DEF_SI],
+      tees: normTees(k.tees)
     };
   });
   state.teamA = state.teamA || { name:'Team Rot',  players:[] };
@@ -483,6 +508,7 @@ function normState(state) {
   state.teamA.name = state.teamA.name || 'Team Rot';
   state.teamB.name = state.teamB.name || 'Team Blau';
   state.eventName  = state.eventName  || 'Ryder Cup Elkofen';
+  state.adminHash  = state.adminHash  || null;
   [1,2].forEach(d => {
     state.pairings[d] = toPairList(state.pairings[d]);
     SERVER_PIDS[d] = state.pairings[d].map(p => p.id).filter(Boolean);
@@ -549,6 +575,70 @@ function toast(msg) {
 async function sbGet(path) {
   const r = await fetch(SB_URL+'/rest/v1/'+path, { headers:{ apikey:SB_KEY, Authorization:'Bearer '+SB_KEY } });
   return r.ok ? r.json() : [];
+}
+
+// ─────────────────────────────────────────
+// ABSCHLÄGE, CR/SLOPE UND SPIELVORGABE
+// ─────────────────────────────────────────
+//
+// In Deutschland ist jeder Abschlag DOPPELT bewertet: Herren und Damen haben
+// von derselben Farbe unterschiedliche CR- und Slope-Werte. Ein Herr von Rot
+// bekommt also andere Werte als eine Dame von Rot.
+//
+// Abschlag = { name, hcr, hslope, dcr, dslope }
+//   h… = Herren, d… = Damen
+
+const TEE_FARBEN = ['Weiß', 'Gelb', 'Blau', 'Rot'];
+
+/** Einen Abschlag auf das vollständige Format bringen (auch alte Datensätze) */
+function normTee(t) {
+  if (!t) return null;
+  return {
+    name:   t.name || '',
+    hcr:    t.hcr    != null ? Number(t.hcr)    : (t.gender === 'm' && t.cr    != null ? Number(t.cr)    : null),
+    hslope: t.hslope != null ? Number(t.hslope) : (t.gender === 'm' && t.slope != null ? Number(t.slope) : null),
+    dcr:    t.dcr    != null ? Number(t.dcr)    : (t.gender === 'w' && t.cr    != null ? Number(t.cr)    : null),
+    dslope: t.dslope != null ? Number(t.dslope) : (t.gender === 'w' && t.slope != null ? Number(t.slope) : null)
+  };
+}
+
+function normTees(list) {
+  return toList(list).map(normTee).filter(Boolean);
+}
+
+/** CR und Slope für ein Geschlecht aus einem Abschlag ziehen */
+function teeVals(tee, gender) {
+  const t = normTee(tee);
+  if (!t) return null;
+  const cr    = gender === 'w' ? t.dcr    : t.hcr;
+  const slope = gender === 'w' ? t.dslope : t.hslope;
+  if (cr == null || slope == null) return null;   // Wertepaar fehlt
+  return { cr: Number(cr), slope: Number(slope) };
+}
+
+/** Abschlag eines Tages nach Farbe finden */
+function findTee(day, farbe) {
+  const c = getCourse(day);
+  return normTees(c.tees).find(t => t.name === farbe) || null;
+}
+
+/**
+ * SPIELVORGABE nach WHS
+ *
+ *   Spielvorgabe = HCP-Index × (Slope / 113) + (CR − Par)
+ *
+ * Kaufmännisch gerundet. Par ist die Summe der Par-Reihe des Platzes.
+ * Fehlen CR/Slope für die Kombination Abschlag+Geschlecht, gibt es null —
+ * der Spieler fällt dann auf seine direkt eingetragene Vorgabe zurück.
+ */
+function calcPlayingHcp(hcpIndex, day, farbe, gender) {
+  if (hcpIndex == null || hcpIndex === '') return null;
+  const vals = teeVals(findTee(day, farbe), gender);
+  if (!vals) return null;
+  const c = getCourse(day);
+  const par = (c.par || DEF_PAR).reduce((a, b) => a + b, 0);
+  const roh = Number(hcpIndex) * (vals.slope / 113) + (vals.cr - par);
+  return Math.round(roh);   // kaufmännisch
 }
 
 // ─────────────────────────────────────────
@@ -641,10 +731,11 @@ function calcMatch(pairing, day) {
   const si   = c.si  || DEF_SI;
   const bn   = pairing.bruttoNetto || 'brutto';
   const mode = pairing.mode || 'matchplay';
-  const hA   = playerHcp(pairing.playerA);
-  const hB   = playerHcp(pairing.playerB);
-  const hA2  = playerHcp(pairing.playerA2 || '');
-  const hB2  = playerHcp(pairing.playerB2 || '');
+  const tag  = Number(day) || 1;
+  const hA   = playerHcp(pairing.playerA,  tag);
+  const hB   = playerHcp(pairing.playerB,  tag);
+  const hA2  = playerHcp(pairing.playerA2 || '', tag);
+  const hB2  = playerHcp(pairing.playerB2 || '', tag);
   if (mode === 'matchplay') return calcMatchplay(sc, hA, hB, par, si, bn);
   if (mode === 'bestball')  return calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn);
   return calcStableford(sc, hA, hB, par, si);
@@ -1232,7 +1323,25 @@ function showUpdateBar() {
 // ─────────────────────────────────────────
 const allPlayers  = () => [...(S.teamA?.players||[]).map(p=>({...p,team:'a'})), ...(S.teamB?.players||[]).map(p=>({...p,team:'b'}))];
 const playerName  = id => allPlayers().find(p=>p.id===id)?.name || '–';
-const playerHcp   = id => Number(allPlayers().find(p=>p.id===id)?.hcp) || 0;
+/**
+ * Spielvorgabe eines Spielers für einen bestimmten Tag.
+ *
+ * Im HCP-Modus wird sie aus HCP-Index, Abschlag und Geschlecht für den Platz
+ * DIESES Tages berechnet — Tag 1 und Tag 2 können verschiedene Plätze sein,
+ * also auch verschiedene Vorgaben ergeben.
+ *
+ * Fehlen die Platzdaten (CR/Slope für Abschlag+Geschlecht), fällt der Spieler
+ * still auf seine direkt eingetragene Vorgabe zurück.
+ */
+function playerHcp(id, day) {
+  const p = allPlayers().find(x => x.id === id);
+  if (!p) return 0;
+  if (p.hcpMode === 'hcp' && p.hcpIndex != null && p.hcpIndex !== '') {
+    const berechnet = calcPlayingHcp(p.hcpIndex, day || 1, p.teeColor, p.gender);
+    if (berechnet != null) return berechnet;
+  }
+  return Number(p.hcp) || 0;
+}
 const getCourse   = day => S.courses?.[Number(day)] || { par:DEF_PAR, si:DEF_SI };
 const getPairing  = (id,day) => (S.pairings?.[day]||[]).find(p=>p.id===id) || null;
 
@@ -1298,7 +1407,7 @@ function renderLB() {
       const bnLbl = p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
       const nA = playerName(p.playerA)+(mode==='bestball'&&p.playerA2?'/'+playerName(p.playerA2):'');
       const nB = playerName(p.playerB)+(mode==='bestball'&&p.playerB2?'/'+playerName(p.playerB2):'');
-      const hA = playerHcp(p.playerA), hB = playerHcp(p.playerB);
+      const hA = playerHcp(p.playerA, day), hB = playerHcp(p.playerB, day);
 
       let pillHtml = '';
       if (r.status==='open') {
@@ -1449,7 +1558,8 @@ function confirmSheet() {
 
   // Horizontales Scrollen bei forBoth (4 große Stepper)
   const inner=document.getElementById('sc-inner');
-  if (inner) inner.style.minWidth=forBoth?'680px':'100%';
+  if (inner) inner.style.minWidth =
+    forBoth ? Math.round(680 * (brilleAn() ? BRILLE_FAKTOR : 1)) + 'px' : '100%';
   const hint=document.getElementById('sc-scrollhint');
   if (hint) hint.style.display=forBoth?'block':'none';
 
@@ -1462,6 +1572,40 @@ function confirmSheet() {
   renderHoles();
   updateMatchStatus();
   showView('score');
+}
+
+// ─────────────────────────────────────────
+// BRILLEN-MODUS
+// ─────────────────────────────────────────
+// Vergrößert die Score-Eingabe über eine einzige CSS-Variable, statt eine
+// Größe für alle festzulegen. Jeder stellt am Abschlag selbst ein, was er
+// lesen kann. Die Wahl bleibt auf dem Gerät gespeichert.
+const BRILLE_KEY = 'rc_brille_' + location.pathname;
+const BRILLE_FAKTOR = 1.3;
+
+function brilleAn() {
+  try { return localStorage.getItem(BRILLE_KEY) === '1'; } catch(e) { return false; }
+}
+
+function setBrille(an) {
+  document.documentElement.style.setProperty('--sc', an ? String(BRILLE_FAKTOR) : '1');
+  const btn = document.getElementById('brillenbtn');
+  if (btn) {
+    btn.style.opacity = an ? '1' : '0.45';
+    btn.style.background = an ? 'var(--acc)' : 'none';
+  }
+  lsSet(BRILLE_KEY, an ? '1' : '0');
+  // Bei vier Spalten muss der scrollbare Bereich mitwachsen
+  const inner = document.getElementById('sc-inner');
+  if (inner && CUR.forBoth) {
+    inner.style.minWidth = Math.round(680 * (an ? BRILLE_FAKTOR : 1)) + 'px';
+  }
+}
+
+function toggleBrille() {
+  const neu = !brilleAn();
+  setBrille(neu);
+  toast(neu ? '👓 Große Ziffern' : 'Normale Größe');
 }
 
 // ─────────────────────────────────────────
@@ -1479,8 +1623,8 @@ function renderHoles() {
   const c=getCourse(CUR.day);
   const par=c.par||DEF_PAR, si=c.si||DEF_SI;
   const mode=p.mode||'matchplay', isBB=mode==='bestball', bn=p.bruttoNetto||'brutto';
-  const hA=playerHcp(p.playerA), hB=playerHcp(p.playerB);
-  const hA2=playerHcp(p.playerA2||''), hB2=playerHcp(p.playerB2||'');
+  const hA=playerHcp(p.playerA, CUR.day), hB=playerHcp(p.playerB, CUR.day);
+  const hA2=playerHcp(p.playerA2||'', CUR.day), hB2=playerHcp(p.playerB2||'', CUR.day);
 
   // Grid-Spalten identisch zu confirmSheet
   let cw;
@@ -1703,6 +1847,103 @@ function showView(name) {
 }
 
 // ─────────────────────────────────────────
+// ADMIN-SPERRE
+// ─────────────────────────────────────────
+//
+// Verhindert, dass Mitspieler versehentlich Paarungen verstellen oder das
+// Turnier zurücksetzen. WICHTIG: Das ist eine Bequemlichkeitssperre, keine
+// echte Sicherheit — in einer reinen Browser-App kann sie mit den
+// Entwicklerwerkzeugen umgangen werden. Gegen Versehen und Neugier reicht sie.
+//
+// Der Code steht als Streuwert in der Datenbank, gilt also auf allen Geräten.
+// Einmal eingegeben, bleibt die Freischaltung auf dem Gerät gespeichert.
+
+const ADMIN_KEY = 'rc_admin_' + location.pathname;
+
+/** Einfacher Streuwert — der Code steht nicht im Klartext in der Datenbank */
+function codeHash(code) {
+  let h = 5381;
+  const s = 'rc:' + String(code).trim();
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+const adminFrei = () => { try { return localStorage.getItem(ADMIN_KEY) === '1'; } catch(e) { return false; } };
+const setAdminFrei = an => { lsSet(ADMIN_KEY, an ? '1' : '0'); };
+
+/** Admin öffnen — oder erst nach dem Code fragen */
+function oeffneAdmin() {
+  if (adminFrei()) { showView('admin'); return; }
+
+  // Noch kein Code vergeben: der Erste darf einen festlegen
+  if (!S.adminHash) {
+    const neu = prompt(
+      'Noch kein Admin-Code vergeben.\n\n' +
+      'Lege jetzt einen fest — nur wer ihn kennt, kommt später in den Admin-Bereich.\n' +
+      'Leer lassen, um ohne Sperre fortzufahren:');
+    if (neu === null) return;
+    if (neu.trim() === '') { setAdminFrei(true); showView('admin'); return; }
+    S.adminHash = codeHash(neu);
+    setAdminFrei(true);
+    reliableWrite({ 'rc/adminHash': S.adminHash });
+    toast('🔒 Admin-Code gesetzt');
+    showView('admin');
+    return;
+  }
+
+  const eingabe = prompt('Admin-Code:');
+  if (eingabe === null) return;
+  if (codeHash(eingabe) === S.adminHash) {
+    setAdminFrei(true);
+    toast('🔓 Admin freigeschaltet');
+    showView('admin');
+  } else {
+    toast('⚠️ Falscher Code');
+  }
+}
+
+/** Freischaltung auf diesem Gerät zurücknehmen */
+function adminSperren() {
+  setAdminFrei(false);
+  toast('🔒 Admin gesperrt');
+  showView('lb');
+}
+
+/** Code ändern (nur aus dem freigeschalteten Admin heraus) */
+function adminCodeAendern() {
+  const neu = prompt('Neuer Admin-Code (leer = Sperre aufheben):');
+  if (neu === null) return;
+  if (neu.trim() === '') {
+    S.adminHash = null;
+    reliableWrite({ 'rc/adminHash': null });
+    toast('Sperre aufgehoben');
+  } else {
+    S.adminHash = codeHash(neu);
+    reliableWrite({ 'rc/adminHash': S.adminHash });
+    toast('🔒 Neuer Code gespeichert');
+  }
+  renderAdminLock();
+}
+
+/** Zeile im Admin: Status und Knöpfe */
+function renderAdminLock() {
+  const el = document.getElementById('adminlock');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">
+      ${S.adminHash ? '🔒 Admin ist durch einen Code geschützt'
+                    : '🔓 Kein Code gesetzt — jeder kommt in den Admin-Bereich'}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="chip" style="flex:1;text-align:center" onclick="adminCodeAendern()">
+        ${S.adminHash ? 'Code ändern' : 'Code festlegen'}
+      </button>
+      ${S.adminHash ? `<button class="chip" style="flex:1;text-align:center" onclick="adminSperren()">
+        Auf diesem Gerät sperren</button>` : ''}
+    </div>`;
+}
+
+// ─────────────────────────────────────────
 // ADMIN
 // ─────────────────────────────────────────
 function initAdmin() {
@@ -1714,9 +1955,11 @@ function initAdmin() {
   [1,2].forEach(d=>{
     const c=S.courses?.[d]||{};
     document.getElementById(`ac${d}n`).value=c.name||'';
-    document.getElementById(`ac${d}p`).value=c.par?c.par.reduce((a,b)=>a+b,0):'';
+    document.getElementById(`ac${d}p`).value=c.par?c.par.join(','):'';
     document.getElementById(`ac${d}si`).value=c.si?c.si.join(','):'';
   });
+  renderTees(1); renderTees(2);
+  renderAdminLock();
   renderAdminPlayers(); renderAdminPairings();
   sbGet('courses?select=*&order=name').then(cs=>{
     [1,2].forEach(d=>{
@@ -1734,30 +1977,146 @@ async function loadCourse(day, name) {
     const c=(cs||[]).find(x=>x.name===name); if(!c)return;
     const par=JSON.parse(c.par||'[]'), si=JSON.parse(c.stroke_index||'[]');
     document.getElementById(`ac${day}n`).value=c.name;
-    document.getElementById(`ac${day}p`).value=par.reduce((a,b)=>a+b,0)||72;
+    if (par.length === 18) {
+      document.getElementById(`ac${day}p`).value = par.join(',');
+      S.courses[day] = { ...(S.courses[day]||{}), par: [...par] };
+    }
     document.getElementById(`ac${day}si`).value=si.join(',');
     toast('✓ '+c.name);
   } catch(e) { toast('⚠️ Fehler beim Laden'); }
 }
 
-function renderAdminPlayers() {
-  ['a','b'].forEach(t=>{
-    const ps=(t==='a'?S.teamA:S.teamB)?.players||[];
-    document.getElementById(`apl-${t}`).innerHTML=ps.map(p=>`
-      <div class="prow">
-        <div class="pcell">${esc(p.name)}</div>
-        <input class="inp" type="number" step="0.1" value="${p.hcp||''}" placeholder="Vorg."
-          style="text-align:center;padding:8px 4px;font-size:14px"
-          oninput="updateHcp('${t}','${p.id}',this.value)">
-        <button class="rmbtn" onclick="removePlayer('${t}','${p.id}')">×</button>
-      </div>`).join('');
+/** CR/Slope-Raster eines Tages aufbauen */
+function renderTees(day) {
+  const el = document.getElementById('tees' + day);
+  if (!el) return;
+  const vorhanden = normTees(getCourse(day).tees);
+  const wert = (farbe, feld) => {
+    const t = vorhanden.find(x => x.name === farbe);
+    return t && t[feld] != null ? t[feld] : '';
+  };
+  const farbeVon = f => f==='Rot'  ? 'var(--ta)'
+                      : f==='Gelb' ? '#b8860b'
+                      : f==='Blau' ? 'var(--tb)' : 'var(--txt2)';
+  el.innerHTML =
+    `<span class="kopf"></span>
+     <span class="kopf">♂ CR</span><span class="kopf">♂ SL</span>
+     <span class="kopf">♀ CR</span><span class="kopf">♀ SL</span>` +
+    TEE_FARBEN.map(f => `
+      <span class="farbe" style="color:${farbeVon(f)}">${f}</span>
+      <input type="number" step="0.1" id="t-${day}-${f}-hcr"    value="${wert(f,'hcr')}"    placeholder="–">
+      <input type="number"            id="t-${day}-${f}-hslope" value="${wert(f,'hslope')}" placeholder="–">
+      <input type="number" step="0.1" id="t-${day}-${f}-dcr"    value="${wert(f,'dcr')}"    placeholder="–">
+      <input type="number"            id="t-${day}-${f}-dslope" value="${wert(f,'dslope')}" placeholder="–">
+    `).join('');
+}
+
+/** Raster auslesen — nur Abschläge mit mindestens einem eingetragenen Wert */
+function readTees(day) {
+  const raus = [];
+  TEE_FARBEN.forEach(f => {
+    const hole = feld => {
+      const el = document.getElementById(`t-${day}-${f}-${feld}`);
+      if (!el || el.value === '') return null;
+      const v = Number(el.value);
+      return Number.isNaN(v) ? null : v;
+    };
+    const t = { name:f, hcr:hole('hcr'), hslope:hole('hslope'),
+                        dcr:hole('dcr'), dslope:hole('dslope') };
+    if (t.hcr != null || t.hslope != null || t.dcr != null || t.dslope != null) raus.push(t);
   });
+  return raus;
+}
+
+/** Hat der Platz verwertbare CR/Slope-Daten (vollständiges Wertepaar)? */
+function hatTeeDaten(day) {
+  return normTees(getCourse(day).tees)
+    .some(t => (t.hcr != null && t.hslope != null) || (t.dcr != null && t.dslope != null));
+}
+
+function renderAdminPlayers() {
+  const teeMoeglich = hatTeeDaten(1) || hatTeeDaten(2);
+
+  ['a','b'].forEach(t => {
+    const ps = (t==='a' ? S.teamA : S.teamB)?.players || [];
+    document.getElementById(`apl-${t}`).innerHTML = ps.map(p => {
+      const imHcp = p.hcpMode === 'hcp';
+
+      // Vorschau: welche Spielvorgabe ergibt der Index an Tag 1 und Tag 2?
+      let vorschau = '';
+      if (imHcp) {
+        const v1 = calcPlayingHcp(p.hcpIndex, 1, p.teeColor, p.gender);
+        const v2 = calcPlayingHcp(p.hcpIndex, 2, p.teeColor, p.gender);
+        vorschau = (v1 == null && v2 == null)
+          ? `<div style="font-size:10px;color:var(--red);margin-top:4px">⚠ CR/Slope für ${esc(p.teeColor||'—')} ${p.gender==='w'?'♀':'♂'} fehlt — es gilt die Vorgabe ${p.hcp||0}</div>`
+          : `<div style="font-size:10px;color:var(--green);margin-top:4px;font-weight:700">Spielvorgabe: Tag 1 = ${v1 ?? '–'} · Tag 2 = ${v2 ?? '–'}</div>`;
+      }
+
+      const zusatz = imHcp ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+          <select class="inp" style="padding:8px;font-size:13px" onchange="updatePlayerField('${t}','${p.id}','gender',this.value)">
+            <option value="m"${p.gender!=='w'?' selected':''}>♂ Herren</option>
+            <option value="w"${p.gender==='w'?' selected':''}>♀ Damen</option>
+          </select>
+          <select class="inp" style="padding:8px;font-size:13px" onchange="updatePlayerField('${t}','${p.id}','teeColor',this.value)">
+            <option value="">– Abschlag –</option>
+            ${TEE_FARBEN.map(f=>`<option value="${f}"${p.teeColor===f?' selected':''}>${f}</option>`).join('')}
+          </select>
+        </div>${vorschau}` : '';
+
+      return `
+        <div style="background:var(--bg2);border:1px solid var(--bl);border-radius:8px;padding:8px;margin-bottom:6px">
+          <div class="prow" style="margin-bottom:0">
+            <div class="pcell" style="background:var(--card)">${esc(p.name)}</div>
+            <input class="inp" type="number" step="0.1"
+              value="${imHcp ? (p.hcpIndex ?? '') : (p.hcp || '')}"
+              placeholder="${imHcp ? 'HCPI' : 'Vorg.'}"
+              style="text-align:center;padding:8px 4px;font-size:14px"
+              oninput="updateHcp('${t}','${p.id}',this.value)">
+            <button class="rmbtn" onclick="removePlayer('${t}','${p.id}')">×</button>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <button class="chip${!imHcp?' on':''}" style="flex:1;text-align:center" onclick="setHcpMode('${t}','${p.id}','vorgabe')">Vorgabe</button>
+            <button class="chip${imHcp?' on':''}" style="flex:1;text-align:center${teeMoeglich?'':';opacity:0.4'}" onclick="setHcpMode('${t}','${p.id}','hcp')">HCP-Index</button>
+          </div>
+          ${zusatz}
+        </div>`;
+    }).join('');
+  });
+}
+
+/** Zwischen direkter Vorgabe und HCP-Index umschalten */
+function setHcpMode(t, id, modus) {
+  if (modus === 'hcp' && !hatTeeDaten(1) && !hatTeeDaten(2)) {
+    toast('⚠️ Erst CR/Slope beim Platz eintragen');
+    return;
+  }
+  const ps = t==='a' ? S.teamA.players : S.teamB.players;
+  const p = ps?.find(x => x.id === id);
+  if (!p) return;
+  p.hcpMode = modus;
+  if (modus === 'hcp') {
+    // bisherigen Wert als Index übernehmen, damit nichts doppelt getippt wird
+    if (p.hcpIndex == null || p.hcpIndex === '') p.hcpIndex = p.hcp || 0;
+    if (!p.gender)   p.gender   = 'm';
+    if (!p.teeColor) p.teeColor = 'Gelb';
+  }
+  renderAdminPlayers();
+}
+
+function updatePlayerField(t, id, feld, wert) {
+  const ps = t==='a' ? S.teamA.players : S.teamB.players;
+  const p = ps?.find(x => x.id === id);
+  if (!p) return;
+  p[feld] = wert;
+  renderAdminPlayers();
 }
 
 function addP(t) {
   const nEl=document.getElementById(`np-${t}`), hEl=document.getElementById(`nh-${t}`);
   const name=nEl.value.trim(); if(!name)return;
-  const player={id:uid(),name,hcp:Number(hEl.value)||0};
+  const player = { id:uid(), name, hcp:Number(hEl.value)||0,
+                   hcpMode:'vorgabe', hcpIndex:null, gender:'m', teeColor:'' };
   if(t==='a') S.teamA.players=[...(S.teamA.players||[]),player];
   else        S.teamB.players=[...(S.teamB.players||[]),player];
   nEl.value=''; hEl.value='';
@@ -1795,8 +2154,17 @@ function removePlayer(t, id) {
 }
 
 function updateHcp(t, id, v) {
-  const ps=t==='a'?S.teamA.players:S.teamB.players;
-  const p=ps?.find(p=>p.id===id); if(p) p.hcp=Number(v)||0;
+  const ps = t==='a' ? S.teamA.players : S.teamB.players;
+  const p = ps?.find(p => p.id === id);
+  if (!p) return;
+  if (p.hcpMode === 'hcp') {
+    p.hcpIndex = v === '' ? null : Number(v);
+    // Vorschau der Spielvorgabe kurz verzögert auffrischen
+    clearTimeout(updateHcp._t);
+    updateHcp._t = setTimeout(renderAdminPlayers, 600);
+  } else {
+    p.hcp = Number(v) || 0;
+  }
 }
 
 function setPD(d) {
@@ -1871,11 +2239,36 @@ function removePairing(i) {
   S.pairings[admPDay].forEach((px, idx) => { px.ord = idx; });
   renderAdminPairings();
 }
-function updatePairing(i,f,v) { if(S.pairings[admPDay][i]) { S.pairings[admPDay][i][f]=v; renderAdminPairings(); } }
+function updatePairing(i, f, v) {
+  const p = S.pairings[admPDay][i];
+  if (!p) return;
+
+  // Spielertausch: Scores hängen an der ROLLE, nicht am Spieler. Wer in eine
+  // Rolle einrückt, in der schon gespielt wurde, erbt diese Löcher — und sie
+  // werden mit seiner Vorgabe neu gewertet. Vor Rundenbeginn (leere Paarung)
+  // ist der Tausch der Normalfall und völlig unkritisch.
+  const rollen = ['playerA','playerA2','playerB','playerB2'];
+  if (rollen.includes(f) && v !== p[f]) {
+    const gespielt = normScores(p.scores)[f].filter(s => s != null).length;
+    if (gespielt > 0) {
+      const alt = playerName(p[f]);
+      const neu = v ? playerName(v) : '—';
+      const ok = confirm(
+        `Auf dieser Position sind bereits ${gespielt} Löcher eingetragen (${alt}).\n\n` +
+        `Wenn du auf ${neu} wechselst, übernimmt ${neu} diese Löcher — ` +
+        `sie werden mit der neuen Vorgabe gewertet.\n\nTrotzdem tauschen?`);
+      if (!ok) { renderAdminPairings(); return; }
+    }
+  }
+
+  p[f] = v;
+  renderAdminPairings();
+}
 
 function resetAll() {
   if(!confirm('Alles zurücksetzen? Alle Scores werden gelöscht!'))return;
-  S={eventName:'Ryder Cup Elkofen',date1:today(),date2:today(),
+  const behalteHash = S.adminHash || null;   // Sperre überlebt das Zurücksetzen
+  S={eventName:'Ryder Cup Elkofen',date1:today(),date2:today(),adminHash:behalteHash,
      teamA:{name:'Team Rot',players:[]},teamB:{name:'Team Blau',players:[]},
      courses:{1:{name:'',par:[...DEF_PAR],si:[...DEF_SI]},2:{name:'',par:[...DEF_PAR],si:[...DEF_SI]}},
      pairings:{1:[],2:[]}};
@@ -1896,7 +2289,14 @@ async function saveAdmin() {
     const siRaw=document.getElementById(`ac${d}si`).value;
     let si=siRaw?siRaw.split(',').map(Number).filter(n=>n>0):[];
     if(si.length<18) si=[...DEF_SI];
-    S.courses[d]={name,par:[...DEF_PAR],si:si.slice(0,18)};
+    // Par-Reihe des Platzes erhalten! Früher stand hier fest [...DEF_PAR] —
+    // jedes Speichern setzte die echte Par-Reihe auf den Standard zurück.
+    // Ein einziger Par-Punkt verschiebt jede Spielvorgabe um 1.
+    const parRaw = document.getElementById(`ac${d}p`).value;
+    let par = parRaw ? parRaw.split(',').map(Number).filter(n => n > 0) : [];
+    if (par.length < 18) par = (S.courses?.[d]?.par?.length === 18)
+      ? [...S.courses[d].par] : [...DEF_PAR];
+    S.courses[d]={name,par:par.slice(0,18),si:si.slice(0,18),tees:readTees(d)};
   });
   S.eventName   = document.getElementById('a-name').value||'Ryder Cup Elkofen';
   S.date1       = document.getElementById('a-d1').value||today();
@@ -1963,6 +2363,7 @@ async function saveAdmin() {
     S = normState(snapshot);
     try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
   }
+  setBrille(brilleAn());   // gespeicherte Größenwahl wiederherstellen
   renderLB();
   setNetBadge(false);
 })();
