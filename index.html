@@ -443,7 +443,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24q';
+const BUILD = '2026-07-24r';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -2462,6 +2462,51 @@ async function saveAdmin() {
 // (let/const sind vor ihrer Zeile nicht nutzbar;
 //  ein Zugriff davor bricht das ganze Skript ab.)
 // ═════════════════════════════════════════
+// ─────────────────────────────────────────
+// ACHSENSPERRE FÜR DIE SCOREKARTE
+// ─────────────────────────────────────────
+//
+// Ohne sie driftet die Karte diagonal: Man wischt nach unten und rutscht
+// dabei seitlich weg — bei vier Spalten besonders störend, weil die
+// Zuordnung verlorengeht.
+//
+// Beim Aufsetzen des Fingers wird die Richtung noch offen gelassen. Sobald
+// klar ist, wohin die Geste geht (ab 8 px), wird die andere Achse für die
+// Dauer der Geste festgehalten. Danach ist wieder alles frei.
+function initAchsenSperre() {
+  const el = document.getElementById('sc-scroll');
+  if (!el) return;
+
+  let startX = 0, startY = 0, achse = null, festLinks = 0, festOben = 0;
+
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { achse = 'frei'; return; }   // Zoom nicht stören
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    achse  = null;
+    festLinks = el.scrollLeft;
+    festOben  = el.scrollTop;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (achse === 'frei' || e.touches.length !== 1) return;
+    const dx = Math.abs(e.touches[0].clientX - startX);
+    const dy = Math.abs(e.touches[0].clientY - startY);
+
+    if (!achse) {
+      if (dx < 8 && dy < 8) return;        // noch zu wenig Bewegung
+      achse = dx > dy ? 'x' : 'y';
+    }
+    // Die nicht gewählte Achse festhalten
+    if (achse === 'y') el.scrollLeft = festLinks;
+    else               el.scrollTop  = festOben;
+  }, { passive: true });
+
+  const loslassen = () => { achse = null; };
+  el.addEventListener('touchend',    loslassen, { passive: true });
+  el.addEventListener('touchcancel', loslassen, { passive: true });
+}
+
 // ── OFFLINE-FIRST-START ────────────────────────────────────
 // Erst den letzten bekannten Stand anzeigen, DANN Firebase versuchen.
 // So ist die App sofort benutzbar, auch wenn die Verbindung hängt oder fehlt.
@@ -2472,6 +2517,7 @@ async function saveAdmin() {
     try { const saved = localStorage.getItem('rc_me_'+S.eventName); if (saved) myId = saved; } catch(e) {}
   }
   setBrille(brilleAn());   // gespeicherte Größenwahl wiederherstellen
+  initAchsenSperre();      // diagonales Wegdriften der Scorekarte verhindern
   renderLB();
   setNetBadge(false);
 })();
