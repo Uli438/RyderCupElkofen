@@ -129,7 +129,13 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
    Der Scrollbereich braucht eine begrenzte Höhe; sonst haftet position:sticky
    am Seiten-Scroll und wandert mit nach oben aus dem Bild. */
 #view-score.active { height: 100vh; height: 100dvh; overflow: hidden; }
-#sc-scroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+#sc-scroll {
+  flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch;
+  /* Senkrecht auf Lochzeilen einrasten — "proximity" rastet nur ein, wenn man
+     ohnehin in der Nähe stoppt, bremst also kein schnelles Durchscrollen */
+  scroll-snap-type: y proximity;
+}
+.hrow { scroll-snap-align: start; }
 
 /* ── Namensreiter (bleibt beim Scrollen stehen) ── */
 .colh {
@@ -443,7 +449,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24r';
+const BUILD = '2026-07-24s';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -2502,9 +2508,41 @@ function initAchsenSperre() {
     else               el.scrollTop  = festOben;
   }, { passive: true });
 
-  const loslassen = () => { achse = null; };
+  /**
+   * Beim Loslassen: War es ein waagerechter Wisch, springt die Karte zur
+   * nächsten Spaltengruppe und rastet dort ein — statt irgendwo dazwischen
+   * stehenzubleiben. Nur nötig, wenn überhaupt seitlich Platz fehlt (vier
+   * Spalten im Modus "für beide").
+   */
+  const loslassen = e => {
+    const warX = achse === 'x';
+    achse = null;
+    if (!warX) return;
+
+    const maxLinks = el.scrollWidth - el.clientWidth;
+    if (maxLinks < 20) return;                    // passt ohnehin auf den Schirm
+
+    const endX = (e.changedTouches && e.changedTouches[0])
+      ? e.changedTouches[0].clientX : startX;
+    const weg = endX - startX;
+    if (Math.abs(weg) < 25) {                     // zu kurz: zurück zum Ausgangspunkt
+      springeZu(festLinks, maxLinks);
+      return;
+    }
+    // Nach links gewischt = weiter nach rechts blättern
+    springeZu(weg < 0 ? maxLinks : 0, maxLinks);
+  };
+
+  function springeZu(ziel, maxLinks) {
+    const wohin = Math.max(0, Math.min(ziel, maxLinks));
+    if (typeof el.scrollTo === 'function') {
+      try { el.scrollTo({ left: wohin, behavior: 'smooth' }); return; } catch(e) {}
+    }
+    el.scrollLeft = wohin;
+  }
+
   el.addEventListener('touchend',    loslassen, { passive: true });
-  el.addEventListener('touchcancel', loslassen, { passive: true });
+  el.addEventListener('touchcancel', () => { achse = null; }, { passive: true });
 }
 
 // ── OFFLINE-FIRST-START ────────────────────────────────────
