@@ -418,6 +418,8 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       <div id="adminlock"></div>
     </section>
 
+    <button class="rstbtn" style="background:#fff8e1;border-color:#f57f17;color:#e65100"
+      onclick="clearScores()">Nur Scores löschen</button>
     <button class="rstbtn"       onclick="resetAll()">Alles zurücksetzen</button>
     <button class="primbtn serif" onclick="saveAdmin()">Speichern &amp; Starten ✓</button>
   </div>
@@ -441,7 +443,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24p';
+const BUILD = '2026-07-24q';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -2324,6 +2326,51 @@ function updatePairing(i, f, v) {
 
   p[f] = v;
   renderAdminPairings();
+}
+
+/**
+ * NUR DIE SCORES LÖSCHEN
+ *
+ * Löscht alle eingetragenen Löcher, behält aber Spieler, Paarungen, Plätze
+ * und Einstellungen. Gedacht für den Fall, dass vor dem Turnier zum Üben
+ * eingetragen wurde und die Aufstellung stehen bleiben soll.
+ */
+async function clearScores() {
+  // Erst zählen, damit die Rückfrage sagt, worum es geht
+  let loecher = 0, betroffen = 0;
+  [1,2].forEach(d => (S.pairings?.[d] || []).forEach(p => {
+    const n = ALL_ROLES.reduce((s, r) => s + normScores(p.scores)[r].filter(v => v != null).length, 0);
+    if (n > 0) { loecher += n; betroffen++; }
+  }));
+
+  if (loecher === 0) { toast('Es sind keine Scores eingetragen'); return; }
+
+  if (!confirm(
+    `${loecher} eingetragene Löcher aus ${betroffen} Paarung(en) löschen?\n\n` +
+    `Spieler, Paarungen, Plätze und Einstellungen bleiben erhalten.`)) return;
+
+  // Zweite Rückfrage — der Schritt lässt sich nicht rückgängig machen
+  if (!confirm(`Wirklich löschen?\n\nDie ${loecher} Löcher sind danach unwiderruflich weg.`)) return;
+
+  const updates = {};
+  [1,2].forEach(d => (S.pairings?.[d] || []).forEach(p => {
+    updates[`rc/pairings/${d}/${p.id}/scores`] = null;
+    updates[`rc/pairings/${d}/${p.id}/ts`]     = null;   // Zeitstempel mit entfernen
+    p.scores = null;
+    p.ts = null;
+  }));
+
+  // Auch alles Wartende und alle Entwürfe verwerfen — sonst kämen die
+  // gelöschten Löcher beim nächsten Synchronisieren zurück
+  outboxClear();
+  try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+  CUR.dirty = {};
+  saveSnapshot(S);
+
+  const angekommen = await reliableWrite(updates);
+  toast(angekommen ? `✅ ${loecher} Löcher gelöscht` : '📶 Offline — Löschung wird nachgereicht');
+  renderLB();
+  initAdmin();
 }
 
 function resetAll() {
