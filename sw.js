@@ -17,7 +17,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 // Bei jedem neuen App-Build hochzählen — erzwingt frischen App-Cache
-const VERSION = '2026-07-24r';
+const VERSION = '2026-07-24s';
 
 // Scope-abhängiger Namensraum, z.B. "_rydercup_" → getrennt von anderen Apps
 const SCOPE_KEY = new URL(self.registration.scope).pathname
