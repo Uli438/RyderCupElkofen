@@ -125,9 +125,44 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
 .stab  { flex: 1; padding: 9px 0; background: none; border: none; border-bottom: 3px solid transparent; color: var(--txt2); font-size: 11px; letter-spacing: 1.5px; cursor: pointer; font-weight: 600; }
 .stab.on { border-bottom-color: var(--acc); color: var(--acc); }
 
-/* ── Score Column Header ── */
-.colh { display: grid; padding: 9px 14px 6px; gap: 6px; background: var(--bg2); border-bottom: 2px solid var(--border); }
-.colh span              { text-align: center; font-size: calc(15px * var(--sc)); font-weight: 800; color: #000; letter-spacing: 0.5px; }
+/* ── Score-Ansicht: fester Rahmen, damit der Namensreiter oben kleben kann ──
+   Der Scrollbereich braucht eine begrenzte Höhe; sonst haftet position:sticky
+   am Seiten-Scroll und wandert mit nach oben aus dem Bild. */
+#view-score.active { height: 100vh; height: 100dvh; overflow: hidden; }
+#sc-scroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Namensreiter (bleibt beim Scrollen stehen) ── */
+.colh {
+  display: grid;
+  padding: 10px 14px 8px;
+  gap: 6px;
+  background: var(--bg2);
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.13);
+}
+.colh span              { text-align: center; font-size: calc(15px * var(--sc)); font-weight: 800; color: #000; letter-spacing: 0.5px;
+                          padding: 4px 2px; border-radius: 6px; }
+
+/* Spaltenfarben — je Team zwei leicht verschiedene Töne,
+   damit man die beiden Spieler eines Teams auseinanderhält */
+.colh span.kA1 { background: #f6c9c9; }
+.colh span.kA2 { background: #fadede; }
+.colh span.kB1 { background: #bcd6f2; }
+.colh span.kB2 { background: #d8e7f9; }
+
+.zelle    { padding: 3px; border-radius: 8px; }
+.zelle.A1 { background: #fbe4e4; }
+.zelle.A2 { background: #fdf0f0; }
+.zelle.B1 { background: #dfeafa; }
+.zelle.B2 { background: #eef4fc; }
+/* auf gefüllten Zeilen etwas kräftiger, damit die Spalte sichtbar bleibt */
+.hrow.filled .zelle.A1 { background: #f8d8d8; }
+.hrow.filled .zelle.A2 { background: #fce6e6; }
+.hrow.filled .zelle.B1 { background: #d2e2f7; }
+.hrow.filled .zelle.B2 { background: #e4eefb; }
 .colh span:first-child  { font-size: 11px; font-weight: 700; color: var(--txt3); }
 .colh span:last-child   { font-size: 11px; font-weight: 700; color: var(--txt3); }
 
@@ -288,13 +323,15 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
     <button class="stab on" id="stf" onclick="setScTab('front')">FRONT 9 (1–9)</button>
     <button class="stab"    id="stb" onclick="setScTab('back')">BACK 9 (10–18)</button>
   </div>
-  <div id="sc-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <div id="sc-scroll">
     <div id="sc-inner" style="min-width:100%">
       <div class="colh" id="colh"></div>
       <div id="sc-holes"></div>
+      <!-- Platz für den Speichern-Knopf: gehört IN den Scrollbereich,
+           sonst liegt das letzte Loch darunter -->
+      <div style="height:96px"></div>
     </div>
   </div>
-  <div style="height:82px"></div>
   <div class="swrap">
     <button class="sbtn serif" id="savebtn" onclick="saveScore()">Score speichern ✓</button>
   </div>
@@ -404,7 +441,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24o';
+const BUILD = '2026-07-24p';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -1547,10 +1584,18 @@ function confirmSheet() {
     cw = forBoth         ? '32px 1fr 1fr 1fr 1fr 50px'
        : myTeamA         ? '32px 1fr 1fr 0.6fr 0.6fr 50px'
        :                   '32px 0.6fr 0.6fr 1fr 1fr 50px';
-    colHtml=`<span>LOCH</span><span>${esc(firstName(nA))}</span><span>${esc(firstName(nA2||'–'))}</span><span>${esc(firstName(nB))}</span><span>${esc(firstName(nB2||'–'))}</span><span>BEST</span>`;
+    colHtml=`<span>LOCH</span>`+
+      `<span class="kA1">${esc(firstName(nA))}</span>`+
+      `<span class="kA2">${esc(firstName(nA2||'–'))}</span>`+
+      `<span class="kB1">${esc(firstName(nB))}</span>`+
+      `<span class="kB2">${esc(firstName(nB2||'–'))}</span>`+
+      `<span>BEST</span>`;
   } else {
     cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
-    colHtml=`<span>LOCH</span><span>${esc(firstName(nA))}</span><span>${esc(firstName(nB))}</span><span>RESULT</span>`;
+    colHtml=`<span>LOCH</span>`+
+      `<span class="kA1">${esc(firstName(nA))}</span>`+
+      `<span class="kB1">${esc(firstName(nB))}</span>`+
+      `<span>RESULT</span>`;
   }
   const colhEl=document.getElementById('colh');
   colhEl.style.gridTemplateColumns=cw;
@@ -1694,10 +1739,13 @@ function renderHoles() {
       }
     }
 
-    const colA  = editA  ? mkStepper('playerA', sA,  `sv-A-${i}`,  i) : mkReadonly(sA,  `sv-A-${i}`);
-    const colA2 = isBB   ? (editA2  ? mkStepper('playerA2',sA2,`sv-A2-${i}`,i) : mkReadonly(sA2,`sv-A2-${i}`)) : '';
-    const colB  = editB  ? mkStepper('playerB', sB,  `sv-B-${i}`,  i) : mkReadonly(sB,  `sv-B-${i}`);
-    const colB2 = isBB   ? (editB2  ? mkStepper('playerB2',sB2,`sv-B2-${i}`,i) : mkReadonly(sB2,`sv-B2-${i}`)) : '';
+    // Jede Score-Zelle in eine farbige Hülle — so entstehen durchgehende
+    // Spalten, an denen man beim Scrollen die Zuordnung behält
+    const huelle = (inhalt, klasse) => `<div class="zelle ${klasse}">${inhalt}</div>`;
+    const colA  = huelle(editA  ? mkStepper('playerA', sA,  `sv-A-${i}`,  i) : mkReadonly(sA,  `sv-A-${i}`),  'A1');
+    const colA2 = isBB ? huelle(editA2 ? mkStepper('playerA2',sA2,`sv-A2-${i}`,i) : mkReadonly(sA2,`sv-A2-${i}`), 'A2') : '';
+    const colB  = huelle(editB  ? mkStepper('playerB', sB,  `sv-B-${i}`,  i) : mkReadonly(sB,  `sv-B-${i}`),  'B1');
+    const colB2 = isBB ? huelle(editB2 ? mkStepper('playerB2',sB2,`sv-B2-${i}`,i) : mkReadonly(sB2,`sv-B2-${i}`), 'B2') : '';
 
     return `<div class="hrow${filled?' filled':''}" style="grid-template-columns:${cw}">
       <div class="hinfo"><div class="hnum">${i+1}</div><div class="hpar">P${pv}·SI${siv}</div></div>
