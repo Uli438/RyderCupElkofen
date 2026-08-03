@@ -130,12 +130,12 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
    am Seiten-Scroll und wandert mit nach oben aus dem Bild. */
 #view-score.active { height: 100vh; height: 100dvh; overflow: hidden; }
 #sc-scroll {
-  flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch;
-  /* Senkrecht auf Lochzeilen einrasten — "proximity" rastet nur ein, wenn man
-     ohnehin in der Nähe stoppt, bremst also kein schnelles Durchscrollen */
-  scroll-snap-type: y proximity;
+  flex: 1; min-height: 0; overflow: auto;
+  /* Das Scrollen übernimmt die Achsensperre in JS: der Browser darf nicht
+     selbst scrollen, sonst zieht er diagonal mit und man müsste die falsche
+     Achse hinterher zurücksetzen — das ruckelt sichtbar. */
+  touch-action: none;
 }
-.hrow { scroll-snap-align: start; }
 
 /* ── Namensreiter (bleibt beim Scrollen stehen) ── */
 .colh {
@@ -449,7 +449,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24s';
+const BUILD = '2026-07-24t';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -2483,66 +2483,81 @@ function initAchsenSperre() {
   const el = document.getElementById('sc-scroll');
   if (!el) return;
 
-  let startX = 0, startY = 0, achse = null, festLinks = 0, festOben = 0;
+  let startX = 0, startY = 0, startLinks = 0, startOben = 0;
+  let achse = null;                       // null = noch offen, 'x', 'y', 'frei'
+  let letzteZeit = 0, letzteX = 0, letzteY = 0, tempoX = 0, tempoY = 0;
+  let ausrollLauf = null;
+
+  const stoppeAusrollen = () => {
+    if (ausrollLauf) { cancelAnimationFrame(ausrollLauf); ausrollLauf = null; }
+  };
 
   el.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) { achse = 'frei'; return; }   // Zoom nicht stören
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    achse  = null;
-    festLinks = el.scrollLeft;
-    festOben  = el.scrollTop;
+    stoppeAusrollen();
+    if (e.touches.length !== 1) { achse = 'frei'; return; }
+    const t = e.touches[0];
+    startX = letzteX = t.clientX;
+    startY = letzteY = t.clientY;
+    startLinks = el.scrollLeft;
+    startOben  = el.scrollTop;
+    achse = null;
+    tempoX = tempoY = 0;
+    letzteZeit = Date.now();
   }, { passive: true });
 
   el.addEventListener('touchmove', e => {
     if (achse === 'frei' || e.touches.length !== 1) return;
-    const dx = Math.abs(e.touches[0].clientX - startX);
-    const dy = Math.abs(e.touches[0].clientY - startY);
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
 
+    // Richtung erst festlegen, wenn die Geste eindeutig genug ist
     if (!achse) {
-      if (dx < 8 && dy < 8) return;        // noch zu wenig Bewegung
-      achse = dx > dy ? 'x' : 'y';
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      achse = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     }
-    // Die nicht gewählte Achse festhalten
-    if (achse === 'y') el.scrollLeft = festLinks;
-    else               el.scrollTop  = festOben;
-  }, { passive: true });
 
-  /**
-   * Beim Loslassen: War es ein waagerechter Wisch, springt die Karte zur
-   * nächsten Spaltengruppe und rastet dort ein — statt irgendwo dazwischen
-   * stehenzubleiben. Nur nötig, wenn überhaupt seitlich Platz fehlt (vier
-   * Spalten im Modus "für beide").
-   */
-  const loslassen = e => {
-    const warX = achse === 'x';
-    achse = null;
-    if (!warX) return;
+    e.preventDefault();                   // der Browser scrollt nicht mit
 
-    const maxLinks = el.scrollWidth - el.clientWidth;
-    if (maxLinks < 20) return;                    // passt ohnehin auf den Schirm
+    // Stufenlos dem Finger folgen — aber nur in der gewählten Achse
+    if (achse === 'x') el.scrollLeft = startLinks - dx;
+    else               el.scrollTop  = startOben  - dy;
 
-    const endX = (e.changedTouches && e.changedTouches[0])
-      ? e.changedTouches[0].clientX : startX;
-    const weg = endX - startX;
-    if (Math.abs(weg) < 25) {                     // zu kurz: zurück zum Ausgangspunkt
-      springeZu(festLinks, maxLinks);
-      return;
+    // Tempo für das Ausrollen mitschreiben
+    const jetzt = Date.now();
+    const dt = jetzt - letzteZeit;
+    if (dt > 0) {
+      tempoX = (t.clientX - letzteX) / dt;
+      tempoY = (t.clientY - letzteY) / dt;
+      letzteZeit = jetzt;
+      letzteX = t.clientX;
+      letzteY = t.clientY;
     }
-    // Nach links gewischt = weiter nach rechts blättern
-    springeZu(weg < 0 ? maxLinks : 0, maxLinks);
-  };
+  }, { passive: false });
 
-  function springeZu(ziel, maxLinks) {
-    const wohin = Math.max(0, Math.min(ziel, maxLinks));
-    if (typeof el.scrollTo === 'function') {
-      try { el.scrollTo({ left: wohin, behavior: 'smooth' }); return; } catch(e) {}
-    }
-    el.scrollLeft = wohin;
+  /** Nach dem Loslassen sanft ausrollen, damit es sich nicht abgehackt anfühlt */
+  function ausrollen(richtung) {
+    let tempo = (richtung === 'x' ? -tempoX : -tempoY) * 16;   // px je Bild
+    if (Math.abs(tempo) < 0.6) return;
+    if (Math.abs(tempo) > 60) tempo = Math.sign(tempo) * 60;   // deckeln
+
+    const schritt = () => {
+      tempo *= 0.94;                       // Reibung
+      if (Math.abs(tempo) < 0.3) { ausrollLauf = null; return; }
+      if (richtung === 'x') el.scrollLeft += tempo;
+      else                  el.scrollTop  += tempo;
+      ausrollLauf = requestAnimationFrame(schritt);
+    };
+    ausrollLauf = requestAnimationFrame(schritt);
   }
 
-  el.addEventListener('touchend',    loslassen, { passive: true });
-  el.addEventListener('touchcancel', () => { achse = null; }, { passive: true });
+  el.addEventListener('touchend', () => {
+    const war = achse;
+    achse = null;
+    if (war === 'x' || war === 'y') ausrollen(war);
+  }, { passive: true });
+
+  el.addEventListener('touchcancel', () => { achse = null; stoppeAusrollen(); }, { passive: true });
 }
 
 // ── OFFLINE-FIRST-START ────────────────────────────────────
