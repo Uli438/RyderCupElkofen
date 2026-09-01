@@ -465,7 +465,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24w';
+const BUILD = '2026-07-24x';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -2332,9 +2332,68 @@ function renderLineupAdmin() {
           </button>
           ${vorhanden ? `<div style="font-size:10px;color:#e65100;margin-top:6px">
             Achtung: Tag ${tag} hat bereits ${vorhanden} Paarung(en) — sie werden ersetzt.</div>` : ''}
+          <button class="chip" style="width:100%;text-align:center;margin-top:8px"
+            onclick="luZuruecksetzen(${tag})">Aufstellung Tag ${tag} zurücksetzen</button>
         ` : ''}
       </div>`;
-  }).join('');
+  }).join('') + `
+    <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin:10px 0 6px;font-weight:700">
+      CAPTAIN-CODES
+    </div>
+    <div style="font-size:10px;color:var(--txt2);margin-bottom:6px">
+      Für vergessene Codes: hier neu setzen oder löschen.
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="chip" style="flex:1;text-align:center" onclick="luCodeAendern('A')">
+        ${S.capHashA ? '🔒' : '🔓'} ${esc(S.teamA?.name||'Team Rot')}</button>
+      <button class="chip" style="flex:1;text-align:center" onclick="luCodeAendern('B')">
+        ${S.capHashB ? '🔒' : '🔓'} ${esc(S.teamB?.name||'Team Blau')}</button>
+    </div>`;
+}
+
+/** Aufstellung eines Tages zurücksetzen — beide Listen, Paarungen bleiben */
+async function luZuruecksetzen(tag) {
+  const d = luDaten(tag);
+  const a = d.A.ord.length, b = d.B.ord.length;
+  if (!a && !b && !d.aufgedeckt) { toast('Für diesen Tag ist nichts eingeteilt'); return; }
+  if (!confirm(
+    `Aufstellung für Tag ${tag} zurücksetzen?\n\n` +
+    `${S.teamA?.name||'Team Rot'}: ${a} eingeteilt\n` +
+    `${S.teamB?.name||'Team Blau'}: ${b} eingeteilt\n\n` +
+    `Beide Captains können danach neu aufstellen.\n` +
+    `Bereits erzeugte Paarungen bleiben bestehen.`)) return;
+
+  S.lineup = S.lineup || {};
+  S.lineup[tag] = { aktiv: d.aktiv, format: d.format };
+  saveSnapshot(S);
+  const ok = await reliableWrite({
+    [`rc/lineup/${tag}/A`]: null,
+    [`rc/lineup/${tag}/B`]: null,
+    [`rc/lineup/${tag}/aufgedeckt`]: null
+  });
+  toast(ok ? '✅ Aufstellung zurückgesetzt' : '📶 Offline — wird nachgereicht');
+  renderLineupAdmin();
+}
+
+/** Captain-Code neu setzen oder löschen — für vergessene Codes */
+async function luCodeAendern(team) {
+  const feld = team === 'A' ? 'capHashA' : 'capHashB';
+  const name = team === 'A' ? (S.teamA?.name||'Team Rot') : (S.teamB?.name||'Team Blau');
+  const neu = prompt(`Neuer Code für ${name}:\n\nLeer lassen = Code löschen (jeder kommt rein).`);
+  if (neu === null) return;
+  if (neu.trim() === '') {
+    S[feld] = null;
+    await reliableWrite({ ['rc/' + feld]: null });
+    toast('Code gelöscht');
+  } else {
+    S[feld] = codeHash(neu);
+    await reliableWrite({ ['rc/' + feld]: S[feld] });
+    toast('🔒 Neuer Code gespeichert');
+  }
+  saveSnapshot(S);
+  // Freischaltung auf diesem Gerät zurücknehmen, damit der neue Code auch greift
+  lsSet(CAP_KEY, JSON.stringify(luTeams().filter(x => x !== team)));
+  renderLineupAdmin();
 }
 
 function luAdminAktiv(tag, an) {
@@ -2825,14 +2884,54 @@ async function clearScores() {
   initAdmin();
 }
 
-function resetAll() {
-  if(!confirm('Alles zurücksetzen? Alle Scores werden gelöscht!'))return;
-  const behalteHash = S.adminHash || null;   // Sperre überlebt das Zurücksetzen
-  S={eventName:'Ryder Cup Elkofen',date1:today(),date2:today(),adminHash:behalteHash,
-     teamA:{name:'Team Rot',players:[]},teamB:{name:'Team Blau',players:[]},
-     courses:{1:{name:'',par:[...DEF_PAR],si:[...DEF_SI]},2:{name:'',par:[...DEF_PAR],si:[...DEF_SI]}},
-     pairings:{1:[],2:[]}};
+/**
+ * ALLES ZURÜCKSETZEN
+ *
+ * Räumt das Turnier vollständig ab — Spieler, Paarungen, Scores, Plätze und
+ * die verdeckten Aufstellungen. Nur der Admin-Code bleibt, sonst stünde das
+ * Turnier danach für alle offen.
+ *
+ * Schreibt direkt in die Datenbank. Früher wurde nur der lokale Zustand
+ * geleert; Aufstellungen und Captain-Codes blieben dort stehen.
+ */
+async function resetAll() {
+  // Zählen, damit die Rückfrage konkret ist
+  let loecher = 0;
+  [1,2].forEach(d => (S.pairings?.[d]||[]).forEach(p =>
+    ALL_ROLES.forEach(r => loecher += normScores(p.scores)[r].filter(v=>v!=null).length)));
+  const spieler = (S.teamA?.players||[]).length + (S.teamB?.players||[]).length;
+  const paarungen = (S.pairings?.[1]||[]).length + (S.pairings?.[2]||[]).length;
+
+  if (!confirm(
+    `Turnier komplett zurücksetzen?\n\n` +
+    `${spieler} Spieler, ${paarungen} Paarungen, ${loecher} eingetragene Löcher,\n` +
+    `beide Plätze und alle verdeckten Aufstellungen werden gelöscht.\n\n` +
+    `Der Admin-Code bleibt bestehen.`)) return;
+  if (!confirm('Wirklich? Das lässt sich nicht rückgängig machen.')) return;
+
+  const behalteHash = S.adminHash || null;
+
+  const updates = { 'rc': null };            // kompletten Turnierknoten entfernen
+  if (behalteHash) updates['rc/adminHash'] = behalteHash;
+
+  S = { eventName:'Ryder Cup Elkofen', date1:today(), date2:today(), adminHash:behalteHash,
+        capHashA:null, capHashB:null,
+        teamA:{name:'Team Rot',players:[]}, teamB:{name:'Team Blau',players:[]},
+        courses:{1:{name:'',par:[...DEF_PAR],si:[...DEF_SI],tees:[]},
+                 2:{name:'',par:[...DEF_PAR],si:[...DEF_SI],tees:[]}},
+        pairings:{1:[],2:[]}, lineup:{} };
+  SERVER_PIDS[1] = []; SERVER_PIDS[2] = [];
+
+  // Wartendes und Entwürfe verwerfen, sonst kommt Gelöschtes zurück
+  outboxClear();
+  try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+  CUR.dirty = {};
+  saveSnapshot(S);
+
+  const ok = await reliableWrite(updates);
+  toast(ok ? '✅ Turnier zurückgesetzt' : '📶 Offline — wird nachgereicht');
   initAdmin();
+  renderLB();
 }
 
 /**
