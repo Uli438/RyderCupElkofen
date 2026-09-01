@@ -281,6 +281,7 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
         <button class="htab on" data-d="1"     onclick="setDay(1)">TAG 1</button>
         <button class="htab"    data-d="2"     onclick="setDay(2)">TAG 2</button>
         <button class="htab"    data-d="total" onclick="setDay('total')">GESAMT</button>
+        <button class="htab"                   onclick="oeffneAufstellung()">📋 Captain</button>
         <button class="htab adm"               onclick="oeffneAdmin()">⚙ Admin</button>
       </div>
     </div>
@@ -420,6 +421,11 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       <button onclick="addPair()" style="width:100%;padding:10px;background:var(--bg2);border:2px dashed var(--acc);border-radius:10px;color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px">+ Paarung hinzufügen</button>
     </section>
     <section>
+      <div class="albl">VERDECKTE AUFSTELLUNG</div>
+      <div id="lu-admin"></div>
+    </section>
+
+    <section>
       <div class="albl">ZUGANG</div>
       <div id="adminlock"></div>
     </section>
@@ -428,6 +434,16 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
       onclick="clearScores()">Nur Scores löschen</button>
     <button class="rstbtn"       onclick="resetAll()">Alles zurücksetzen</button>
     <button class="primbtn serif" onclick="saveAdmin()">Speichern &amp; Starten ✓</button>
+  </div>
+</div>
+
+<div id="view-lineup" class="view">
+  <div class="hdr">
+    <button class="back" onclick="showView('lb')">←</button>
+    <div class="hdr-t serif">📋 Aufstellung</div>
+  </div>
+  <div class="abody">
+    <div id="lu-body"></div>
   </div>
 </div>
 
@@ -449,7 +465,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24t';
+const BUILD = '2026-07-24w';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -554,6 +570,9 @@ function normState(state) {
   state.teamB.name = state.teamB.name || 'Team Blau';
   state.eventName  = state.eventName  || 'Ryder Cup Elkofen';
   state.adminHash  = state.adminHash  || null;
+  state.capHashA   = state.capHashA   || null;
+  state.capHashB   = state.capHashB   || null;
+  state.lineup     = state.lineup     || {};
   [1,2].forEach(d => {
     state.pairings[d] = toPairList(state.pairings[d]);
     SERVER_PIDS[d] = state.pairings[d].map(p => p.id).filter(Boolean);
@@ -947,10 +966,49 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+/**
+ * ANONYME ANMELDUNG
+ *
+ * Die Sicherheitsregeln verlangen `auth != null`. Ohne Anmeldung wäre die
+ * Datenbank für jeden offen, der die Adresse kennt — genau das meldet Firebase
+ * per E-Mail als "unsichere Regeln".
+ *
+ * Für die Spieler ändert sich nichts: Die Anmeldung läuft unsichtbar und
+ * bleibt auf dem Gerät gespeichert. Kein Konto, kein Passwort, kein Klick.
+ *
+ * Das ist KEINE Zugangskontrolle — anmelden kann sich jeder. Es hält
+ * Zufallsfunde und automatische Scanner draußen, mehr nicht.
+ */
+async function anmelden() {
+  const auth = firebase.auth();
+  // Bestehende Anmeldung von diesem Gerät wiederverwenden
+  const vorhanden = await new Promise(res => {
+    const ab = auth.onAuthStateChanged(u => { ab(); res(u); }, () => { ab(); res(null); });
+  });
+  if (vorhanden) return vorhanden;
+  const cred = await auth.signInAnonymously();
+  return cred.user;
+}
+
 async function initFirebase() {
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
   await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js');
+  await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
   if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+
+  // Erst anmelden, dann auf die Datenbank zugreifen
+  try {
+    await withTimeout(anmelden(), 8000, 'anmeldung');
+  } catch (e) {
+    if (e && String(e.code || e.message).includes('operation-not-allowed')) {
+      // Anonyme Anmeldung ist in der Firebase-Konsole noch nicht eingeschaltet
+      toast('⚠️ Anmeldung nicht aktiviert — bitte Admin informieren');
+      console.error('Anonyme Anmeldung in der Firebase-Konsole einschalten:',
+                    'Authentication → Sign-in method → Anonymous');
+    }
+    throw e;   // führt in den Offline-Modus mit dem letzten Stand
+  }
+
   const db = firebase.database();
   window._fbSet = (path, data) => db.ref(path).set(data);
   // Multi-Path-Update: schreibt mehrere Pfade atomar in EINEM Vorgang.
@@ -1532,8 +1590,12 @@ function confirmSheet() {
   const pid=sheetPid, day=sheetDay;
   const p=getPairing(pid,day); if (!p) return;
   const roleVal=document.getElementById('sheet-sel').value;
-  const forBoth=roleVal==='both';
-  const myRole=forBoth?'playerA':roleVal;
+  // Absicherung: ein unbekannter Wert (etwa nach einem Umbau des Dropdowns)
+  // würde sonst eine leere Rolle setzen — dann sähe man seine getippten Zahlen,
+  // aber Speichern täte still nichts. Im Zweifel "für beide".
+  const gueltig = roleVal === 'both' || ALL_ROLES.includes(roleVal);
+  const forBoth = !gueltig || roleVal === 'both';
+  const myRole  = forBoth ? 'playerA' : roleVal;
   const isBB=p.mode==='bestball';
 
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
@@ -1903,6 +1965,261 @@ function showView(name) {
 }
 
 // ─────────────────────────────────────────
+// VERDECKTE AUFSTELLUNG (Captain-Draw)
+// ─────────────────────────────────────────
+//
+// Jeder Captain stellt seine Reihenfolge zusammen, ohne die des Gegners zu
+// sehen. Sind beide abgegeben, deckt der Wettspielleiter auf und die
+// Paarungen entstehen Position gegen Position: Platz 1 gegen Platz 1 usw.
+//
+// Je Tag getrennt an- oder abschaltbar. Format je Tag:
+//   'einzel' = ein Spieler je Platz    → Matchplay
+//   'zweier' = zwei Spieler je Platz   → Best Ball
+//
+// ACHTUNG: Das ist Sichtschutz, keine Geheimhaltung. Beide Listen liegen in
+// derselben Datenbank; wer sie dort ansieht, kann mitlesen. Gegen neugierige
+// Blicke in der App hilft es, gegen gezieltes Nachschauen nicht.
+
+const CAP_KEY = 'rc_cap_' + location.pathname;   // freigeschaltete Teams je Gerät
+let LU_TEAM = null;                              // 'A' oder 'B' — wer gerade dran ist
+let LU_TAG  = 1;
+
+const luTeams = () => { try { return JSON.parse(localStorage.getItem(CAP_KEY) || '[]'); }
+                        catch(e) { return []; } };
+const luFrei  = team => luTeams().includes(team);
+const luFreischalten = team => {
+  const l = luTeams(); if (!l.includes(team)) l.push(team);
+  lsSet(CAP_KEY, JSON.stringify(l));
+};
+
+/** Aufstellungsknoten eines Tages holen, immer vollständig */
+function luDaten(tag) {
+  const n = S.lineup?.[tag] || {};
+  return {
+    aktiv:      !!n.aktiv,
+    format:     n.format === 'zweier' ? 'zweier' : 'einzel',
+    aufgedeckt: !!n.aufgedeckt,
+    A: { ord: toList(n.A?.ord), abgegeben: !!n.A?.abgegeben },
+    B: { ord: toList(n.B?.ord), abgegeben: !!n.B?.abgegeben }
+  };
+}
+
+/** Wie viele Plätze hat die Liste? Kleinere Mannschaft gibt die Zahl vor. */
+function luPlaetze(tag) {
+  const d = luDaten(tag);
+  const proPlatz = d.format === 'zweier' ? 2 : 1;
+  const a = (S.teamA?.players || []).length;
+  const b = (S.teamB?.players || []).length;
+  return Math.floor(Math.min(a, b) / proPlatz);
+}
+
+function oeffneAufstellung() {
+  showView('lineup');
+  renderLineup();
+}
+
+/** Team-Auswahl mit Captain-Code */
+function luWaehleTeam(team) {
+  if (luFrei(team)) { LU_TEAM = team; renderLineup(); return; }
+  const hashFeld = team === 'A' ? 'capHashA' : 'capHashB';
+  const name = team === 'A' ? (S.teamA?.name || 'Team Rot') : (S.teamB?.name || 'Team Blau');
+
+  if (!S[hashFeld]) {
+    const neu = prompt(`Noch kein Code für ${name}.\n\n` +
+      `Lege einen fest — nur wer ihn kennt, sieht diese Aufstellung.\n` +
+      `Leer lassen für keinen Schutz:`);
+    if (neu === null) return;
+    if (neu.trim() !== '') {
+      S[hashFeld] = codeHash(neu);
+      reliableWrite({ ['rc/' + hashFeld]: S[hashFeld] });
+    }
+    luFreischalten(team); LU_TEAM = team; renderLineup(); return;
+  }
+  const eingabe = prompt(`Code für ${name}:`);
+  if (eingabe === null) return;
+  if (codeHash(eingabe) === S[hashFeld]) {
+    luFreischalten(team); LU_TEAM = team; renderLineup();
+  } else toast('⚠️ Falscher Code');
+}
+
+function luSetTag(tag) { LU_TAG = tag; renderLineup(); }
+
+/** Spieler an eine freie Position setzen oder wieder herausnehmen */
+function luToggle(id) {
+  const d = luDaten(LU_TAG);
+  const eigene = [...d[LU_TEAM].ord];
+  const pos = eigene.indexOf(id);
+  if (pos >= 0) eigene.splice(pos, 1);
+  else {
+    const proPlatz = d.format === 'zweier' ? 2 : 1;
+    if (eigene.length >= luPlaetze(LU_TAG) * proPlatz) { toast('Alle Plätze belegt'); return; }
+    eigene.push(id);
+  }
+  luSpeichereListe(eigene);
+}
+
+/** Position nach oben oder unten schieben */
+function luSchiebe(index, richtung) {
+  const d = luDaten(LU_TAG);
+  const eigene = [...d[LU_TEAM].ord];
+  const ziel = index + richtung;
+  if (ziel < 0 || ziel >= eigene.length) return;
+  [eigene[index], eigene[ziel]] = [eigene[ziel], eigene[index]];
+  luSpeichereListe(eigene);
+}
+
+function luSpeichereListe(ord) {
+  S.lineup = S.lineup || {};
+  S.lineup[LU_TAG] = S.lineup[LU_TAG] || {};
+  S.lineup[LU_TAG][LU_TEAM] = { ...(S.lineup[LU_TAG][LU_TEAM] || {}), ord };
+  saveSnapshot(S);
+  reliableWrite({ [`rc/lineup/${LU_TAG}/${LU_TEAM}/ord`]: ord });
+  renderLineup();
+}
+
+/** Aufstellung abgeben — danach ist sie gesperrt */
+function luAbgeben() {
+  const d = luDaten(LU_TAG);
+  const proPlatz = d.format === 'zweier' ? 2 : 1;
+  const noetig = luPlaetze(LU_TAG) * proPlatz;
+  if (d[LU_TEAM].ord.length < noetig) {
+    toast(`Noch ${noetig - d[LU_TEAM].ord.length} Spieler einteilen`); return;
+  }
+  if (!confirm('Aufstellung abgeben?\n\nDanach lässt sie sich nicht mehr ändern.')) return;
+  S.lineup[LU_TAG][LU_TEAM].abgegeben = true;
+  saveSnapshot(S);
+  reliableWrite({ [`rc/lineup/${LU_TAG}/${LU_TEAM}/abgegeben`]: true });
+  toast('✅ Abgegeben');
+  renderLineup();
+}
+
+/** Abgabe zurücknehmen, solange noch nicht aufgedeckt wurde */
+function luZuruecknehmen() {
+  const d = luDaten(LU_TAG);
+  if (d.aufgedeckt) { toast('Bereits aufgedeckt'); return; }
+  if (!confirm('Abgabe zurücknehmen und weiter bearbeiten?')) return;
+  S.lineup[LU_TAG][LU_TEAM].abgegeben = false;
+  saveSnapshot(S);
+  reliableWrite({ [`rc/lineup/${LU_TAG}/${LU_TEAM}/abgegeben`]: false });
+  renderLineup();
+}
+
+function renderLineup() {
+  const el = document.getElementById('lu-body');
+  if (!el) return;
+  const nameA = S.teamA?.name || 'Team Rot';
+  const nameB = S.teamB?.name || 'Team Blau';
+
+  // Noch kein Team gewählt
+  if (!LU_TEAM) {
+    el.innerHTML = `
+      <section>
+        <div class="albl">WER BIST DU?</div>
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">
+          Wähle dein Team. Die Aufstellung des anderen Captains bekommst du nicht zu sehen.
+        </div>
+        <button class="primbtn serif" style="background:var(--ta);margin-bottom:8px"
+          onclick="luWaehleTeam('A')">${esc(nameA)}</button>
+        <button class="primbtn serif" style="background:var(--tb)"
+          onclick="luWaehleTeam('B')">${esc(nameB)}</button>
+      </section>`;
+    return;
+  }
+
+  const d = luDaten(LU_TAG);
+  const meins = d[LU_TEAM];
+  const andere = d[LU_TEAM === 'A' ? 'B' : 'A'];
+  const spieler = (LU_TEAM === 'A' ? S.teamA : S.teamB)?.players || [];
+  const proPlatz = d.format === 'zweier' ? 2 : 1;
+  const plaetze = luPlaetze(LU_TAG);
+  const farbe = LU_TEAM === 'A' ? 'var(--ta)' : 'var(--tb)';
+
+  if (!d.aktiv) {
+    el.innerHTML = `
+      <section>
+        <div class="albl">TAG WÄHLEN</div>
+        ${[1,2].map(x=>`<button class="chip${LU_TAG===x?' on':''}" onclick="luSetTag(${x})">TAG ${x}</button>`).join(' ')}
+      </section>
+      <section>
+        <div style="font-size:12px;color:var(--txt2);text-align:center;padding:20px 0">
+          Für Tag ${LU_TAG} ist die verdeckte Aufstellung nicht eingeschaltet.<br><br>
+          Der Wettspielleiter kann sie im Admin-Bereich aktivieren.
+        </div>
+      </section>`;
+    return;
+  }
+
+  // Gewählte Plätze aufbauen
+  let plaetzeHtml = '';
+  for (let i = 0; i < plaetze; i++) {
+    const ids = meins.ord.slice(i*proPlatz, i*proPlatz + proPlatz);
+    const namen = ids.map(id => esc(playerName(id))).join(' & ') || '<i style="color:var(--txt3)">frei</i>';
+    plaetzeHtml += `
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);
+                  border:1px solid var(--bl);border-radius:8px;padding:8px;margin-bottom:5px">
+        <div style="width:26px;height:26px;border-radius:50%;background:${farbe};color:#fff;
+                    display:flex;align-items:center;justify-content:center;
+                    font-weight:800;font-size:12px;flex-shrink:0">${i+1}</div>
+        <div style="flex:1;font-size:13px;font-weight:600">${namen}</div>
+        ${meins.abgegeben ? '' : `
+          <button class="chip" onclick="luSchiebe(${i*proPlatz}, -${proPlatz})" ${i===0?'disabled':''}>▲</button>
+          <button class="chip" onclick="luSchiebe(${i*proPlatz}, ${proPlatz})" ${i===plaetze-1?'disabled':''}>▼</button>`}
+      </div>`;
+  }
+
+  // Noch nicht eingeteilte Spieler
+  const offen = spieler.filter(s => !meins.ord.includes(s.id));
+
+  el.innerHTML = `
+    <section>
+      <div class="albl">TAG WÄHLEN</div>
+      ${[1,2].map(x=>`<button class="chip${LU_TAG===x?' on':''}" onclick="luSetTag(${x})">TAG ${x}</button>`).join(' ')}
+    </section>
+
+    <section>
+      <div class="albl" style="color:${farbe}">
+        ${esc(LU_TEAM==='A'?nameA:nameB)} · ${d.format==='zweier'?'Zweier-Teams':'Einzel'}
+      </div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">
+        ${andere.abgegeben
+          ? '✅ Der andere Captain hat abgegeben.'
+          : '⏳ Der andere Captain hat noch nicht abgegeben.'}
+        ${d.aufgedeckt ? '<br><b>Bereits aufgedeckt.</b>' : ''}
+      </div>
+      ${plaetzeHtml}
+    </section>
+
+    ${meins.abgegeben ? `
+      <section>
+        <div style="font-size:12px;color:var(--green);font-weight:700;text-align:center;padding:8px">
+          ✅ Aufstellung abgegeben
+        </div>
+        ${d.aufgedeckt ? '' :
+          `<button class="chip" style="width:100%;text-align:center" onclick="luZuruecknehmen()">
+             Abgabe zurücknehmen</button>`}
+      </section>` : `
+      <section>
+        <div class="albl">NOCH EINZUTEILEN</div>
+        ${offen.length ? offen.map(s=>`
+          <button class="chip" style="margin:0 4px 4px 0" onclick="luToggle('${s.id}')">
+            ${esc(s.name)}</button>`).join('') :
+          '<div style="font-size:11px;color:var(--txt3)">Alle eingeteilt</div>'}
+      </section>
+      <section>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:6px">
+          Zum Herausnehmen den Namen oben antippen — oder mit ▲▼ die Reihenfolge ändern.
+        </div>
+        ${meins.ord.length ? meins.ord.map(id=>`
+          <button class="chip" style="margin:0 4px 4px 0;opacity:0.7" onclick="luToggle('${id}')">
+            ✕ ${esc(playerName(id))}</button>`).join('') : ''}
+      </section>
+      <button class="primbtn serif" onclick="luAbgeben()">Aufstellung abgeben ✓</button>`}
+
+    <button class="chip" style="width:100%;text-align:center;margin-top:10px"
+      onclick="LU_TEAM=null;renderLineup()">Team wechseln</button>`;
+}
+
+// ─────────────────────────────────────────
 // ADMIN-SPERRE
 // ─────────────────────────────────────────
 //
@@ -1981,6 +2298,134 @@ function adminCodeAendern() {
   renderAdminLock();
 }
 
+/** Admin-Bereich: verdeckte Aufstellung je Tag steuern */
+function renderLineupAdmin() {
+  const el = document.getElementById('lu-admin');
+  if (!el) return;
+  el.innerHTML = [1,2].map(tag => {
+    const d = luDaten(tag);
+    const bereit = d.A.abgegeben && d.B.abgegeben;
+    const vorhanden = (S.pairings?.[tag] || []).length;
+    return `
+      <div style="background:var(--bg2);border:1px solid var(--bl);border-radius:8px;
+                  padding:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <b style="font-size:12px;flex:1">TAG ${tag}</b>
+          <button class="chip${d.aktiv?' on':''}" onclick="luAdminAktiv(${tag}, ${!d.aktiv})">
+            ${d.aktiv ? 'aktiv' : 'aus'}</button>
+        </div>
+        ${d.aktiv ? `
+          <div style="display:flex;gap:4px;margin-bottom:8px">
+            <button class="chip${d.format==='einzel'?' on':''}" style="flex:1;text-align:center"
+              onclick="luAdminFormat(${tag},'einzel')">Einzel</button>
+            <button class="chip${d.format==='zweier'?' on':''}" style="flex:1;text-align:center"
+              onclick="luAdminFormat(${tag},'zweier')">Zweier-Teams</button>
+          </div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">
+            ${d.A.abgegeben?'✅':'⏳'} ${esc(S.teamA?.name||'Team Rot')} &nbsp;
+            ${d.B.abgegeben?'✅':'⏳'} ${esc(S.teamB?.name||'Team Blau')}
+            ${d.aufgedeckt?'<br><b>Aufgedeckt.</b>':''}
+          </div>
+          <button class="primbtn serif" style="padding:10px;font-size:13px${bereit&&!d.aufgedeckt?'':';opacity:0.45'}"
+            onclick="luAufdecken(${tag})">
+            ${d.aufgedeckt ? 'Erneut aufdecken' : 'Aufdecken & Paarungen erzeugen'}
+          </button>
+          ${vorhanden ? `<div style="font-size:10px;color:#e65100;margin-top:6px">
+            Achtung: Tag ${tag} hat bereits ${vorhanden} Paarung(en) — sie werden ersetzt.</div>` : ''}
+        ` : ''}
+      </div>`;
+  }).join('');
+}
+
+function luAdminAktiv(tag, an) {
+  S.lineup = S.lineup || {};
+  S.lineup[tag] = { ...(S.lineup[tag] || {}), aktiv: an };
+  saveSnapshot(S);
+  reliableWrite({ [`rc/lineup/${tag}/aktiv`]: an });
+  renderLineupAdmin();
+}
+
+function luAdminFormat(tag, fmt) {
+  const d = luDaten(tag);
+  if (d.A.abgegeben || d.B.abgegeben) { toast('Es wurde schon abgegeben'); return; }
+  S.lineup = S.lineup || {};
+  S.lineup[tag] = { ...(S.lineup[tag] || {}), format: fmt, A: null, B: null };
+  saveSnapshot(S);
+  reliableWrite({
+    [`rc/lineup/${tag}/format`]: fmt,
+    [`rc/lineup/${tag}/A`]: null,
+    [`rc/lineup/${tag}/B`]: null
+  });
+  renderLineupAdmin();
+}
+
+/**
+ * AUFDECKEN
+ * Erzeugt die Paarungen Position gegen Position: Platz 1 gegen Platz 1 usw.
+ * Bestehende Paarungen dieses Tages werden ersetzt — inklusive ihrer Scores,
+ * deshalb die deutliche Rückfrage.
+ */
+async function luAufdecken(tag) {
+  const d = luDaten(tag);
+  if (!d.aktiv) { toast('Für diesen Tag nicht aktiv'); return; }
+  if (!d.A.abgegeben || !d.B.abgegeben) {
+    toast('Es haben noch nicht beide abgegeben'); return;
+  }
+
+  const proPlatz = d.format === 'zweier' ? 2 : 1;
+  const anzahl = Math.min(
+    Math.floor(d.A.ord.length / proPlatz),
+    Math.floor(d.B.ord.length / proPlatz));
+  if (anzahl < 1) { toast('Zu wenige Spieler eingeteilt'); return; }
+
+  // Vorhandene Paarungen samt Scores zählen
+  const alte = S.pairings?.[tag] || [];
+  let loecher = 0;
+  alte.forEach(p => ALL_ROLES.forEach(r =>
+    loecher += normScores(p.scores)[r].filter(v => v != null).length));
+
+  let frage = `${anzahl} Paarung(en) für Tag ${tag} erzeugen?`;
+  if (alte.length) {
+    frage += `\n\nDie bestehenden ${alte.length} Paarung(en) werden ersetzt`;
+    frage += loecher ? ` — dabei gehen ${loecher} eingetragene Löcher verloren!` : '.';
+  }
+  if (!confirm(frage)) return;
+  if (loecher > 0 && !confirm(`Wirklich? ${loecher} Löcher sind danach weg.`)) return;
+
+  const updates = {};
+  // Alte Paarungen des Tages entfernen
+  (SERVER_PIDS[tag] || []).forEach(pid => { updates[`rc/pairings/${tag}/${pid}`] = null; });
+
+  const neue = [];
+  for (let i = 0; i < anzahl; i++) {
+    const a = d.A.ord.slice(i*proPlatz, i*proPlatz + proPlatz);
+    const b = d.B.ord.slice(i*proPlatz, i*proPlatz + proPlatz);
+    const p = {
+      id: uid(), ord: i,
+      playerA: a[0] || '', playerA2: proPlatz === 2 ? (a[1] || '') : '',
+      playerB: b[0] || '', playerB2: proPlatz === 2 ? (b[1] || '') : '',
+      mode: proPlatz === 2 ? 'bestball' : 'matchplay',
+      bruttoNetto: 'netto',
+      scores: null
+    };
+    neue.push(p);
+    updates[`rc/pairings/${tag}/${p.id}`] = p;
+  }
+  updates[`rc/lineup/${tag}/aufgedeckt`] = true;
+
+  S.pairings = S.pairings || {};
+  S.pairings[tag] = neue;
+  SERVER_PIDS[tag] = neue.map(p => p.id);
+  S.lineup[tag].aufgedeckt = true;
+  saveSnapshot(S);
+
+  const angekommen = await reliableWrite(updates);
+  toast(angekommen ? `✅ ${anzahl} Paarungen erzeugt` : '📶 Offline — wird nachgereicht');
+  renderLineupAdmin();
+  renderAdminPairings();
+  renderLB();
+}
+
 /** Zeile im Admin: Status und Knöpfe */
 function renderAdminLock() {
   const el = document.getElementById('adminlock');
@@ -2015,6 +2460,7 @@ function initAdmin() {
     document.getElementById(`ac${d}si`).value=c.si?c.si.join(','):'';
   });
   renderTees(1); renderTees(2);
+  renderLineupAdmin();
   renderAdminLock();
   renderAdminPlayers(); renderAdminPairings();
   sbGet('courses?select=*&order=name').then(cs=>{
