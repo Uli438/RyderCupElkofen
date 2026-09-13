@@ -236,6 +236,17 @@ input, select, button { font-family: 'DM Sans', sans-serif; }
 .dtab    { flex: 1; padding: 10px 0; background: none; border: none; color: var(--txt2); font-size: 12px; cursor: pointer; font-weight: 700; }
 .dtab.on { background: var(--acc); color: #fff; }
 .cdrop   { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: var(--txt); font-size: 15px; padding: 11px 14px; outline: none; cursor: pointer; margin-bottom: 8px; }
+/* ── Lochverlauf im Leaderboard ──
+   Gefüllter Punkt = gespielt, leerer Kreis = noch offen. Diese Unterscheidung
+   fehlt auf vielen Turnierseiten, dort ist beides gleich grau. */
+.hstrip  { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; margin-top: 8px; }
+.hdot    { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center;
+           justify-content: center; font-size: 9px; font-weight: 700; line-height: 1; }
+.hdot.o  { background: transparent; border: 1px solid var(--bl);  color: var(--txt3); }
+.hdot.h  { background: #c8ced4; border: 1px solid #c8ced4; color: #4a5560; }
+.hdot.a  { background: var(--ta); border: 1px solid var(--ta);   color: #fff; }
+.hdot.b  { background: var(--tb); border: 1px solid var(--tb);   color: #fff; }
+
 .teegrid { display: grid; grid-template-columns: 46px 1fr 1fr 1fr 1fr; gap: 4px; align-items: center; margin-bottom: 6px; }
 .teegrid .kopf { font-size: 9px; color: var(--txt3); font-weight: 700; text-align: center; letter-spacing: 0.5px; }
 .teegrid .farbe { font-size: 11px; font-weight: 700; }
@@ -465,7 +476,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24x';
+const BUILD = '2026-07-24y';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -810,6 +821,62 @@ function calcMatch(pairing, day) {
  * Gewinner pro Loch: niedrigerer Score (Netto oder Brutto).
  * Match endet sobald der Vorsprung die verbleibenden Löcher übersteigt.
  */
+/**
+ * LOCHVERLAUF
+ *
+ * Liefert für alle 18 Löcher, wer es gewonnen hat:
+ *   'A' Team Rot · 'B' Team Blau · 'H' halbiert · null noch nicht gespielt
+ *
+ * Wichtig ist die Unterscheidung zwischen 'H' und null: "geteilt" und "noch
+ * offen" sehen sonst gleich aus, und eine fast fertige Runde wirkt leer.
+ */
+function holeWinners(pairing, day) {
+  const c    = getCourse(day);
+  const par  = c.par || DEF_PAR;
+  const si   = c.si  || DEF_SI;
+  const bn   = pairing.bruttoNetto || 'brutto';
+  const mode = pairing.mode || 'matchplay';
+  const sc   = normScores(pairing.scores);
+  const tag  = Number(day) || 1;
+
+  const hA  = playerHcp(pairing.playerA,  tag);
+  const hB  = playerHcp(pairing.playerB,  tag);
+  const hA2 = playerHcp(pairing.playerA2 || '', tag);
+  const hB2 = playerHcp(pairing.playerB2 || '', tag);
+
+  const wert = (roh, i, h) => {
+    if (roh == null) return null;
+    const g = cappedScore(roh, i, par, h, si, bn);
+    return bn === 'netto' ? netScore(g, i, h, si) : g;
+  };
+
+  const out = Array(18).fill(null);
+  for (let i = 0; i < 18; i++) {
+    if (mode === 'stableford') {
+      const a = sc.playerA[i], b = sc.playerB[i];
+      if (a == null || b == null) continue;
+      const pA = stablefordPts(netScore(cappedScore(a,i,par,hA,si,'netto'), i, hA, si), par[i]);
+      const pB = stablefordPts(netScore(cappedScore(b,i,par,hB,si,'netto'), i, hB, si), par[i]);
+      out[i] = pA > pB ? 'A' : pB > pA ? 'B' : 'H';
+      continue;
+    }
+
+    let vA, vB;
+    if (mode === 'bestball') {
+      const kA = [wert(sc.playerA[i], i, hA), wert(sc.playerA2[i], i, hA2)].filter(v => v != null);
+      const kB = [wert(sc.playerB[i], i, hB), wert(sc.playerB2[i], i, hB2)].filter(v => v != null);
+      if (!kA.length || !kB.length) continue;
+      vA = Math.min(...kA); vB = Math.min(...kB);
+    } else {
+      vA = wert(sc.playerA[i], i, hA);
+      vB = wert(sc.playerB[i], i, hB);
+      if (vA == null || vB == null) continue;
+    }
+    out[i] = vA < vB ? 'A' : vB < vA ? 'B' : 'H';
+  }
+  return out;
+}
+
 function calcMatchplay(sc, hA, hB, par, si, bn) {
   const sA = toArr18(sc.playerA);
   const sB = toArr18(sc.playerB);
@@ -1535,6 +1602,20 @@ function renderLB() {
       const scNorm = normScores(p.scores);
       const hasA = scNorm.playerA.some(s=>s!=null) || (mode==='bestball' && scNorm.playerA2.some(s=>s!=null));
       const hasB = scNorm.playerB.some(s=>s!=null) || (mode==='bestball' && scNorm.playerB2.some(s=>s!=null));
+      // Lochverlauf — nur zeigen, wenn schon gespielt wurde
+      let verlaufHtml = '';
+      if (hasA || hasB) {
+        const gew = holeWinners(p, day);
+        const punkt = i => {
+          const w = gew[i];
+          const cls = w==='A' ? 'a' : w==='B' ? 'b' : w==='H' ? 'h' : 'o';
+          return `<div class="hdot ${cls}">${i+1}</div>`;
+        };
+        verlaufHtml =
+          `<div class="hstrip">${[...Array(9)].map((_,i)=>punkt(i)).join('')}</div>` +
+          `<div class="hstrip" style="margin-top:3px">${[...Array(9)].map((_,i)=>punkt(i+9)).join('')}</div>`;
+      }
+
       const entryInfo = (hasA||hasB) ? `<div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:4px">${hasA?'🔴 eingetragen':'🔴 ⏳ offen'} &nbsp;·&nbsp; ${hasB?'🔵 eingetragen':'🔵 ⏳ offen'}</div>` : '';
 
       html += `<div class="pc" onclick="openSheet('${p.id}',${day})">
@@ -1545,6 +1626,7 @@ function renderLB() {
           <div><div class="pnb">${esc(nB)}</div><div class="phcp">Vorg. ${hB}</div></div>
         </div>
         <div class="pr">${pillHtml}</div>
+        ${verlaufHtml}
         ${entryInfo}
       </div>`;
     });
