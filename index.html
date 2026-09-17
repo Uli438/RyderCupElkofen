@@ -480,7 +480,7 @@ const FB_CONFIG = {
 const SB_URL = 'https://pukixlbdbdbbsmqobfhj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1a2l4bGJkYmRiYnNtcW9iZmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDEyNzksImV4cCI6MjA5MjgxNzI3OX0.DPTM9aJmVIQaa_Csu0wEvzcgGc7pstM5M0K3GGTgXgk';
 
-const BUILD = '2026-07-24z';
+const BUILD = '2026-07-25a';
 
 const DEF_PAR = [4,5,3,4,4,3,5,4,4, 4,4,3,5,4,3,4,5,4];
 const DEF_SI  = [7,1,15,11,5,17,3,9,13, 8,2,16,12,6,18,4,10,14];
@@ -802,6 +802,18 @@ function cappedScore(brutto, holeIdx, par, hcp, si, bn) {
 // MATCH BERECHNUNG
 // ─────────────────────────────────────────
 
+// Zweier-Modi: vier Score-Spalten statt zwei
+const ZWEIER_MODI = ['bestball', 'aggregat'];
+const istZweier = m => ZWEIER_MODI.includes(m);
+
+/** Beschriftung eines Spielmodus */
+function modeLabel(m, kurz) {
+  if (m === 'matchplay')  return kurz ? 'MATCHPLAY'  : 'Matchplay';
+  if (m === 'bestball')   return kurz ? 'BEST BALL'  : 'Best Ball 2v2';
+  if (m === 'aggregat')   return kurz ? 'SUMME'      : 'Summe 2v2';
+  return kurz ? 'STABLEFORD' : 'Stableford';
+}
+
 function calcMatch(pairing, day) {
   if (!pairing) return { ptA:0, ptB:0, status:'open' };
   const sc   = pairing.scores || {};
@@ -817,6 +829,7 @@ function calcMatch(pairing, day) {
   const hB2  = playerHcp(pairing.playerB2 || '', tag);
   const r = mode === 'matchplay' ? calcMatchplay(sc, hA, hB, par, si, bn)
           : mode === 'bestball'  ? calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn)
+          : mode === 'aggregat'  ? calcAggregat(sc, hA, hB, hA2, hB2, par, si, bn)
           : calcStableford(sc, hA, hB, par, si);
   return alsBeendet(r, pairing, mode);
 }
@@ -893,11 +906,18 @@ function holeWinners(pairing, day) {
     }
 
     let vA, vB;
-    if (mode === 'bestball') {
-      const kA = [wert(sc.playerA[i], i, hA), wert(sc.playerA2[i], i, hA2)].filter(v => v != null);
-      const kB = [wert(sc.playerB[i], i, hB), wert(sc.playerB2[i], i, hB2)].filter(v => v != null);
-      if (!kA.length || !kB.length) continue;
-      vA = Math.min(...kA); vB = Math.min(...kB);
+    if (istZweier(mode)) {
+      const kA = [wert(sc.playerA[i], i, hA), wert(sc.playerA2[i], i, hA2)];
+      const kB = [wert(sc.playerB[i], i, hB), wert(sc.playerB2[i], i, hB2)];
+      if (mode === 'aggregat') {
+        // Summe: alle vier Spieler nötig
+        if (kA.some(v=>v==null) || kB.some(v=>v==null)) continue;
+        vA = kA[0]+kA[1]; vB = kB[0]+kB[1];
+      } else {
+        const fA = kA.filter(v=>v!=null), fB = kB.filter(v=>v!=null);
+        if (!fA.length || !fB.length) continue;
+        vA = Math.min(...fA); vB = Math.min(...fB);
+      }
     } else {
       vA = wert(sc.playerA[i], i, hA);
       vB = wert(sc.playerB[i], i, hB);
@@ -931,6 +951,38 @@ function calcMatchplay(sc, hA, hB, par, si, bn) {
  * Loch wird gewertet wenn mind. ein Spieler pro Team eingetragen hat.
  * Match endet wie Matchplay (vorzeitiges Ende möglich).
  */
+/**
+ * SUMME 2v2 (Aggregat)
+ *
+ * Anders als Best Ball zählen BEIDE Spieler: Ihre Ergebnisse werden addiert,
+ * das niedrigere Team-Ergebnis gewinnt das Loch. Ein schwacher Partner fällt
+ * damit ins Gewicht — das Format belohnt geschlossene Mannschaftsleistung.
+ *
+ * Ein Loch zählt erst, wenn alle vier Spieler eingetragen sind.
+ */
+function calcAggregat(sc, hA, hB, hA2, hB2, par, si, bn) {
+  const A  = toArr18(sc.playerA),  A2 = toArr18(sc.playerA2);
+  const B  = toArr18(sc.playerB),  B2 = toArr18(sc.playerB2);
+  let wA = 0, wB = 0, played = 0;
+
+  const wert = (roh, i, h) => {
+    if (roh == null) return null;
+    const g = cappedScore(roh, i, par, h, si, bn);
+    return bn === 'netto' ? netScore(g, i, h, si) : g;
+  };
+
+  for (let i = 0; i < 18; i++) {
+    const a1 = wert(A[i],  i, hA),  a2 = wert(A2[i], i, hA2);
+    const b1 = wert(B[i],  i, hB),  b2 = wert(B2[i], i, hB2);
+    // Alle vier nötig — sonst wäre die Summe unvollständig und verfälscht
+    if (a1 == null || a2 == null || b1 == null || b2 == null) continue;
+    played++;
+    const sA = a1 + a2, sB = b1 + b2;
+    if (sA < sB) wA++; else if (sB < sA) wB++;
+  }
+  return matchStatus(wA, wB, played);
+}
+
 function calcBestBall(sc, hA, hB, hA2, hB2, par, si, bn) {
   const sA  = toArr18(sc.playerA);
   const sA2 = toArr18(sc.playerA2);
@@ -1603,11 +1655,11 @@ function renderLB() {
     pairs.forEach(p => {
       const r     = calcMatch({...p}, day);
       const mode  = p.mode || 'matchplay';
-      const mLbl  = mode==='matchplay'?'MATCHPLAY':mode==='bestball'?'BEST BALL':'STABLEFORD';
-      const mCls  = mode==='matchplay'?'bm':mode==='bestball'?'bb':'bs';
+      const mLbl  = modeLabel(mode, true);
+      const mCls  = mode==='matchplay'?'bm':istZweier(mode)?'bb':'bs';
       const bnLbl = p.bruttoNetto==='netto'?' · NETTO':' · BRUTTO';
-      const nA = playerName(p.playerA)+(mode==='bestball'&&p.playerA2?'/'+playerName(p.playerA2):'');
-      const nB = playerName(p.playerB)+(mode==='bestball'&&p.playerB2?'/'+playerName(p.playerB2):'');
+      const nA = playerName(p.playerA)+(istZweier(mode)&&p.playerA2?'/'+playerName(p.playerA2):'');
+      const nB = playerName(p.playerB)+(istZweier(mode)&&p.playerB2?'/'+playerName(p.playerB2):'');
       const hA = playerHcp(p.playerA, day), hB = playerHcp(p.playerB, day);
 
       let pillHtml = '';
@@ -1615,7 +1667,7 @@ function renderLB() {
         pillHtml = `<div class="rpill rpo">Noch nicht gespielt</div>`;
       } else {
         let txt='', cls='rpd';
-        if (mode==='matchplay'||mode==='bestball') {
+        if (mode!=='stableford') {
           const lead  = r.lead||0;
           const nameA = esc(firstName(nA));
           const nameB = esc(firstName(nB));
@@ -1633,8 +1685,8 @@ function renderLB() {
       }
 
       const scNorm = normScores(p.scores);
-      const hasA = scNorm.playerA.some(s=>s!=null) || (mode==='bestball' && scNorm.playerA2.some(s=>s!=null));
-      const hasB = scNorm.playerB.some(s=>s!=null) || (mode==='bestball' && scNorm.playerB2.some(s=>s!=null));
+      const hasA = scNorm.playerA.some(s=>s!=null) || (istZweier(mode) && scNorm.playerA2.some(s=>s!=null));
+      const hasB = scNorm.playerB.some(s=>s!=null) || (istZweier(mode) && scNorm.playerB2.some(s=>s!=null));
       // Lochverlauf — nur zeigen, wenn schon gespielt wurde
       let verlaufHtml = '';
       if (hasA || hasB) {
@@ -1676,7 +1728,7 @@ let sheetPid=null, sheetDay=null;
 function openSheet(pid, day) {
   sheetPid=pid; sheetDay=day;
   const p = getPairing(pid, day); if (!p) return;
-  const isBB = p.mode==='bestball';
+  const isBB = istZweier(p.mode);
   const nA=playerName(p.playerA), nB=playerName(p.playerB);
   const nA2=p.playerA2?playerName(p.playerA2):'';
   const nB2=p.playerB2?playerName(p.playerB2):'';
@@ -1711,7 +1763,7 @@ function confirmSheet() {
   const gueltig = roleVal === 'both' || ALL_ROLES.includes(roleVal);
   const forBoth = !gueltig || roleVal === 'both';
   const myRole  = forBoth ? 'playerA' : roleVal;
-  const isBB=p.mode==='bestball';
+  const isBB=istZweier(p.mode);
 
   CUR.pid=pid; CUR.day=day; CUR.role=myRole; CUR.forBoth=forBoth; CUR.tab='front';
   CUR.dirty = {};
@@ -1751,7 +1803,7 @@ function confirmSheet() {
   const nA2=p.playerA2?playerName(p.playerA2):'';
   const nB2=p.playerB2?playerName(p.playerB2):'';
   const mode=p.mode||'matchplay';
-  const mLbl=mode==='matchplay'?'Matchplay':mode==='bestball'?'Best Ball 2v2':'Stableford';
+  const mLbl=modeLabel(mode);
   let myName='beide';
   if (!forBoth) {
     if      (roleVal==='playerA')  myName=nA;
@@ -1774,7 +1826,7 @@ function confirmSheet() {
       `<span class="kA2">${esc(firstName(nA2||'–'))}</span>`+
       `<span class="kB1">${esc(firstName(nB))}</span>`+
       `<span class="kB2">${esc(firstName(nB2||'–'))}</span>`+
-      `<span>BEST</span>`;
+      `<span>${mode==='aggregat'?'SUMME':'BEST'}</span>`;
   } else {
     cw=`32px 1fr 1fr ${mode==='matchplay'?'80px':'60px'}`;
     colHtml=`<span>LOCH</span>`+
@@ -1853,7 +1905,7 @@ function renderHoles() {
   const p=getPairing(CUR.pid,CUR.day); if (!p) return;
   const c=getCourse(CUR.day);
   const par=c.par||DEF_PAR, si=c.si||DEF_SI;
-  const mode=p.mode||'matchplay', isBB=mode==='bestball', bn=p.bruttoNetto||'brutto';
+  const mode=p.mode||'matchplay', isBB=istZweier(mode), bn=p.bruttoNetto||'brutto';
   const hA=playerHcp(p.playerA, CUR.day), hB=playerHcp(p.playerB, CUR.day);
   const hA2=playerHcp(p.playerA2||'', CUR.day), hB2=playerHcp(p.playerB2||'', CUR.day);
 
@@ -1895,18 +1947,24 @@ function renderHoles() {
     // Loch-Ergebnis (mit Score-Cap, identisch zur Wertung)
     let hresHtml='<span style="color:#aaa;font-size:11px">–</span>';
     if (isBB) {
-      const hasA=sA!=null||sA2!=null, hasB=sB!=null||sB2!=null;
+      const summe = mode === 'aggregat';
+      // Bei "Summe" zählen beide Spieler — also müssen auch alle vier
+      // eingetragen sein, sonst wäre das Ergebnis verfälscht.
+      const hasA = summe ? (sA!=null&&sA2!=null) : (sA!=null||sA2!=null);
+      const hasB = summe ? (sB!=null&&sB2!=null) : (sB!=null||sB2!=null);
       if (hasA&&hasB) {
         const cA1=cappedScore(sA, i,par,hA, si,bn), cA2c=cappedScore(sA2,i,par,hA2,si,bn);
         const cB1=cappedScore(sB, i,par,hB, si,bn), cB2c=cappedScore(sB2,i,par,hB2,si,bn);
-        const vA1=cA1 !=null?(bn==='netto'?netScore(cA1, i,hA, si):cA1) :999;
-        const vA2=cA2c!=null?(bn==='netto'?netScore(cA2c,i,hA2,si):cA2c):999;
-        const vB1=cB1 !=null?(bn==='netto'?netScore(cB1, i,hB, si):cB1) :999;
-        const vB2=cB2c!=null?(bn==='netto'?netScore(cB2c,i,hB2,si):cB2c):999;
-        const bA=Math.min(vA1,vA2), bB=Math.min(vB1,vB2);
+        const leer = summe ? null : 999;
+        const vA1=cA1 !=null?(bn==='netto'?netScore(cA1, i,hA, si):cA1) :leer;
+        const vA2=cA2c!=null?(bn==='netto'?netScore(cA2c,i,hA2,si):cA2c):leer;
+        const vB1=cB1 !=null?(bn==='netto'?netScore(cB1, i,hB, si):cB1) :leer;
+        const vB2=cB2c!=null?(bn==='netto'?netScore(cB2c,i,hB2,si):cB2c):leer;
+        const bA = summe ? vA1+vA2 : Math.min(vA1,vA2);
+        const bB = summe ? vB1+vB2 : Math.min(vB1,vB2);
         if      (bA<bB) hresHtml=`<span style="font-weight:900;color:var(--ta);font-size:13px">◀${bA}</span>`;
         else if (bB<bA) hresHtml=`<span style="font-weight:900;color:var(--tb);font-size:13px">${bB}▶</span>`;
-        else            hresHtml=`<span style="font-weight:700;color:#666;font-size:12px">½</span>`;
+        else            hresHtml=`<span style="font-weight:700;color:#666;font-size:12px">½ ${summe?bA:''}</span>`;
       }
     } else if (sA!=null&&sB!=null) {
       const cA=cappedScore(sA,i,par,hA,si,bn);
@@ -1969,7 +2027,7 @@ function updateMatchStatus() {
   const plbl=document.getElementById('sc-plbl');
   const bar=document.getElementById('mbar');
 
-  if (mode==='matchplay'||mode==='bestball') {
+  if (mode!=='stableford') {
     const lead=r.lead||0, left=18-(r.played||0);
     let txt='', bg='#e0e0e0', col='#333';
     if      (!r.played)   txt='Noch kein Loch';
@@ -2943,8 +3001,8 @@ function renderAdminPairings() {
   const sel=(opts,val)=>opts.replace(`value="${val}"`,`value="${val}" selected`);
 
   document.getElementById('a-pairs').innerHTML=pairs.map((p,i)=>{
-    const isBB=p.mode==='bestball';
-    const modes=['matchplay','bestball','stableford'], bns=['brutto','netto'];
+    const isBB=istZweier(p.mode);
+    const modes=['matchplay','bestball','aggregat','stableford'], bns=['brutto','netto'];
     const bb2A=isBB?`<div style="font-size:9px;color:var(--ta);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${esc(S.teamA?.name||'A')}</div><select class="inp" style="padding:8px;font-size:13px" onchange="updatePairing(${i},'playerA2',this.value)">${sel(optA,p.playerA2||'')}</select>`:'';
     const bb2B=isBB?`<div style="font-size:9px;color:var(--tb);letter-spacing:1px;margin:6px 0 4px;font-weight:700">PARTNER ${esc(S.teamB?.name||'B')}</div><select class="inp" style="padding:8px;font-size:13px" onchange="updatePairing(${i},'playerB2',this.value)">${sel(optB,p.playerB2||'')}</select>`:'';
     return `<div class="padm">
@@ -2966,7 +3024,7 @@ function renderAdminPairings() {
         </div>
       </div>
       <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px;margin-top:8px">SPIELMODUS</div>
-      <div class="chips">${modes.map(m=>`<button class="chip${p.mode===m?' on':''}" onclick="updatePairing(${i},'mode','${m}');renderAdminPairings()">${m==='matchplay'?'Matchplay':m==='bestball'?'Best Ball 2v2':'Stableford'}</button>`).join('')}</div>
+      <div class="chips">${modes.map(m=>`<button class="chip${p.mode===m?' on':''}" onclick="updatePairing(${i},'mode','${m}');renderAdminPairings()">${modeLabel(m)}</button>`).join('')}</div>
       <div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px;margin-top:8px">WERTUNG</div>
       <div class="chips">${bns.map(bn=>`<button class="chip${p.bruttoNetto===bn?' on':''}" onclick="updatePairing(${i},'bruttoNetto','${bn}')">${bn==='brutto'?'Brutto':'Netto'}</button>`).join('')}</div>
     </div>`;
